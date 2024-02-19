@@ -2,7 +2,7 @@ class TodoListItem {
 
   String text;
 
-  bool isChecked = false;
+  bool isChecked = false; //todo extract into the widget and out of the model!!!
 
   DateTime dateTime = DateTime.now();
   bool isArchived = false;

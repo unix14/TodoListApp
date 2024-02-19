@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/common/consts.dart';
 import 'package:flutter_example/common/stub_data.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
+import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'common/DialogHelper.dart';
+import 'common/common_styles.dart';
 import 'common/date_extensions.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -61,13 +63,23 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<TodoListItem> items = [];
   late Future<List<TodoListItem>> _loadingData;
-  bool isEditMode = false;
-
+  bool isEditMode(TodoListItem todoItem) {
+    bool sizeValidation = itemOnEditIndex > -1 && itemOnEditIndex < items.length;
+    var index = items.indexOf(todoItem);
+    bool indexValidation = index > -1;
+    bool sameIndexValidation = itemOnEditIndex == index;
+    return sizeValidation && indexValidation && sameIndexValidation;
+  }
+  int itemOnEditIndex = -1;
 
   //todo refactor and extract code to widgets
 
   bool isLoading = true;
-  final _controller = TextEditingController();
+  late RoundedTextInputField todoInputField = RoundedTextInputField(hintText: "Write your ToDo here!",onChanged: (newValue) {
+    setState(() {
+      inputText = newValue;
+    });
+  });
 
 
   BannerAd? myBanner;
@@ -231,25 +243,7 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    onChanged: (newValue) {
-                      setState(() {
-                        inputText = newValue;
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.black,
-                          width: 2.0,
-                          style: BorderStyle.solid,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                todoInputField,
                 SizedBox(
                   height: 69.0,
                   width: inputText.isNotEmpty ? 80 : 10,
@@ -268,7 +262,7 @@ class _MyHomePageState extends State<MyHomePage> {
               _updateList();
 
               inputText = "";
-              _controller.clear();
+              todoInputField.clear();
             });
           } else {
             DialogHelper.showAlertDialog(
@@ -445,18 +439,44 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget getListTile(TodoListItem currentTodo) {
+    var isOnEditMode = isEditMode(currentTodo);
+    var currentTodoEditInput = RoundedTextInputField(
+        initialText: currentTodo.text,
+        hintText: "Edit your ToDo here!", onChanged: (newValue) {
+      setState(() {
+        //todo update the current tile here
+        var index = items.indexOf(currentTodo);
+        items[index].text = newValue;
+        items[index].dateTime = DateTime.now();
+        _updateList();
+        // inputText = newValue;
+      });
+    });
     return InkWell(
       onLongPress: () {
-        setState(() {
-          isEditMode = !isEditMode;
-        });
+        toggleEditMode(currentTodo);
       },
       onTap: () {
-        toggleCheckBox(currentTodo, !currentTodo.isChecked);
+        if(isOnEditMode) {
+          var updatedTodoText = currentTodoEditInput.getText();
+          updateTile(currentTodo, updatedTodoText);// todo impl and debug
+          toggleEditMode(currentTodo);
+        } else {
+          toggleCheckBox(currentTodo, !currentTodo.isChecked);
+        }
       },
       child: SizedBox(
         child: ListTile(
-          leading: Checkbox(
+          leading: isOnEditMode ? TextButton(
+              onPressed: () {
+                  var updatedTodoText = currentTodoEditInput.getText();
+                  updateTile(currentTodo, updatedTodoText); // todo impl and debug
+                  toggleEditMode(currentTodo);
+              },
+              child: const Icon(
+                Icons.save,
+                color: Colors.black12,
+              )) : Checkbox(
             value: currentTodo.isChecked,
             onChanged: (bool? value) {
               toggleCheckBox(currentTodo, value);
@@ -470,7 +490,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   : TextDecoration.none,
             ),
           ),
-          subtitle: Text(
+          subtitle: isOnEditMode ? Container() : Text(
             getFormattedDate(currentTodo.dateTime.toString()),
             style: TextStyle(
               decoration: currentTodo.isChecked
@@ -478,7 +498,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   : TextDecoration.none,
             ),
           ),
-          trailing: isEditMode ? TextButton(
+          trailing: isOnEditMode ? TextButton(
               onPressed: () {
                 DialogHelper.showAlertDialog(
                     context, "Do you want to delete?", "This can't be undone",
@@ -502,6 +522,27 @@ class _MyHomePageState extends State<MyHomePage> {
   void toggleCheckBox(TodoListItem currentTodo, bool? value) {
     setState(() {
       currentTodo.isChecked = value ?? false;
+      _updateList();
+    });
+  }
+
+  void toggleEditMode(TodoListItem currentTodo) {
+    setState(() {
+      if(itemOnEditIndex == -1) {
+        var index = items.indexOf(currentTodo);
+        itemOnEditIndex = index;
+      } else {
+        itemOnEditIndex = -1;
+      }
+    });
+  }
+
+  void updateTile(TodoListItem currentTodo, String todoText){
+    setState(() {
+      var index = items.indexOf(currentTodo);
+      currentTodo.text = todoText;
+      currentTodo.dateTime = DateTime.now();
+      items[index] = currentTodo;
       _updateList();
     });
   }
