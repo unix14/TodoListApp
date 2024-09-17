@@ -4,7 +4,7 @@
       <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
     </configurations>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_3" default="true" project-jdk-name="Android API 34, extension level 7 Platform" project-jdk-type="Android SDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_3" default="true">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ProjectType">

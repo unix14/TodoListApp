@@ -22,14 +22,11 @@ if (flutterVersionName == null) {
 }
 
 apply plugin: 'com.android.application'
-// START: FlutterFire Configuration
-apply plugin: 'com.google.gms.google-services'
-// END: FlutterFire Configuration
 apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 33
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -45,13 +42,11 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.eyalya94.tools.todoLater"
-        minSdkVersion 24
-        targetSdkVersion 34
+        applicationId "com.triPCups.tools.todoList"
+        minSdkVersion 19
+        targetSdkVersion 33
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-
-        multiDexEnabled true
     }
 
 
@@ -59,7 +54,7 @@ android {
     buildTypes {
         release {
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
 }
@@ -70,9 +65,6 @@ flutter {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.work:work-runtime-ktx:2.9.0'
-
-    implementation 'com.android.support:multidex:1.0.3'
-
+    implementation 'androidx.work:work-runtime-ktx:2.7.0'
 
 }

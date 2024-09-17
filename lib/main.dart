@@ -1,44 +1,39 @@
 import 'dart:convert';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/common/consts.dart';
 import 'package:flutter_example/common/stub_data.dart';
-import 'package:flutter_example/managers/app_initializer.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'common/DialogHelper.dart';
+import 'common/common_styles.dart';
 import 'common/date_extensions.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'screens/onboarding.dart';
 
 void main() {
-  AppInitializer.initialize(andThen: () {
-    runApp(const MyApp());
-  });
+  WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize();
+
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Todo Later',
-      // color: Colors.blueAccent, //todo add this color to splash screen
+      title: 'Todo List',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        useMaterial3: false,
         primarySwatch: Colors.blue,
       ),
       //todo add rtl support??
       // home: Column(
       //   children: [
-      home: const OnboardingScreen() , //const MyHomePage(title: 'Todo Later'),
-      // todo use banner here??
+      home: const MyHomePage(title: 'Todo List'),
       //     Container(
       //       alignment: Alignment.bottomCenter,
       //       child: adWidget,
@@ -76,16 +71,13 @@ class _MyHomePageState extends State<MyHomePage> {
     return sizeValidation && indexValidation && sameIndexValidation;
   }
   int itemOnEditIndex = -1;
-  // Add a variable to control the opacity of the FloatingActionButton
-  double fabOpacity = 0.0;
 
   //todo refactor and extract code to widgets
 
   bool isLoading = true;
-  late RoundedTextInputField todoInputField = RoundedTextInputField(hintText: "Enter a Todo here..",onChanged: (newValue) {
+  late RoundedTextInputField todoInputField = RoundedTextInputField(hintText: "Write your ToDo here!",onChanged: (newValue) {
     setState(() {
       inputText = newValue;
-      fabOpacity = newValue.isNotEmpty ? 1 : 0;
     });
   });
 
@@ -146,8 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     _loadingData = loadList();
-    if(false)
-      initAds();
+    initAds();
     super.initState();
   }
 
@@ -169,10 +160,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     List<PopupMenuItem<String>> popupMenuItems = [];
                     //Check if should show Archive Button
                     if (items.any((item) => item.isArchived)) {
-                      popupMenuItems.add(const PopupMenuItem<String>(
+                      popupMenuItems.add(PopupMenuItem<String>(
                         value: 'archive',
                         child: Row(
-                          children: [
+                          children: const [
                             Icon(Icons.archive,
                               color: Colors.blue,),
                             SizedBox(width: 8.0),
@@ -183,10 +174,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     }
                     //Check if should show Delete Button
                     if (items.isNotEmpty) {
-                      popupMenuItems.add(const PopupMenuItem<String>(
+                      popupMenuItems.add(PopupMenuItem<String>(
                         value: kDeleteAllMenuButtonName,
                         child: Row(
-                          children: [
+                          children: const [
                             Icon(
                               Icons.delete_forever,
                               color: Colors.blue,
