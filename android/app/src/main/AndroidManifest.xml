@@ -1,11 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.triPCups.tools.flutter_example">
+    package="com.eyalya94.tools.todoLater">
 
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
-        android:label="Todo List"
+        android:label="Todo Later"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
