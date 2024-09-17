@@ -73,6 +73,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               const Spacer(),
               WhiteRoundButton(text: 'Login with Email', onPressed: () async {
                 // Implement email login functionality
+                // UserCredential? userCredential = await loginManager.signInWithEmailPassword('email', 'password');
+                /// todo go to email login screen
               },),
               const SizedBox(height: 20),
               WhiteRoundButton(text: 'Login with Google', onPressed: () async {
