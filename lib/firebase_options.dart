@@ -48,6 +48,7 @@ class DefaultFirebaseOptions {
     authDomain: 'todo-later.firebaseapp.com',
     storageBucket: 'todo-later.appspot.com',
     measurementId: 'G-20RXHFVRQE',
+    databaseURL: "https://todo-later-default-rtdb.firebaseio.com",
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -56,6 +57,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '681999893255',
     projectId: 'todo-later',
     storageBucket: 'todo-later.appspot.com',
+    databaseURL: "https://todo-later-default-rtdb.firebaseio.com",
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -65,6 +67,7 @@ class DefaultFirebaseOptions {
     projectId: 'todo-later',
     storageBucket: 'todo-later.appspot.com',
     iosBundleId: 'com.triPCups.tools.flutterExample',
+    databaseURL: "https://todo-later-default-rtdb.firebaseio.com",
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -74,6 +77,7 @@ class DefaultFirebaseOptions {
     projectId: 'todo-later',
     storageBucket: 'todo-later.appspot.com',
     iosBundleId: 'com.eyalya94.tools.todoLater',
+    databaseURL: "https://todo-later-default-rtdb.firebaseio.com",
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -84,5 +88,6 @@ class DefaultFirebaseOptions {
     authDomain: 'todo-later.firebaseapp.com',
     storageBucket: 'todo-later.appspot.com',
     measurementId: 'G-9DZC6HZPJD',
+    databaseURL: "https://todo-later-default-rtdb.firebaseio.com",
   );
 }

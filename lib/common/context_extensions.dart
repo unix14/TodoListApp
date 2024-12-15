@@ -8,6 +8,9 @@ import 'package:flutter_example/main.dart';
 import 'package:flutter_example/common/dialog_extensions.dart';
 import 'package:flutter_example/auth/authenticator.dart';
 import 'package:flutter_example/managers/app_initializer.dart';
+import 'package:flutter_example/models/user.dart' as MyUser;
+import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:flutter_example/common/globals.dart';
 
 
 extension ContextExtension on BuildContext { // todo rename to auth extensions?
@@ -182,7 +185,9 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
     if(user != null) {
       showSnackBar("You are now logged in, Welcome ${/*currentPage?.userName ??*/ user.email}");
       AppInitializer.handleLoginSuccess(user);
+      myCurrentUser = await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
 
+      myCurrentUser!.dateOfLoginIn = DateTime.now();
 
 
       Future.delayed(const Duration(milliseconds: 500), () async {
@@ -214,6 +219,20 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
       showSnackBar("You are now signed up, Welcome ${/*currentPage?.userName ??*/ user.email}");
       AppInitializer.handleLoginSuccess(user);
 
+      myCurrentUser = MyUser.User(
+        email: user.email,
+        imageURL: user.photoURL ?? "",
+        name: user.displayName ?? "",);
+
+      myCurrentUser!.dateOfRegistration = DateTime.now();
+      myCurrentUser!.dateOfLoginIn = DateTime.now();
+
+      myCurrentUser!.todoListItems = [];
+
+      var didSuccess = await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+      if(didSuccess == true) {
+        print("success save after signup to DB");
+      }
 
       // PageData pageData = PageData(
       //   id: user.uid,

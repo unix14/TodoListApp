@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_example/common/globals.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/common/consts.dart';
@@ -15,6 +15,10 @@ import 'common/date_extensions.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'screens/onboarding.dart';
 import 'package:flutter_example/common/globals.dart';
+import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_example/models/user.dart' as MyUser;
+
 
 void main() {
   AppInitializer.initialize(andThen: () {
@@ -55,7 +59,7 @@ class MyApp extends StatelessWidget {
 
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends StatefulWidget {// todo etract to another file
   const MyHomePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
@@ -293,6 +297,21 @@ class _MyHomePageState extends State<MyHomePage> {
     var listAsStr = jsonEncode(items);
     prefs.setString(kAllListSavedPrefs, listAsStr);
     print("update list :" + listAsStr);
+
+    // todo update realtime DB if logged in
+
+    if(isLoggedIn && currentUser?.uid.isNotEmpty == true) {
+
+      if(myCurrentUser == null) {
+        myCurrentUser = await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
+      }
+      myCurrentUser!.todoListItems = items;
+
+      var didSuccess = await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+      if(didSuccess == true) {
+        print("success save to DB");
+      }
+    }
   }
 
   Future<List<TodoListItem>> loadList() async {
@@ -427,11 +446,30 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   //todo refactor to somewhere else
-  Future<List<TodoListItem>> _loadList() async {
-    // Obtain shared preferences.
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+  Future<List<TodoListItem>> _loadList() async { /// todo refactor to seperate classes
+    var listStr = "";
 
-    var listStr = prefs.getString(kAllListSavedPrefs) ?? "";
+    if(isLoggedIn && currentUser != null) {
+      /// fetch from firebase
+      if (myCurrentUser == null) {
+        // Load user data if not already loaded
+        myCurrentUser = await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
+
+        print("Loading first time the data from the DB");
+
+      }
+
+      print("the result for ${currentUser!.uid} is ${myCurrentUser?.todoListItems?.length ?? -1}");
+      if(myCurrentUser != null && myCurrentUser?.todoListItems?.isNotEmpty == true) {
+        return myCurrentUser!.todoListItems!;
+      }
+    } else {
+      /// fetch from shared Preferences
+      // Obtain shared preferences.
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      listStr = prefs.getString(kAllListSavedPrefs) ?? "";
+    }
     print("load list :" + listStr);
 
     if (listStr.isNotEmpty) {

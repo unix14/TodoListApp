@@ -14,7 +14,7 @@ class AppInitializer {
   //todo add crash detection and analytics with Firebase
   static Future<void> initialize({required Function andThen}) async {
     WidgetsFlutterBinding.ensureInitialized();
-    MobileAds.instance.initialize();
+    // MobileAds.instance.initialize();
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
     //todo add auto login if user exist or anon user if not
     await initAuthentication();
