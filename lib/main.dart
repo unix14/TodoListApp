@@ -84,6 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // Add a variable to control the opacity of the FloatingActionButton
   double fabOpacity = 0.0;
 
+  final FocusNode _todoLineFocusNode = FocusNode();
   //todo refactor and extract code to widgets
 
   bool isLoading = true;
@@ -92,7 +93,13 @@ class _MyHomePageState extends State<MyHomePage> {
       inputText = newValue;
       fabOpacity = newValue.isNotEmpty ? 1 : 0;
     });
-  });
+  },
+    focusNode: _todoLineFocusNode,
+    callback: () {
+      print("Clicked enter");
+      _onAddItem();
+    },
+  );
 
 
   BannerAd? myBanner;
@@ -146,6 +153,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     super.dispose();
     myBanner?.dispose();
+    _todoLineFocusNode.dispose(); // Dispose of the FocusNode
   }
 
   @override
@@ -161,17 +169,33 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        actions: items.isNotEmpty ? [
+        actions: (isLoggedIn == false || items.isNotEmpty || items.where((item) => item.isArchived).toList().isNotEmpty) ? [
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == kArchiveMenuButtonName) {
                       showArchivedTodos();
                     } else if (value == kDeleteAllMenuButtonName) {
                       deleteAll();
+                    } else if(value == kLoginButtonMenu) {
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const OnboardingScreen()));
                     }
                   },
                   itemBuilder: (BuildContext context) {
                     List<PopupMenuItem<String>> popupMenuItems = [];
+                    //Check if should show Login Button
+                    if (isLoggedIn == false) {
+                      popupMenuItems.add(const PopupMenuItem<String>(
+                        value: 'login',
+                        child: Row(
+                          children: [
+                            Icon(Icons.supervised_user_circle,
+                              color: Colors.blue,),
+                            SizedBox(width: 8.0),
+                            Text('Login'),
+                          ],
+                        ),
+                      ));
+                    }
                     //Check if should show Archive Button
                     if (items.any((item) => item.isArchived)) {
                       popupMenuItems.add(const PopupMenuItem<String>(
@@ -270,23 +294,28 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: (inputText.isNotEmpty) ? FloatingActionButton(
         onPressed: () {
-          if (inputText.isNotEmpty) {
-            setState(() {
-              items.add(TodoListItem(inputText.trim()));
-              _updateList();
-
-              inputText = "";
-              todoInputField.clear();
-            });
-          } else {
-            DialogHelper.showAlertDialog(
-                context, "Empty Todo", "Please write a Todo", null);
-          }
+          _onAddItem();
         },
         tooltip: 'Add',
         child: const Icon(Icons.add),
       ) : Container(), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  void _onAddItem() {
+
+    if (inputText.isNotEmpty) {
+      setState(() {
+        items.add(TodoListItem(inputText.trim()));
+        _updateList();
+
+        inputText = "";
+        todoInputField.clear();
+      });
+    } else {
+      DialogHelper.showAlertDialog(
+          context, "Empty Todo", "Please write a Todo", null);
+    }
   }
 
   void _updateList() async {
@@ -447,28 +476,25 @@ class _MyHomePageState extends State<MyHomePage> {
 
   //todo refactor to somewhere else
   Future<List<TodoListItem>> _loadList() async { /// todo refactor to seperate classes
-    var listStr = "";
+
+    /// fetch from shared Preferences
+    // Obtain shared preferences.
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    var listStr = prefs.getString(kAllListSavedPrefs) ?? "";
 
     if(isLoggedIn && currentUser != null) {
       /// fetch from firebase
       if (myCurrentUser == null) {
         // Load user data if not already loaded
         myCurrentUser = await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
-
         print("Loading first time the data from the DB");
-
       }
 
       print("the result for ${currentUser!.uid} is ${myCurrentUser?.todoListItems?.length ?? -1}");
       if(myCurrentUser != null && myCurrentUser?.todoListItems?.isNotEmpty == true) {
         return myCurrentUser!.todoListItems!;
       }
-    } else {
-      /// fetch from shared Preferences
-      // Obtain shared preferences.
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-      listStr = prefs.getString(kAllListSavedPrefs) ?? "";
     }
     print("load list :" + listStr);
 
@@ -494,12 +520,18 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         //todo update the current tile here
         var index = items.indexOf(currentTodo);
-        items[index].text = newValue;
+        // items[index].text = newValue;
         items[index].dateTime = DateTime.now();
         _updateList();
         // inputText = newValue;
       });
-    });
+    },
+      focusNode: FocusNode(),
+      callback: () {
+        print("Clicked enter from edit");
+        _onAddItem();
+      },
+    );
     return InkWell(
       onLongPress: () {
         toggleEditMode(currentTodo);
@@ -588,7 +620,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void updateTile(TodoListItem currentTodo, String todoText){
     setState(() {
       var index = items.indexOf(currentTodo);
-      currentTodo.text = todoText;
+      if(todoText.isNotEmpty) {
+        currentTodo.text = todoText;
+      }
       currentTodo.dateTime = DateTime.now();
       items[index] = currentTodo;
       _updateList();

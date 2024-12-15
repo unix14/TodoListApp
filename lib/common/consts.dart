@@ -18,6 +18,7 @@ const kDefaultPadding = EdgeInsets.fromLTRB(19, 0, 0, 19);
 
 const kDeleteAllMenuButtonName = "deleteAll";
 const kArchiveMenuButtonName = "archive";
+const kLoginButtonMenu = 'login';
 
 
 
