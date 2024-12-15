@@ -54,7 +54,14 @@ android {
         multiDexEnabled true
     }
 
-
+    signingConfigs {
+        release {
+            storeFile file("C:\\Users\\Eyal\\Desktop\\TodoList\\keystore\\uploaderKey.jks")
+            storePassword "e159263Ee"
+            keyAlias "uploaderKey"
+            keyPassword "e159263Ee"
+        }
+    }
 
     buildTypes {
         release {

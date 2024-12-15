@@ -6,6 +6,8 @@ import 'package:flutter_example/managers/login_manager.dart';
 import 'package:flutter_example/models/user.dart';
 
 import '../widgets/white_round_button.dart';
+import '../common/context_extensions.dart';
+import '../auth/authenticator.dart';
 
 
 //todo refactor package name
@@ -72,9 +74,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const Spacer(),
               WhiteRoundButton(text: 'Login with Email', onPressed: () async {
-                // Implement email login functionality
-                // UserCredential? userCredential = await loginManager.signInWithEmailPassword('email', 'password');
-                /// todo go to email login screen
+                // todo Implement email login functionality
+                /// go to email login screen
+                context.showLoginDialog();//(_a, emailController, passwordController) async {
+                //   var email = emailController.text;
+                //   var password = passwordController.text;
+                //   // UserCredential? userCredential = await loginManager.signInWithEmailPassword(email, password);
+                //
+                //   var user = await Authenticator.signIn(email, password);
+                //
+                //   if(user != null) {
+                //     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Todo Later')));
+                //   } else {
+                //     // todo handle errors here
+                //   }
+                //
+                // });
               },),
               const SizedBox(height: 20),
               WhiteRoundButton(text: 'Login with Google', onPressed: () async {

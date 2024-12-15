@@ -14,6 +14,7 @@ import 'common/DialogHelper.dart';
 import 'common/date_extensions.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'screens/onboarding.dart';
+import 'package:flutter_example/common/globals.dart';
 
 void main() {
   AppInitializer.initialize(andThen: () {
@@ -37,7 +38,7 @@ class MyApp extends StatelessWidget {
       //todo add rtl support??
       // home: Column(
       //   children: [
-      home: const OnboardingScreen() , //const MyHomePage(title: 'Todo Later'),
+      home: isLoggedIn ? MyHomePage(title: 'Todo Later') : OnboardingScreen(), // todo rename myhomepage class
       // todo use banner here??
       //     Container(
       //       alignment: Alignment.bottomCenter,
