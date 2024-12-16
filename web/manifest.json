@@ -1,11 +1,11 @@
 {
-    "name": "flutter_example",
-    "short_name": "flutter_example",
+    "name": "Todo Later Web App",
+    "short_name": "Todo Later",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Todo Later Web App created by Eyal Yaakobi",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
