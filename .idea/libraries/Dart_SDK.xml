@@ -4,6 +4,7 @@
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/async" />
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/cli" />
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/collection" />
+      <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/concurrent" />
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/convert" />
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/core" />
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/developer" />
@@ -13,6 +14,8 @@
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/io" />
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/isolate" />
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/js" />
+      <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/js_interop" />
+      <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/js_interop_unsafe" />
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/js_util" />
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/math" />
       <root url="file://$PROJECT_DIR$/../../../flutter/flutter/bin/cache/dart-sdk/lib/mirrors" />

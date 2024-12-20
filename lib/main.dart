@@ -1,37 +1,49 @@
 import 'dart:convert';
 
+import 'package:flutter_example/common/globals.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/common/consts.dart';
 import 'package:flutter_example/common/stub_data.dart';
+import 'package:flutter_example/managers/app_initializer.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
+import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'common/DialogHelper.dart';
 import 'common/date_extensions.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'screens/onboarding.dart';
+import 'package:flutter_example/common/globals.dart';
+import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_example/models/user.dart' as MyUser;
+
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  MobileAds.instance.initialize();
-
-  runApp(MyApp());
+  AppInitializer.initialize(andThen: () {
+    runApp(const MyApp());
+  });
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Todo List',
+      title: 'Todo Later',
+      // color: Colors.blueAccent, //todo add this color to splash screen
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        useMaterial3: false,
         primarySwatch: Colors.blue,
       ),
       //todo add rtl support??
       // home: Column(
       //   children: [
-      home: const MyHomePage(title: 'Todo List'),
+      home: isLoggedIn ? MyHomePage(title: 'Todo Later') : OnboardingScreen(), // todo rename myhomepage class
+      // todo use banner here??
       //     Container(
       //       alignment: Alignment.bottomCenter,
       //       child: adWidget,
@@ -47,7 +59,7 @@ class MyApp extends StatelessWidget {
 
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends StatefulWidget {// todo etract to another file
   const MyHomePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
@@ -61,13 +73,33 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<TodoListItem> items = [];
   late Future<List<TodoListItem>> _loadingData;
-  bool isEditMode = false;
+  bool isEditMode(TodoListItem todoItem) {
+    bool sizeValidation = itemOnEditIndex > -1 && itemOnEditIndex < items.length;
+    var index = items.indexOf(todoItem);
+    bool indexValidation = index > -1;
+    bool sameIndexValidation = itemOnEditIndex == index;
+    return sizeValidation && indexValidation && sameIndexValidation;
+  }
+  int itemOnEditIndex = -1;
+  // Add a variable to control the opacity of the FloatingActionButton
+  double fabOpacity = 0.0;
 
-
+  final FocusNode _todoLineFocusNode = FocusNode();
   //todo refactor and extract code to widgets
 
   bool isLoading = true;
-  final _controller = TextEditingController();
+  late RoundedTextInputField todoInputField = RoundedTextInputField(hintText: "Enter a Todo here..",onChanged: (newValue) {
+    setState(() {
+      inputText = newValue;
+      fabOpacity = newValue.isNotEmpty ? 1 : 0;
+    });
+  },
+    focusNode: _todoLineFocusNode,
+    callback: () {
+      print("Clicked enter");
+      _onAddItem();
+    },
+  );
 
 
   BannerAd? myBanner;
@@ -121,12 +153,14 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     super.dispose();
     myBanner?.dispose();
+    _todoLineFocusNode.dispose(); // Dispose of the FocusNode
   }
 
   @override
   void initState() {
     _loadingData = loadList();
-    initAds();
+    if(false)
+      initAds();
     super.initState();
   }
 
@@ -135,23 +169,39 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        actions: items.isNotEmpty ? [
+        actions: (isLoggedIn == false || items.isNotEmpty || items.where((item) => item.isArchived).toList().isNotEmpty) ? [
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == kArchiveMenuButtonName) {
                       showArchivedTodos();
                     } else if (value == kDeleteAllMenuButtonName) {
                       deleteAll();
+                    } else if(value == kLoginButtonMenu) {
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const OnboardingScreen()));
                     }
                   },
                   itemBuilder: (BuildContext context) {
                     List<PopupMenuItem<String>> popupMenuItems = [];
+                    //Check if should show Login Button
+                    if (isLoggedIn == false) {
+                      popupMenuItems.add(const PopupMenuItem<String>(
+                        value: 'login',
+                        child: Row(
+                          children: [
+                            Icon(Icons.supervised_user_circle,
+                              color: Colors.blue,),
+                            SizedBox(width: 8.0),
+                            Text('Login'),
+                          ],
+                        ),
+                      ));
+                    }
                     //Check if should show Archive Button
                     if (items.any((item) => item.isArchived)) {
-                      popupMenuItems.add(PopupMenuItem<String>(
+                      popupMenuItems.add(const PopupMenuItem<String>(
                         value: 'archive',
                         child: Row(
-                          children: const [
+                          children: [
                             Icon(Icons.archive,
                               color: Colors.blue,),
                             SizedBox(width: 8.0),
@@ -162,10 +212,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     }
                     //Check if should show Delete Button
                     if (items.isNotEmpty) {
-                      popupMenuItems.add(PopupMenuItem<String>(
+                      popupMenuItems.add(const PopupMenuItem<String>(
                         value: kDeleteAllMenuButtonName,
                         child: Row(
-                          children: const [
+                          children: [
                             Icon(
                               Icons.delete_forever,
                               color: Colors.blue,
@@ -231,25 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    onChanged: (newValue) {
-                      setState(() {
-                        inputText = newValue;
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.black,
-                          width: 2.0,
-                          style: BorderStyle.solid,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                todoInputField,
                 SizedBox(
                   height: 69.0,
                   width: inputText.isNotEmpty ? 80 : 10,
@@ -262,23 +294,28 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: (inputText.isNotEmpty) ? FloatingActionButton(
         onPressed: () {
-          if (inputText.isNotEmpty) {
-            setState(() {
-              items.add(TodoListItem(inputText.trim()));
-              _updateList();
-
-              inputText = "";
-              _controller.clear();
-            });
-          } else {
-            DialogHelper.showAlertDialog(
-                context, "Empty Todo", "Please write a Todo", null);
-          }
+          _onAddItem();
         },
         tooltip: 'Add',
         child: const Icon(Icons.add),
       ) : Container(), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  void _onAddItem() {
+
+    if (inputText.isNotEmpty) {
+      setState(() {
+        items.add(TodoListItem(inputText.trim()));
+        _updateList();
+
+        inputText = "";
+        todoInputField.clear();
+      });
+    } else {
+      DialogHelper.showAlertDialog(
+          context, "Empty Todo", "Please write a Todo", null);
+    }
   }
 
   void _updateList() async {
@@ -289,6 +326,21 @@ class _MyHomePageState extends State<MyHomePage> {
     var listAsStr = jsonEncode(items);
     prefs.setString(kAllListSavedPrefs, listAsStr);
     print("update list :" + listAsStr);
+
+    // todo update realtime DB if logged in
+
+    if(isLoggedIn && currentUser?.uid.isNotEmpty == true) {
+
+      if(myCurrentUser == null) {
+        myCurrentUser = await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
+      }
+      myCurrentUser!.todoListItems = items;
+
+      var didSuccess = await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+      if(didSuccess == true) {
+        print("success save to DB");
+      }
+    }
   }
 
   Future<List<TodoListItem>> loadList() async {
@@ -423,11 +475,27 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   //todo refactor to somewhere else
-  Future<List<TodoListItem>> _loadList() async {
+  Future<List<TodoListItem>> _loadList() async { /// todo refactor to seperate classes
+
+    /// fetch from shared Preferences
     // Obtain shared preferences.
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
     var listStr = prefs.getString(kAllListSavedPrefs) ?? "";
+
+    if(isLoggedIn && currentUser != null) {
+      /// fetch from firebase
+      if (myCurrentUser == null) {
+        // Load user data if not already loaded
+        myCurrentUser = await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
+        print("Loading first time the data from the DB");
+      }
+
+      print("the result for ${currentUser!.uid} is ${myCurrentUser?.todoListItems?.length ?? -1}");
+      if(myCurrentUser != null && myCurrentUser?.todoListItems?.isNotEmpty == true) {
+        return myCurrentUser!.todoListItems!;
+      }
+    }
     print("load list :" + listStr);
 
     if (listStr.isNotEmpty) {
@@ -445,18 +513,50 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget getListTile(TodoListItem currentTodo) {
+    var isOnEditMode = isEditMode(currentTodo);
+    var currentTodoEditInput = RoundedTextInputField(
+        initialText: currentTodo.text,
+        hintText: "Edit your ToDo here!", onChanged: (newValue) {
+      setState(() {
+        //todo update the current tile here
+        var index = items.indexOf(currentTodo);
+        // items[index].text = newValue;
+        items[index].dateTime = DateTime.now();
+        _updateList();
+        // inputText = newValue;
+      });
+    },
+      focusNode: FocusNode(),
+      callback: () {
+        print("Clicked enter from edit");
+        _onAddItem();
+      },
+    );
     return InkWell(
       onLongPress: () {
-        setState(() {
-          isEditMode = !isEditMode;
-        });
+        toggleEditMode(currentTodo);
       },
       onTap: () {
-        toggleCheckBox(currentTodo, !currentTodo.isChecked);
+        if(isOnEditMode) {
+          var updatedTodoText = currentTodoEditInput.getText();
+          updateTile(currentTodo, updatedTodoText);// todo impl and debug
+          toggleEditMode(currentTodo);
+        } else {
+          toggleCheckBox(currentTodo, !currentTodo.isChecked);
+        }
       },
       child: SizedBox(
         child: ListTile(
-          leading: Checkbox(
+          leading: isOnEditMode ? TextButton(
+              onPressed: () {
+                  var updatedTodoText = currentTodoEditInput.getText();
+                  updateTile(currentTodo, updatedTodoText); // todo impl and debug
+                  toggleEditMode(currentTodo);
+              },
+              child: const Icon(
+                Icons.save,
+                color: Colors.black12,
+              )) : Checkbox(
             value: currentTodo.isChecked,
             onChanged: (bool? value) {
               toggleCheckBox(currentTodo, value);
@@ -470,7 +570,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   : TextDecoration.none,
             ),
           ),
-          subtitle: Text(
+          subtitle: isOnEditMode ? Container() : Text(
             getFormattedDate(currentTodo.dateTime.toString()),
             style: TextStyle(
               decoration: currentTodo.isChecked
@@ -478,7 +578,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   : TextDecoration.none,
             ),
           ),
-          trailing: isEditMode ? TextButton(
+          trailing: isOnEditMode ? TextButton(
               onPressed: () {
                 DialogHelper.showAlertDialog(
                     context, "Do you want to delete?", "This can't be undone",
@@ -502,6 +602,29 @@ class _MyHomePageState extends State<MyHomePage> {
   void toggleCheckBox(TodoListItem currentTodo, bool? value) {
     setState(() {
       currentTodo.isChecked = value ?? false;
+      _updateList();
+    });
+  }
+
+  void toggleEditMode(TodoListItem currentTodo) {
+    setState(() {
+      if(itemOnEditIndex == -1) {
+        var index = items.indexOf(currentTodo);
+        itemOnEditIndex = index;
+      } else {
+        itemOnEditIndex = -1;
+      }
+    });
+  }
+
+  void updateTile(TodoListItem currentTodo, String todoText){
+    setState(() {
+      var index = items.indexOf(currentTodo);
+      if(todoText.isNotEmpty) {
+        currentTodo.text = todoText;
+      }
+      currentTodo.dateTime = DateTime.now();
+      items[index] = currentTodo;
       _updateList();
     });
   }

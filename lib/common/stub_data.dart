@@ -6,21 +6,6 @@ class StubData {
     list.add(TodoListItem("Buy Milk"));
     list.add(TodoListItem("Buy Gas"));
     list.add(TodoListItem("Get Clean Clothes"));
-    list.add(TodoListItem("Buy Milk"));
-    list.add(TodoListItem("Buy Gas"));
-    list.add(TodoListItem("Get Clean Clothes"));
-    list.add(TodoListItem("Buy Milk"));
-    list.add(TodoListItem("Buy Gas"));
-    list.add(TodoListItem("Get Clean Clothes"));
-    list.add(TodoListItem("Buy Milk"));
-    list.add(TodoListItem("Buy Gas"));
-    list.add(TodoListItem("Get Clean Clothes"));
-    list.add(TodoListItem("Buy Milk"));
-    list.add(TodoListItem("Buy Gas"));
-    list.add(TodoListItem("Get Clean Clothes"));
-    list.add(TodoListItem("Buy Milk"));
-    list.add(TodoListItem("Buy Gas"));
-    list.add(TodoListItem("Get Clean Clothes"));
     return list;
   }
 }
