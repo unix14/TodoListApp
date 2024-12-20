@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_example/common/encryption_helper.dart';
 import 'package:flutter_example/firebase_options.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_example/common/globals.dart';
@@ -14,6 +15,7 @@ class AppInitializer {
   //todo add crash detection and analytics with Firebase
   static Future<void> initialize({required Function andThen}) async {
     WidgetsFlutterBinding.ensureInitialized();
+    await EncryptionHelper.initialize();
     // MobileAds.instance.initialize();
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
     //todo add auto login if user exist or anon user if not

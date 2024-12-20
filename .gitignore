@@ -26,3 +26,4 @@ doc/api/
 .flutter-plugins
 .flutter-plugins-dependencies
 android/app/build.gradle
+assets/config/encryption_config.json

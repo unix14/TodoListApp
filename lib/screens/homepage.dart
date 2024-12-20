@@ -505,6 +505,18 @@ class _HomePageState extends State<HomePage> {
       }
       return sharedPrefsTodoList;
     } else {
+
+      /// fetch from firebase
+      if (myCurrentUser == null) {
+        // Load user data if not already loaded
+        myCurrentUser = await FirebaseRepoInteractor.instance
+            .getUserData(currentUser!.uid);
+      }
+      if (myCurrentUser != null &&
+          myCurrentUser?.todoListItems != null) {
+        print("Loading from the DB 2");
+        return myCurrentUser!.todoListItems!;
+      }
       return StubData.getInitialTodoList();
     }
   }

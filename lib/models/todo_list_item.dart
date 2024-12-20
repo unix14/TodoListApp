@@ -1,3 +1,5 @@
+import 'package:flutter_example/common/encryption_helper.dart';
+
 class TodoListItem {
 
   String text;
@@ -19,7 +21,7 @@ class TodoListItem {
 
   Map<String, dynamic> toJson() {
     return {
-      'text': text,
+      'text': EncryptionHelper.encryptText(text),
       'isChecked': isChecked,
       'dateTime': dateTime.toIso8601String(),
       'isArchived': isArchived,
@@ -27,9 +29,14 @@ class TodoListItem {
   }
 
   factory TodoListItem.fromJson(Map<String, dynamic> json) {
-    return TodoListItem(
-      json['text'] as String,
-    )
+    String decryptedText;
+    try {
+      decryptedText = EncryptionHelper.decryptText(json['text'] as String);
+    } catch (e) {
+      // If decryption fails, assume the text is not encrypted
+      decryptedText = json['text'] as String;
+    }
+    return TodoListItem(decryptedText)
       ..isChecked = json['isChecked'] as bool? ?? false
       ..dateTime = DateTime.parse(json['dateTime'] as String? ?? '')
       ..isArchived = json['isArchived'] as bool? ?? false;
