@@ -460,34 +460,50 @@ class _HomePageState extends State<HomePage> {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
     var listStr = prefs.getString(kAllListSavedPrefs) ?? "";
-
-    if (isLoggedIn && currentUser != null) {
-      /// fetch from firebase
-      if (myCurrentUser == null) {
-        // Load user data if not already loaded
-        myCurrentUser =
-            await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
-        print("Loading first time the data from the DB");
-      }
-
-      print(
-          "the result for ${currentUser!.uid} is ${myCurrentUser?.todoListItems?.length ?? -1}");
-      if (myCurrentUser != null &&
-          myCurrentUser?.todoListItems?.isNotEmpty == true) {
-        return myCurrentUser!.todoListItems!;
-      }
-    }
     print("load list :" + listStr);
 
     if (listStr.isNotEmpty) {
       List<dynamic> decodedList = jsonDecode(listStr);
-      if (decodedList.isNotEmpty) {
-        List<TodoListItem> todoList =
-            decodedList.map((item) => TodoListItem.fromJson(item)).toList();
-        return todoList;
-      } else {
-        return [];
+      List<TodoListItem> sharedPrefsTodoList = decodedList.isNotEmpty ?
+      decodedList.map((item) => TodoListItem.fromJson(item)).toList() : [];
+
+      if (isLoggedIn && currentUser != null) {
+        /// fetch from firebase
+        if (myCurrentUser == null) {
+          // Load user data if not already loaded
+          myCurrentUser = await FirebaseRepoInteractor.instance
+              .getUserData(currentUser!.uid);
+          print("Loading first time the data from the DB");
+        }
+
+        print("the result for ${currentUser!.uid} is ${myCurrentUser?.todoListItems?.length ?? -1}");
+        if (myCurrentUser != null &&
+            myCurrentUser?.todoListItems != null) {
+          print("Loading from the DB");
+
+          if(sharedPrefsTodoList.isNotEmpty) {
+            // Merge the two lists
+            for (var item in sharedPrefsTodoList) {
+              // check by parameters
+              if (!myCurrentUser!.todoListItems!.contains(item) &&
+                  !myCurrentUser!.todoListItems!.any((element) => element.text == item.text && element.isArchived == item.isArchived)) {
+                myCurrentUser!.todoListItems!.add(item);
+              }
+            }
+
+            // update firebase
+            var didSuccess = await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+            if (didSuccess == true) {
+              print("success save to DB");
+            } else {
+              print("failed save to DB");
+            }
+          }
+
+          return myCurrentUser!.todoListItems!;
+        }
       }
+      return sharedPrefsTodoList;
     } else {
       return StubData.getInitialTodoList();
     }
