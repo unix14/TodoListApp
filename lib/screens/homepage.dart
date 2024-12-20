@@ -624,10 +624,14 @@ class _HomePageState extends State<HomePage> {
   void updateTile(TodoListItem currentTodo, String todoText) {
     setState(() {
       var index = items.indexOf(currentTodo);
+      var didChanged = false;
       if (todoText.isNotEmpty) {
-        currentTodo.text = todoText;
+        didChanged = currentTodo.text != todoText;
+        currentTodo.text = todoText; // todo fix issues w updating the text
       }
-      currentTodo.dateTime = DateTime.now();
+      if(didChanged) {
+        currentTodo.dateTime = DateTime.now();
+      }
       items[index] = currentTodo;
       _updateList();
     });
