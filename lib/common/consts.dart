@@ -14,6 +14,10 @@ import 'package:flutter/cupertino.dart';
 
 const String kAllListSavedPrefs = "LIST";
 
+
+const String kAdUnitIdDebug  = "ca-app-pub-3940256099942544/6300978111";
+const String kAdUnitIdProd = "ca-app-pub-7481638286003806/6665802500";
+
 const kDefaultPadding = EdgeInsets.fromLTRB(19, 0, 0, 19);
 
 const kDeleteAllMenuButtonName = "deleteAll";

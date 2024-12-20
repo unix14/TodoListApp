@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_example/managers/login_manager.dart';
 import 'package:flutter_example/models/user.dart';
+import 'package:flutter_example/screens/homepage.dart';
 
 import '../widgets/white_round_button.dart';
 import '../common/context_extensions.dart';
@@ -133,7 +134,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       // Navigate to main screen
       //todo use routes!!
       // Navigator.pushReplacementNamed(context, '/main');
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Todo Later')));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage(title: 'Todo Later')));
     } else {
       // Handle the error
     }

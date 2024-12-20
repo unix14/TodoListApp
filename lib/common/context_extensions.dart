@@ -11,6 +11,7 @@ import 'package:flutter_example/managers/app_initializer.dart';
 import 'package:flutter_example/models/user.dart' as MyUser;
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
 import 'package:flutter_example/common/globals.dart';
+import 'package:flutter_example/screens/homepage.dart';
 
 
 extension ContextExtension on BuildContext { // todo rename to auth extensions?
@@ -191,7 +192,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
 
 
       Future.delayed(const Duration(milliseconds: 500), () async {
-        Navigator.of(this).pushReplacement(MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Todo Later')));
+        Navigator.of(this).pushReplacement(MaterialPageRoute(builder: (context) => const HomePage(title: 'Todo Later')));
       });
     } else {
       showAlertDialog("Login failed", "Please try again");
@@ -241,7 +242,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
       // currentPage = pageData;
 
       Future.delayed(const Duration(milliseconds: 500), () async {
-        Navigator.of(this).pushReplacement(MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Todo Later')));
+        Navigator.of(this).pushReplacement(MaterialPageRoute(builder: (context) => const HomePage(title: 'Todo Later')));
       });
     } else {
       showAlertDialog("Signup failed", "Please try again");
