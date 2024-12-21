@@ -21,7 +21,7 @@ class TodoListItem {
 
   Map<String, dynamic> toJson() {
     return {
-      'text': EncryptionHelper.encryptText(text),
+      'text': text.startsWith('ENC:') ? text : 'ENC:' + EncryptionHelper.encryptText(text),
       'isChecked': isChecked,
       'dateTime': dateTime.toIso8601String(),
       'isArchived': isArchived,
@@ -30,11 +30,17 @@ class TodoListItem {
 
   factory TodoListItem.fromJson(Map<String, dynamic> json) {
     String decryptedText;
-    try {
-      decryptedText = EncryptionHelper.decryptText(json['text'] as String);
-    } catch (e) {
-      // If decryption fails, assume the text is not encrypted
-      decryptedText = json['text'] as String;
+    String text = json['text'] as String;
+    if (text.startsWith('ENC:')) {
+      try {
+        decryptedText = EncryptionHelper.decryptText(text.substring(4));
+      } catch (e) {
+        // If decryption fails, assume the text is not encrypted
+        decryptedText = text;
+        print("Failed to decrypt text: ${text.substring(4)}");
+      }
+    } else {
+      decryptedText = text;
     }
     return TodoListItem(decryptedText)
       ..isChecked = json['isChecked'] as bool? ?? false

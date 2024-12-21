@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/common/DialogHelper.dart';
 import 'package:flutter_example/common/consts.dart';
 import 'package:flutter_example/common/date_extensions.dart';
+import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart';
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/common/stub_data.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
@@ -295,12 +296,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _updateList() async {
-    // Obtain shared preferences.
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    //convert to JSON
+    // Convert the current list to JSON
     var listAsStr = jsonEncode(items);
-    prefs.setString(kAllListSavedPrefs, listAsStr);
+    await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, listAsStr);
     print("update list :" + listAsStr);
 
     // todo update realtime DB if logged in
@@ -456,10 +454,7 @@ class _HomePageState extends State<HomePage> {
     /// todo refactor to seperate classes
 
     /// fetch from shared Preferences
-    // Obtain shared preferences.
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    var listStr = prefs.getString(kAllListSavedPrefs) ?? "";
+    var listStr = await EncryptedSharedPreferencesHelper.getString(kAllListSavedPrefs) ?? "";
     print("load list :" + listStr);
 
     if (listStr.isNotEmpty) {
@@ -482,21 +477,28 @@ class _HomePageState extends State<HomePage> {
           print("Loading from the DB");
 
           if(sharedPrefsTodoList.isNotEmpty) {
+            var didMerged = false;
             // Merge the two lists
             for (var item in sharedPrefsTodoList) {
               // check by parameters
               if (!myCurrentUser!.todoListItems!.contains(item) &&
                   !myCurrentUser!.todoListItems!.any((element) => element.text == item.text && element.isArchived == item.isArchived)) {
                 myCurrentUser!.todoListItems!.add(item);
+                didMerged = true;
               }
             }
 
-            // update firebase
-            var didSuccess = await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
-            if (didSuccess == true) {
-              print("success save to DB");
-            } else {
-              print("failed save to DB");
+            if(didMerged) {
+              // update firebase
+              var didSuccess = await FirebaseRepoInteractor.instance
+                  .updateUserData(myCurrentUser!);
+              if (didSuccess == true) {
+                print("success save to DB");
+              } else {
+                print("failed save to DB");
+              }
+              // update shared prefs
+              await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, jsonEncode(myCurrentUser!.todoListItems));
             }
           }
 

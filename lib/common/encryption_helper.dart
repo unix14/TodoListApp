@@ -6,16 +6,17 @@ import 'package:flutter/services.dart' show rootBundle;
 class EncryptionHelper {
 
   static Key? _key;
-  static final _iv = IV.fromLength(16);
+  static IV? _iv;
 
   static Future<void> initialize() async {
     final config = await rootBundle.loadString('config/encryption_config.json');
     final jsonConfig = json.decode(config);
     _key = Key.fromUtf8(jsonConfig['key']);
+    _iv = IV.fromUtf8(jsonConfig['iv']);
   }
 
   static String encryptText(String text) {
-    if (_key == null) {
+    if (_key == null || _iv == null) {
       throw Exception('EncryptionHelper not initialized');
     }
     final encrypter = Encrypter(AES(_key!));
@@ -24,7 +25,7 @@ class EncryptionHelper {
   }
 
   static String decryptText(String encryptedText) {
-    if (_key == null) {
+    if (_key == null || _iv == null) {
       throw Exception('EncryptionHelper not initialized');
     }
     final encrypter = Encrypter(AES(_key!));
