@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_example/main.dart';
 import 'package:flutter_example/models/user.dart' as MyUser;
 import 'package:flutter_example/screens/homepage.dart';
 
@@ -110,7 +109,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   onPressed: _skipToMainScreen,
                   child: const Text(
                     //todo use translation service \ app localization
-                    'or skip',
+                    'Try as Guest',
                     style: TextStyle(
                       color: Colors.white,
                       decoration: TextDecoration.underline,
