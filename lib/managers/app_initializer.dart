@@ -49,7 +49,7 @@ class AppInitializer {
   static initIsLoggedIn() {
     Authenticator.onAuthStateChanged.listen((event) {
       print("isLoggedInStream: $event");
-      isLoggedIn = event != null && event.isAnonymous == false;
+      isLoggedIn = event != null && event.isAnonymous == false && event.email?.isNotEmpty == true;
     });
   }
 

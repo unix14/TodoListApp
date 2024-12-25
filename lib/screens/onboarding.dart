@@ -2,8 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/main.dart';
-import 'package:flutter_example/managers/login_manager.dart';
-import 'package:flutter_example/models/user.dart';
+import 'package:flutter_example/models/user.dart' as MyUser;
 import 'package:flutter_example/screens/homepage.dart';
 
 import '../widgets/white_round_button.dart';
@@ -25,7 +24,6 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   double angle = 0.0;
   late Timer timer;
-  final LoginManager loginManager = LoginManager();
 
   @override
   void initState() {
@@ -92,21 +90,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 //
                 // });
               },),
-              const SizedBox(height: 20),
-              WhiteRoundButton(text: 'Login with Google', onPressed: () async {
-                // Implement Google login functionality
-                UserCredential? userCredential = await loginManager.signInWithGoogle();
-                if (userCredential != null) {
-                  // User is signed in
-                  // Navigate to home screen or do something else
-                  // userCredential.user // todo use this??
-                  userCredential.toUser();
-                  //todo add on logged in move to next screen
-                } else {
-                  // User is not signed in
-                  // Handle the error
-                }
-              },),
+              // const SizedBox(height: 20), // todo reimplement google login
+              // WhiteRoundButton(text: 'Login with Google', onPressed: () async {
+              //   // Implement Google login functionality
+              //   User? user = await Authenticator.signInWithGoogle();
+              //   if (user != null) {
+              //     // User is signed in
+              //     // Navigate to home screen or do something else
+              //     // userCredential.user // todo use this??
+              //     //todo add on logged in move to next screen
+              //   } else {
+              //     // User is not signed in
+              //     // Handle the error
+              //   }
+              // },),
               const Spacer(),
               Padding(padding: const EdgeInsets.only(bottom: 8, top: 30),
                 child: TextButton(
@@ -129,8 +126,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   _skipToMainScreen() async {
-    UserCredential? userCredential = await loginManager.signInAnonymously();
-    if (userCredential != null) {
+    User? user = await Authenticator.signInAnonymously();
+    if (user != null) {
       // Navigate to main screen
       //todo use routes!!
       // Navigator.pushReplacementNamed(context, '/main');

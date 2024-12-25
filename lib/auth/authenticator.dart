@@ -4,6 +4,17 @@ class Authenticator {
 
   static final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  static Future<User?> signInWithGoogle() async {
+    GoogleAuthProvider googleProvider = GoogleAuthProvider();
+    try {
+      UserCredential userCredential = await _auth.signInWithPopup(googleProvider);
+      return userCredential.user;
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
+
   static Future<User?> signInAnonymously() async {
     try {
       UserCredential userCredential = await _auth.signInAnonymously();
