@@ -11,6 +11,13 @@ extension DialogExtensions on BuildContext {
     ScaffoldMessenger.of(this).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  void copyToClipboard(String text)  async {
+    // copy to clipboard
+    await Clipboard.setData(ClipboardData(text: text));
+    // copied successfully
+    showSnackBar("Copied to clipboard: $text");
+  }
+
   void showAlertDialog(String title, String message) async {
     // FunnelsManager().start(AnalytixFunnel(Funnels.funnel_2, shouldCountTime: true));
     // AnalytixManager().logEvent('user_click', 'show_alert_dialog', params: {

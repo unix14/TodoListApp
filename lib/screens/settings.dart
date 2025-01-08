@@ -1,6 +1,10 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_example/common/dialog_extensions.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
+
+import '../common/globals.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -22,6 +26,8 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> with PWAInstallerMixin {
   @override
   Widget build(BuildContext context) {
+    var email = myCurrentUser?.email ?? "Guest";
+    var version = "1.0.0"; // todo change
     return Scaffold(
       appBar: AppBar(
         title: Text("Settings"), // todo heb translation
@@ -44,16 +50,16 @@ class _SettingsScreenState extends State<SettingsScreen> with PWAInstallerMixin 
           ),
           ListTile(
             title: Text("Account"),
-            subtitle: Text("todo@change.this"), // todo
+            subtitle: Text(email), // todo
             onTap: () {
-             // todo
+              context.copyToClipboard(email);
             },
           ),
           ListTile(
             title: Text("Version"),
-            subtitle: Text("1.0.0"), // todo
+            subtitle: Text(version), // todo
             onTap: () {
-             // todo
+              context.copyToClipboard(version);
             },
           ),
           ListTile(
