@@ -40,6 +40,10 @@ dev_dependencies:
     sdk: flutter
   intl: ^0.18.1
 
+  # Version and device info
+  package_info_plus: ^4.0.0
+  package_info_plus_web: ^2.0.0
+
   # Data
   shared_preferences: ^2.0.0
   encrypt_shared_preferences: ^0.8.2

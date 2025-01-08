@@ -24,10 +24,25 @@ class SettingsScreen extends StatefulWidget {
 
 
 class _SettingsScreenState extends State<SettingsScreen> with PWAInstallerMixin {
+
+  String version = "1.0.0";
+
+  @override
+  void initState() {
+    Future.delayed(const Duration(seconds: 1), () async {
+      var returnedVersion = await context.getAppVersion();
+      setState(() {
+        version = returnedVersion;
+      });
+
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     var email = myCurrentUser?.email ?? "Guest";
-    var version = "1.0.0"; // todo change
+    var name = myCurrentUser?.name ?? "Unknown";
     return Scaffold(
       appBar: AppBar(
         title: Text("Settings"), // todo heb translation
@@ -53,6 +68,13 @@ class _SettingsScreenState extends State<SettingsScreen> with PWAInstallerMixin 
             subtitle: Text(email), // todo
             onTap: () {
               context.copyToClipboard(email);
+            },
+          ),
+          ListTile(
+            title: Text("Name"),
+            subtitle: Text(name),
+            onTap: () {
+              // todo when clicked show different name input dialog and change it in firebase
             },
           ),
           ListTile(
