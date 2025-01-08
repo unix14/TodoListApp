@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example/common/DialogHelper.dart';
@@ -9,14 +8,13 @@ import 'package:flutter_example/common/date_extensions.dart';
 import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart';
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/common/stub_data.dart';
+import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
-import 'package:flutter_example/models/todo_list_item.dart';
-import 'package:flutter_example/models/user.dart' as MyUser;
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
-import 'package:flutter_example/widgets/rounded_text_input_field.dart';
+import 'package:flutter_example/screens/settings.dart';
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:html' as html;
 
 import 'onboarding.dart';
 
@@ -29,8 +27,9 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with PWAInstallerMixin {
   String inputText = "";
+  bool enteredAtLeast1Todo = false;
 
   List<TodoListItem> items = [];
   late Future<List<TodoListItem>> _loadingData;
@@ -47,7 +46,7 @@ class _HomePageState extends State<HomePage> {
   int itemOnEditIndex = -1;
 
   // Add a variable to control the opacity of the FloatingActionButton
-  double fabOpacity = 0.0;
+  double fabOpacity = 0.42;
 
   final FocusNode _todoLineFocusNode = FocusNode();
 
@@ -59,7 +58,8 @@ class _HomePageState extends State<HomePage> {
     onChanged: (newValue) {
       setState(() {
         inputText = newValue;
-        fabOpacity = newValue.isNotEmpty ? 1 : 0;
+        fabOpacity = newValue.isNotEmpty ? 1 : 0.42;
+        enteredAtLeast1Todo = true;
       });
     },
     focusNode: _todoLineFocusNode,
@@ -69,6 +69,7 @@ class _HomePageState extends State<HomePage> {
     },
   );
 
+  /// Ads
   BannerAd? myBanner;
   AdWidget? adWidget;
   late AdListener listener;
@@ -128,6 +129,7 @@ class _HomePageState extends State<HomePage> {
     _loadingData = loadList();
     if (false) 
       initAds();
+    initializeInstallPrompt();
     super.initState();
   }
 
@@ -142,6 +144,9 @@ class _HomePageState extends State<HomePage> {
             ? [
                 PopupMenuButton<String>(
                   onSelected: (value) {
+                    if(value == kInstallMenuButtonName) {
+                      showInstallPrompt();
+                    }
                     if (value == kArchiveMenuButtonName) {
                       showArchivedTodos();
                     } else if (value == kDeleteAllMenuButtonName) {
@@ -151,6 +156,11 @@ class _HomePageState extends State<HomePage> {
                           context,
                           MaterialPageRoute(
                               builder: (context) => const OnboardingScreen()));
+                    } else if (value == kSettingsMenuButtonName) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const SettingsScreen()));
                     }
                   },
                   itemBuilder: (BuildContext context) {
@@ -158,7 +168,7 @@ class _HomePageState extends State<HomePage> {
                     //Check if should show Login Button
                     if (isLoggedIn == false) {
                       popupMenuItems.add(const PopupMenuItem<String>(
-                        value: 'login',
+                        value: kLoginButtonMenu,
                         child: Row(
                           children: [
                             Icon(
@@ -174,7 +184,7 @@ class _HomePageState extends State<HomePage> {
                     //Check if should show Archive Button
                     if (items.any((item) => item.isArchived)) {
                       popupMenuItems.add(const PopupMenuItem<String>(
-                        value: 'archive',
+                        value: kArchiveMenuButtonName,
                         child: Row(
                           children: [
                             Icon(
@@ -183,6 +193,22 @@ class _HomePageState extends State<HomePage> {
                             ),
                             SizedBox(width: 8.0),
                             Text('Archive'),
+                          ],
+                        ),
+                      ));
+                    }
+                    //Check if should show Install App prompt button
+                    if(isInstallable()) {
+                      popupMenuItems.add(const PopupMenuItem<String>(
+                        value: kInstallMenuButtonName,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.install_mobile,
+                              color: Colors.blue,
+                            ),
+                            SizedBox(width: 8.0),
+                            Text('Install App'),
                           ],
                         ),
                       ));
@@ -203,6 +229,19 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ));
                     }
+                    popupMenuItems.add(const PopupMenuItem<String>(
+                      value: kSettingsMenuButtonName,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.settings_outlined,
+                            color: Colors.blue,
+                          ),
+                          SizedBox(width: 8.0),
+                          Text('Settings'),
+                        ],
+                      ),
+                    ));
                     //Check if should show any buttons
                     if (items.isNotEmpty) {
                       return popupMenuItems;
@@ -260,7 +299,7 @@ class _HomePageState extends State<HomePage> {
                 todoInputField,
                 SizedBox(
                   height: 69.0,
-                  width: inputText.isNotEmpty ? 80 : 10,
+                  width: enteredAtLeast1Todo ? 80 : 10,
                   child: Container(),
                 )
               ],
@@ -268,13 +307,16 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      floatingActionButton: (inputText.isNotEmpty)
-          ? FloatingActionButton(
-              onPressed: () {
-                _onAddItem();
-              },
-              tooltip: 'Add',
-              child: const Icon(Icons.add),
+      floatingActionButton: (enteredAtLeast1Todo)
+          ? Opacity(
+              opacity: fabOpacity,
+              child: FloatingActionButton(
+                  onPressed: () {
+                    _onAddItem();
+                  },
+                  tooltip: 'Add',
+                  child: const Icon(Icons.add),
+                ),
             )
           : Container(), // This trailing comma makes auto-formatting nicer for build methods.
     );
@@ -291,7 +333,10 @@ class _HomePageState extends State<HomePage> {
       });
     } else {
       DialogHelper.showAlertDialog(
-          context, "Empty Todo", "Please write a Todo", null);
+          context, "Empty Todo", "Please write a Todo", () {
+        // Ok
+        Navigator.of(context).pop(); // dismiss dialog
+      }, null);
     }
   }
 
@@ -406,6 +451,9 @@ class _HomePageState extends State<HomePage> {
                                           _updateList();
                                         });
                                         Navigator.of(context).pop();
+                                      }, () {
+                                        // Cancel
+                                        Navigator.of(context).pop(); // dismiss dialog
                                       });
                                     },
                                     child: const Icon(
@@ -605,6 +653,9 @@ class _HomePageState extends State<HomePage> {
                         items.remove(currentTodo);
                         _updateList();
                       });
+                    }, () {
+                          // Cancel
+                          Navigator.of(context).pop(); // dismiss dialog
                     });
                   },
                   child: const Icon(
@@ -660,6 +711,40 @@ class _HomePageState extends State<HomePage> {
         _updateList();
         Navigator.of(context).pop();
       });
+    },() {
+          // Cancel
+          Navigator.of(context).pop(); // dismiss dialog
     });
   }
+
+  // void _handleInstallPrompt() {
+  //   _showInstallButton = PWAInstallerMixin.checkBrowserAndAppMode();
+  //   PWAInstallerMixin.registerForInstallPrompt((event) {
+  //     setState(() {
+  //       _deferredPrompt = event;
+  //     });
+  //   });
+  // }
+  //
+  // void _runInstallPrompt() {
+  //   print("_runInstallPrompt: _deferredPrompt is $_deferredPrompt");
+  //
+  //   if (_deferredPrompt != null) {
+  //     // Show the install prompt
+  //     _deferredPrompt?.prompt();
+  //
+  //     // Handle the user's response
+  //     _deferredPrompt?.userChoice.then((result) {
+  //       print("_runInstallPrompt: result is $result");
+  //       // if (result?.outcome == 'accepted') {
+  //       //   print('User accepted the install prompt');
+  //       // } else {
+  //       //   print('User dismissed the install prompt');
+  //       // }
+  //       setState(() {
+  //         _deferredPrompt = null; // Reset after showing the prompt
+  //       });
+  //     });
+  //   }
+  // }
 }
