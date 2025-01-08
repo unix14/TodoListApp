@@ -34,6 +34,8 @@ const kLoginButtonMenu = 'login';
   width: 80,
 );
 
+double fabOpacityOff = 0.42;
+
 
 /*static*/ Widget orWidget = Padding(
   padding: const EdgeInsets.only(top: 28, bottom: 8),

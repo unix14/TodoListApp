@@ -46,7 +46,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
   int itemOnEditIndex = -1;
 
   // Add a variable to control the opacity of the FloatingActionButton
-  double fabOpacity = 0.42;
+  double fabOpacity = fabOpacityOff;
 
   final FocusNode _todoLineFocusNode = FocusNode();
 
@@ -58,7 +58,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
     onChanged: (newValue) {
       setState(() {
         inputText = newValue;
-        fabOpacity = newValue.isNotEmpty ? 1 : 0.42;
+        fabOpacity = newValue.isNotEmpty ? 1 : fabOpacityOff;
         enteredAtLeast1Todo = true;
       });
     },
@@ -330,6 +330,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
 
         inputText = "";
         todoInputField.clear();
+        fabOpacity = fabOpacityOff;
       });
     } else {
       DialogHelper.showAlertDialog(
