@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Todo Later Web App created by Eyal Yaakobi",
+    "description": "Todo Later. A To-Do list app designed to make you achieve more",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
