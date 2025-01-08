@@ -24,6 +24,18 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: false,
         primarySwatch: Colors.blue,
+        // todo try to replicate no internet - fonts downloading issues
+        // todo also check when there's no internet - if the user still logged in
+        // todo else do relogin if needed ( we can encrypt email and pass inside the shared prefs )
+        fontFamily: 'Roboto', // Use your font family here
+        fontFamilyFallback: const ['Arial', 'Helvetica', 'sans-serif'], // Define fallbacks to local fonts
+          textTheme: const TextTheme(
+          bodyLarge: TextStyle(fontFamily: 'Roboto'),
+          bodyMedium: TextStyle(fontFamily: 'Roboto'),
+          displayLarge: TextStyle(fontFamily: 'Roboto'),
+          displayMedium: TextStyle(fontFamily: 'Roboto'),
+          // Add more text styles as needed
+        ),
       ),
       //todo add rtl support??
       // home: Column(
