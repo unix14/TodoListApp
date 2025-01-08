@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/managers/app_initializer.dart';
 
-
 import 'screens/homepage.dart';
 import 'screens/onboarding.dart';
 
