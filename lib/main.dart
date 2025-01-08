@@ -7,13 +7,14 @@ import 'screens/homepage.dart';
 import 'screens/onboarding.dart';
 
 void main() {
-  AppInitializer.initialize(andThen: () {
-    runApp(const MyApp());
+  AppInitializer.initialize(andThen: (isAlreadyEnteredTodos) {
+    runApp(MyApp(isAlreadyEnteredTodos: isAlreadyEnteredTodos));
   });
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  bool isAlreadyEnteredTodos;
+  MyApp({Key? key, required this.isAlreadyEnteredTodos}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
       //todo add rtl support??
       // home: Column(
       //   children: [
-      home: isLoggedIn
+      home: isLoggedIn || isAlreadyEnteredTodos
           ? const HomePage(title: 'Todo Later')
           : const OnboardingScreen(),
       // todo use banner here??
@@ -54,6 +55,4 @@ class MyApp extends StatelessWidget {
       // ),
     );
   }
-//
-//
 }

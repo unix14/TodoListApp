@@ -21,7 +21,9 @@ const String kAdUnitIdProd = "ca-app-pub-7481638286003806/6665802500";
 const kDefaultPadding = EdgeInsets.fromLTRB(19, 0, 0, 19);
 
 const kDeleteAllMenuButtonName = "deleteAll";
+const kSettingsMenuButtonName = "settings";
 const kArchiveMenuButtonName = "archive";
+const kInstallMenuButtonName = "installwpa";
 const kLoginButtonMenu = 'login';
 
 

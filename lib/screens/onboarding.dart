@@ -19,32 +19,9 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 //todo find suitable font
+// todo add option to do repeating tasks
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  double angle = 0.0;
-  late Timer timer;
-
-  @override
-  void initState() {
-    super.initState();
-    //todo refactor weird bg animation into a widget
-    timer = Timer.periodic(const Duration(seconds: 3), (Timer t) {
-      setState(() {
-        angle += 0.1;
-        if (angle >= 1.0) {
-          angle -= 0.2;
-        } else if(angle <= 0.0) {
-          angle += 0.1;
-        }
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    timer.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,8 +29,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment(-1.5, -angle),
             colors: const [Colors.blue, Colors.blueAccent],
           ),
         ),
@@ -62,6 +37,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               const Spacer(),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 28),
+                child: SizedBox(
+                  width: 96,
+                    child: Image.asset("icons/Icon-192.png")
+                ),
+              ),
               const Text(
                 'Todo Later',
                 style: TextStyle(
@@ -126,13 +108,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   _skipToMainScreen() async {
     User? user = await Authenticator.signInAnonymously();
-    if (user != null) {
-      // Navigate to main screen
-      //todo use routes!!
-      // Navigator.pushReplacementNamed(context, '/main');
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage(title: 'Todo Later')));
-    } else {
-      // Handle the error
-    }
+    // Navigate to main screen even if sign in anon is failed
+    //todo use routes!!
+    // Navigator.pushReplacementNamed(context, '/main');
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage(title: 'Todo Later')));
   }
 }

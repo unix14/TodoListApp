@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 class DialogHelper {
   static showAlertDialog(BuildContext context, String title, String text,
-      VoidCallback? onOkButton) {
+      VoidCallback? onOkButton,
+      VoidCallback? onCancelButton
+      ) {
 
     // set up the button
     Widget okButton = TextButton(
@@ -12,9 +14,7 @@ class DialogHelper {
 
     Widget cancelButton = TextButton(
       child: const Text("Cancel"),
-      onPressed: () {
-        Navigator.of(context).pop(); // dismiss dialog
-      },
+      onPressed: onCancelButton,
     );
 
     // set up the AlertDialog
@@ -22,8 +22,8 @@ class DialogHelper {
       title: Text(title),
       content: Text(text),
       actions: [
-        cancelButton,
-        okButton,
+        if(onCancelButton != null) cancelButton,
+        if(onOkButton != null) okButton,
       ],
     );
     // show the dialog
