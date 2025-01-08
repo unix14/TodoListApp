@@ -15,15 +15,15 @@ class WhiteRoundButton extends StatelessWidget {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         foregroundColor: Colors.black, backgroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30.0),
+          borderRadius: BorderRadius.circular(12.0),
         ),
       ),
       onPressed: onPressed != null ? () async {
           onPressed!();
       } : null,
-      child: Text(text),
+      child: Text(text, style: const TextStyle(fontSize: 15, fontFamily: 'Roboto'),),
     );
   }
 }
