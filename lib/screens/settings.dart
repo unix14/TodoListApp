@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_example/common/dialog_extensions.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 
+import '../common/consts.dart';
 import '../common/globals.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -70,6 +71,7 @@ class _SettingsScreenState extends State<SettingsScreen> with PWAInstallerMixin 
               context.copyToClipboard(email);
             },
           ),
+          simpleDivider,
           ListTile(
             title: Text("Name"),
             subtitle: Text(name),

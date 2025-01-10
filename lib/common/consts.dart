@@ -34,6 +34,11 @@ const kLoginButtonMenu = 'login';
   width: 80,
 );
 
+final simpleDivider = Container(
+  height: 1,
+  color: Colors.grey,
+);
+
 double fabOpacityOff = 0.42;
 
 
