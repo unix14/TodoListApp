@@ -258,7 +258,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
   }
 
   Future<void> onLogoutClicked(Function() onLogout) async {
-    showAreYouSureDialog("Logout", "Are you sure you want to logout?", () async {
+    showAreYouSureDialog(AppLocale.logout.getString(this), AppLocale.logoutText.getString(this), () async {
       // AnalytixManager().logEvent('user_click', 'logout');
       await Authenticator.signOut();
 
@@ -277,7 +277,8 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
         // isAdmin = false;
       });
       await onLogout();
-    });
+    }, firstButtonText: AppLocale.ok.getString(this),
+    secondButtonText: AppLocale.cancel.getString(this));
   }
 
 

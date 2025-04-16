@@ -25,11 +25,13 @@ mixin AppLocale {
   static const String email = "email";
   static const String password = "password";
   static const String or = "or";
+  static const String ok = "ok";
   static const String signup = "signup";
   static const String cancel = "cancel";
   static const String todoExample1 = "todoExample1";
   static const String todoExample2 = "todoExample2";
   static const String todoExample3 = "todoExample3";
+  static const String logoutText = "logoutText";
 
 
   static const Map<String, dynamic> EN = {
@@ -59,11 +61,13 @@ mixin AppLocale {
     email: "Email",
     password: "Password",
     or: "or",
+    ok: "OK",
     signup: "Signup",
     cancel: "Cancel",
     todoExample1: "Get clean clothes",
     todoExample2: "Buy gas",
     todoExample3: "Buy milk",
+    logoutText: "Are you sure you want to logout?",
   };
   static const Map<String, dynamic> HE = {
     title: 'המשימות שלי',
@@ -92,10 +96,12 @@ mixin AppLocale {
     email: "כתובת דוא''ל",
     password: "סיסמה",
     or: "או",
+    ok: "אוקיי",
     signup: "הרשמה",
     cancel: "ביטול",
     todoExample1: "להוציא כביסה מהמייבש",
     todoExample2: "לתדלק את האוטו",
     todoExample3: "לקנות חלב",
+    logoutText: "האם ברצונכם להתנתק מהמשתמש?",
   };
 }
