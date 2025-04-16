@@ -233,12 +233,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                         ],
                       ),
                     ));
-                    //Check if should show any buttons
-                    if (items.isNotEmpty) {
-                      return popupMenuItems;
-                    } else {
-                      return [];
-                    }
+                    return popupMenuItems;
                   },
                 ),
               ],
@@ -709,8 +704,8 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
   }
 
   void deleteAll() {
-    DialogHelper.showAlertDialog(context, "Are you sure?",
-        "Deleting all Todos will result in an empty list and an empty archive list. Do you really want to delete everything?",
+    DialogHelper.showAlertDialog(context, AppLocale.areUsure.getString(context),
+        AppLocale.deleteAllSubtext.getString(context),
         () {
       setState(() {
         items.clear();

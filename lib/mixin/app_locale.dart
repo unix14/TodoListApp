@@ -32,13 +32,14 @@ mixin AppLocale {
   static const String todoExample2 = "todoExample2";
   static const String todoExample3 = "todoExample3";
   static const String logoutText = "logoutText";
-
+  static const String areUsure = "areUsure";
+  static const String deleteAllSubtext = "deleteAllSubtext";
 
   static const Map<String, dynamic> EN = {
     title: 'Todo List',
     lang: 'Language',
     settings: "Settings",
-    archive: "archive",
+    archive: "Archive",
     installApp: "Install App",
     deleteAll: "Delete All",
     appIsInstalled: "App is installed",
@@ -68,6 +69,8 @@ mixin AppLocale {
     todoExample2: "Buy gas",
     todoExample3: "Buy milk",
     logoutText: "Are you sure you want to logout?",
+    areUsure: "Are you sure?",
+    deleteAllSubtext: "Deleting all Todos will result in an empty list and an empty archive list. Do you really want to delete everything?",
   };
   static const Map<String, dynamic> HE = {
     title: 'המשימות שלי',
@@ -103,5 +106,7 @@ mixin AppLocale {
     todoExample2: "לתדלק את האוטו",
     todoExample3: "לקנות חלב",
     logoutText: "האם ברצונכם להתנתק מהמשתמש?",
+    areUsure: "האם אתם בטוחים?",
+    deleteAllSubtext: "מחיקת כל המשימות תגרום לרשימה שלכם להיות ריקה, ולארכיון להתרוקן. האם אתם בטוחים שזה מה שאתם רוצים לעשות?",
   };
 }

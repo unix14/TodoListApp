@@ -175,8 +175,8 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   void deleteAll() async {
-    DialogHelper.showAlertDialog(context, "Are you sure?",
-        "Deleting all Todos will result in an empty list and an empty archive list. Do you really want to delete everything?",
+    DialogHelper.showAlertDialog(context, AppLocale.areUsure.getString(context),
+        AppLocale.deleteAllSubtext.getString(context),
         () async {
       await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, "");
       print("Delete all list from settings");
@@ -192,6 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         if (didSuccess == true) {
           print("success save to DB");
         }
+        Navigator.of(context).pop(); // dismiss dialog
       }
     }, () {
       // Cancel
