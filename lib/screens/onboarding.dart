@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_example/common/globals.dart';
+import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/models/user.dart' as MyUser;
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter_example/screens/homepage.dart';
 
 import '../widgets/white_round_button.dart';
@@ -27,15 +30,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: const [Colors.blue, Colors.blueAccent],
+            colors: [Colors.blue, Colors.blueAccent],
           ),
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
+              Align(
+                alignment: Alignment.topRight,
+                child: TextButton(onPressed: () {
+                  if(currentLocaleStr == "he") {
+                    currentLocaleStr = "en";
+                  } else {
+                    currentLocaleStr = "he";
+                  }
+                  FlutterLocalization.instance.translate(currentLocaleStr);
+                }, child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(FlutterLocalization.instance.getLanguageName(), style: TextStyle(color: Colors.white),),
+                )),
+              ),
               const Spacer(),
               Padding(
                 padding: const EdgeInsets.only(bottom: 28),
@@ -44,8 +61,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Image.asset("icons/Icon-192.png")
                 ),
               ),
-              const Text(
-                'Todo Later',
+              Text(
+                AppLocale.todoLater.getString(context),
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
@@ -53,7 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
               const Spacer(),
-              WhiteRoundButton(text: 'Login with Email', onPressed: () async {
+              WhiteRoundButton(text: AppLocale.loginWEmail.getString(context), onPressed: () async {
                 // todo Implement email login functionality
                 /// go to email login screen
                 context.showLoginDialog();//(_a, emailController, passwordController) async {
@@ -89,10 +106,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Padding(padding: const EdgeInsets.only(bottom: 8, top: 30),
                 child: TextButton(
                   onPressed: _skipToMainScreen,
-                  child: const Text(
-                    //todo use translation service \ app localization
-                    'Try as Guest',
-                    style: TextStyle(
+                  child: Text(
+                    AppLocale.loginAsGuest.getString(context),
+                    style: const TextStyle(
                       color: Colors.white,
                       decoration: TextDecoration.underline,
                     ),
@@ -111,6 +127,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     // Navigate to main screen even if sign in anon is failed
     //todo use routes!!
     // Navigator.pushReplacementNamed(context, '/main');
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage(title: 'Todo Later')));
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));
   }
 }

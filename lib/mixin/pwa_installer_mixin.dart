@@ -1,6 +1,7 @@
 import 'dart:html' as html;
 
 mixin PWAInstallerMixin {
+  bool isInstallableRightNow = true;
   html.BeforeInstallPromptEvent? _deferredPrompt;
 
   /// Register for the 'beforeinstallprompt' event.
@@ -15,7 +16,7 @@ mixin PWAInstallerMixin {
   bool isInstallable() {
     final isChrome = html.window.navigator.userAgent.contains('Chrome');
     final isPwa = html.window.matchMedia('(display-mode: standalone)').matches;
-    return isChrome && !isPwa;
+    return isChrome && !isPwa && isInstallableRightNow;
   }
 
   /// Handle the install prompt registration.
@@ -24,6 +25,8 @@ mixin PWAInstallerMixin {
       registerForInstallPrompt((event) {
         _deferredPrompt = event;
       });
+    } else {
+      isInstallableRightNow = false;
     }
   }
 
@@ -37,7 +40,10 @@ mixin PWAInstallerMixin {
         print('User response: ${result}');
         // You can handle user response here if needed, like logging or tracking installs.
         _deferredPrompt = null; // Reset after showing the prompt
+        isInstallableRightNow = false;
       });
+    } else {
+      isInstallableRightNow = false;
     }
   }
 }

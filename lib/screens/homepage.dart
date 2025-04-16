@@ -5,23 +5,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_example/common/DialogHelper.dart';
 import 'package:flutter_example/common/consts.dart';
 import 'package:flutter_example/common/date_extensions.dart';
+import 'package:flutter_example/common/dialog_extensions.dart';
 import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart';
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/common/stub_data.dart';
+import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:html' as html;
 
 import 'onboarding.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key, required this.title}) : super(key: key);
-
-  final String title;
+  const HomePage({
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -53,21 +57,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
   //todo refactor and extract code to widgets
 
   bool isLoading = true;
-  late RoundedTextInputField todoInputField = RoundedTextInputField(
-    hintText: "Enter a Todo here..",
-    onChanged: (newValue) {
-      setState(() {
-        inputText = newValue;
-        fabOpacity = newValue.isNotEmpty ? 1 : fabOpacityOff;
-        enteredAtLeast1Todo = true;
-      });
-    },
-    focusNode: _todoLineFocusNode,
-    callback: () {
-      print("Clicked enter");
-      _onAddItem();
-    },
-  );
+  late RoundedTextInputField todoInputField;
 
   /// Ads
   BannerAd? myBanner;
@@ -97,7 +87,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
     );
 
     myBanner = BannerAd(
-      adUnitId: kDebugMode ? kAdUnitIdDebug : kAdUnitIdProd ,
+      adUnitId: kDebugMode ? kAdUnitIdDebug : kAdUnitIdProd,
       size: AdSize.banner,
       request: const AdRequest(),
       listener: listener,
@@ -127,8 +117,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
   @override
   void initState() {
     _loadingData = loadList();
-    if (false) 
-      initAds();
+    if (false) initAds();
     initializeInstallPrompt();
     super.initState();
   }
@@ -137,15 +126,14 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
-        actions: (isLoggedIn == false ||
-                items.isNotEmpty ||
-                items.where((item) => item.isArchived).toList().isNotEmpty)
-            ? [
+        centerTitle: true,
+        title: Text(AppLocale.title.getString(context)),
+        actions: [
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     if(value == kInstallMenuButtonName) {
                       showInstallPrompt();
+                      context.showSnackBar(AppLocale.appIsInstalled.getString(context));
                     }
                     if (value == kArchiveMenuButtonName) {
                       showArchivedTodos();
@@ -167,78 +155,81 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                     List<PopupMenuItem<String>> popupMenuItems = [];
                     //Check if should show Login Button
                     if (isLoggedIn == false) {
-                      popupMenuItems.add(const PopupMenuItem<String>(
+                      popupMenuItems.add(PopupMenuItem<String>(
                         value: kLoginButtonMenu,
                         child: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.supervised_user_circle,
                               color: Colors.blue,
                             ),
-                            SizedBox(width: 8.0),
-                            Text('Login'),
+                            const SizedBox(width: 8.0),
+                            Text(AppLocale.login.getString(context)),
                           ],
                         ),
                       ));
                     }
                     //Check if should show Archive Button
                     if (items.any((item) => item.isArchived)) {
-                      popupMenuItems.add(const PopupMenuItem<String>(
+                      popupMenuItems.add(PopupMenuItem<String>(
                         value: kArchiveMenuButtonName,
                         child: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.archive,
                               color: Colors.blue,
                             ),
-                            SizedBox(width: 8.0),
-                            Text('Archive'),
+                            const SizedBox(width: 8.0),
+                            Text(AppLocale.archive.getString(context)),
                           ],
                         ),
                       ));
                     }
                     //Check if should show Install App prompt button
-                    if(isInstallable()) {
-                      popupMenuItems.add(const PopupMenuItem<String>(
+                    if (isInstallable()) {
+                      popupMenuItems.add(PopupMenuItem<String>(
                         value: kInstallMenuButtonName,
                         child: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.install_mobile,
                               color: Colors.blue,
                             ),
-                            SizedBox(width: 8.0),
-                            Text('Install App'),
+                            const SizedBox(width: 8.0),
+                            Text(AppLocale.installApp.getString(context)),
                           ],
                         ),
                       ));
                     }
                     //Check if should show Delete Button
                     if (items.isNotEmpty) {
-                      popupMenuItems.add(const PopupMenuItem<String>(
+                      popupMenuItems.add(PopupMenuItem<String>(
                         value: kDeleteAllMenuButtonName,
                         child: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.delete_forever,
-                              color: Colors.blue,
+                              color: Colors.red,
                             ),
-                            SizedBox(width: 8.0),
-                            Text('Delete All'),
+                            const SizedBox(width: 8.0),
+                            Text(
+                              AppLocale.deleteAll.getString(context),
+                              style: const TextStyle(color: Colors.red),
+                            ),
                           ],
                         ),
                       ));
                     }
-                    popupMenuItems.add(const PopupMenuItem<String>(
+                    popupMenuItems.add(PopupMenuItem<String>(
                       value: kSettingsMenuButtonName,
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.settings_outlined,
                             color: Colors.blue,
                           ),
-                          SizedBox(width: 8.0),
-                          Text('Settings'),
+                          const SizedBox(width: 8.0),
+                          Text(AppLocale.settings.getString(context)),
                         ],
                       ),
                     ));
@@ -250,8 +241,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                     }
                   },
                 ),
-              ]
-            : [],
+              ],
       ),
       body: Column(
         children: [
@@ -291,16 +281,29 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
             height: myBanner?.size.height.toDouble() ?? 0,
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 0, 10),
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                todoInputField,
+                todoInputField = RoundedTextInputField(
+                  hintText: AppLocale.enterTodoTextPlaceholder.getString(context),
+                  onChanged: (newValue) {
+                    setState(() {
+                      inputText = newValue;
+                      fabOpacity = newValue.isNotEmpty ? 1 : fabOpacityOff;
+                      enteredAtLeast1Todo = true;
+                    });
+                  },
+                  focusNode: _todoLineFocusNode,
+                  callback: () {
+                    print("Clicked enter");
+                    _onAddItem();
+                  },
+                ),
                 SizedBox(
                   height: 69.0,
-                  width: enteredAtLeast1Todo ? 80 : 10,
-                  child: Container(),
+                  width: enteredAtLeast1Todo ? 80 : 0,
                 )
               ],
             ),
@@ -311,12 +314,12 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
           ? Opacity(
               opacity: fabOpacity,
               child: FloatingActionButton(
-                  onPressed: () {
-                    _onAddItem();
-                  },
-                  tooltip: 'Add',
-                  child: const Icon(Icons.add),
-                ),
+                onPressed: () {
+                  _onAddItem();
+                },
+                tooltip: AppLocale.deleteAllSubtitle.getString(context),
+                child: const Icon(Icons.add),
+              ),
             )
           : Container(), // This trailing comma makes auto-formatting nicer for build methods.
     );
@@ -333,8 +336,8 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
         fabOpacity = fabOpacityOff;
       });
     } else {
-      DialogHelper.showAlertDialog(
-          context, "Empty Todo", "Please write a Todo", () {
+      DialogHelper.showAlertDialog(context, "Empty Todo", "Please write a Todo",
+          () {
         // Ok
         Navigator.of(context).pop(); // dismiss dialog
       }, null);
@@ -391,7 +394,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                 items.where((item) => item.isArchived).toList();
 
             return AlertDialog(
-              title: const Text('Archived Todos'),
+              title: Text(AppLocale.archivedTodos.getString(context)),
               content: SizedBox(
                 width: double.maxFinite,
                 child: Column(
@@ -454,7 +457,8 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                                         Navigator.of(context).pop();
                                       }, () {
                                         // Cancel
-                                        Navigator.of(context).pop(); // dismiss dialog
+                                        Navigator.of(context)
+                                            .pop(); // dismiss dialog
                                       });
                                     },
                                     child: const Icon(
@@ -467,8 +471,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                         },
                       ),
                     ),
-                    const Text(
-                        "Todos are added to the archive after 24 hours since they're checked as done."),
+                    Text(AppLocale.archivedTodosSubtitle.getString(context)),
                   ],
                 ),
               ),
@@ -478,7 +481,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                     Navigator.of(context).pop(); // Close the dialog
                     setState(() {});
                   },
-                  child: const Text('Close'),
+                  child: Text(AppLocale.close.getString(context)),
                 ),
               ],
             );
@@ -508,8 +511,9 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
 
     if (listStr.isNotEmpty) {
       List<dynamic> decodedList = jsonDecode(listStr);
-      List<TodoListItem> sharedPrefsTodoList = decodedList.isNotEmpty ?
-      decodedList.map((item) => TodoListItem.fromJson(item)).toList() : [];
+      List<TodoListItem> sharedPrefsTodoList = decodedList.isNotEmpty
+          ? decodedList.map((item) => TodoListItem.fromJson(item)).toList()
+          : [];
 
       if (isLoggedIn && currentUser != null) {
         /// fetch from firebase
@@ -520,24 +524,26 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
           print("Loading first time the data from the DB");
         }
 
-        print("the result for ${currentUser!.uid} is ${myCurrentUser?.todoListItems?.length ?? -1}");
-        if (myCurrentUser != null &&
-            myCurrentUser?.todoListItems != null) {
+        print(
+            "the result for ${currentUser!.uid} is ${myCurrentUser?.todoListItems?.length ?? -1}");
+        if (myCurrentUser != null && myCurrentUser?.todoListItems != null) {
           print("Loading from the DB");
 
-          if(sharedPrefsTodoList.isNotEmpty) {
+          if (sharedPrefsTodoList.isNotEmpty) {
             var didMerged = false;
             // Merge the two lists
             for (var item in sharedPrefsTodoList) {
               // check by parameters
               if (!myCurrentUser!.todoListItems!.contains(item) &&
-                  !myCurrentUser!.todoListItems!.any((element) => element.text == item.text && element.isArchived == item.isArchived)) {
+                  !myCurrentUser!.todoListItems!.any((element) =>
+                      element.text == item.text &&
+                      element.isArchived == item.isArchived)) {
                 myCurrentUser!.todoListItems!.add(item);
                 didMerged = true;
               }
             }
 
-            if(didMerged) {
+            if (didMerged) {
               // update firebase
               var didSuccess = await FirebaseRepoInteractor.instance
                   .updateUserData(myCurrentUser!);
@@ -547,7 +553,8 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                 print("failed save to DB");
               }
               // update shared prefs
-              await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, jsonEncode(myCurrentUser!.todoListItems));
+              await EncryptedSharedPreferencesHelper.setString(
+                  kAllListSavedPrefs, jsonEncode(myCurrentUser!.todoListItems));
             }
           }
 
@@ -556,19 +563,17 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
       }
       return sharedPrefsTodoList;
     } else {
-
       /// fetch from firebase
-      if (myCurrentUser == null) {
+      if (myCurrentUser == null && currentUser != null) {
         // Load user data if not already loaded
-        myCurrentUser = await FirebaseRepoInteractor.instance
-            .getUserData(currentUser!.uid);
+        myCurrentUser =
+            await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
       }
-      if (myCurrentUser != null &&
-          myCurrentUser?.todoListItems != null) {
+      if (myCurrentUser != null && myCurrentUser?.todoListItems != null) {
         print("Loading from the DB 2");
         return myCurrentUser!.todoListItems!;
       }
-      return StubData.getInitialTodoList();
+      return StubData.getInitialTodoList(context);
     }
   }
 
@@ -655,8 +660,8 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                         _updateList();
                       });
                     }, () {
-                          // Cancel
-                          Navigator.of(context).pop(); // dismiss dialog
+                      // Cancel
+                      Navigator.of(context).pop(); // dismiss dialog
                     });
                   },
                   child: const Icon(
@@ -695,7 +700,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
         didChanged = currentTodo.text != todoText;
         currentTodo.text = todoText; // todo fix issues w updating the text
       }
-      if(didChanged) {
+      if (didChanged) {
         currentTodo.dateTime = DateTime.now();
       }
       items[index] = currentTodo;
@@ -712,40 +717,40 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
         _updateList();
         Navigator.of(context).pop();
       });
-    },() {
-          // Cancel
-          Navigator.of(context).pop(); // dismiss dialog
+    }, () {
+      // Cancel
+      Navigator.of(context).pop(); // dismiss dialog
     });
   }
 
-  // void _handleInstallPrompt() {
-  //   _showInstallButton = PWAInstallerMixin.checkBrowserAndAppMode();
-  //   PWAInstallerMixin.registerForInstallPrompt((event) {
-  //     setState(() {
-  //       _deferredPrompt = event;
-  //     });
-  //   });
-  // }
-  //
-  // void _runInstallPrompt() {
-  //   print("_runInstallPrompt: _deferredPrompt is $_deferredPrompt");
-  //
-  //   if (_deferredPrompt != null) {
-  //     // Show the install prompt
-  //     _deferredPrompt?.prompt();
-  //
-  //     // Handle the user's response
-  //     _deferredPrompt?.userChoice.then((result) {
-  //       print("_runInstallPrompt: result is $result");
-  //       // if (result?.outcome == 'accepted') {
-  //       //   print('User accepted the install prompt');
-  //       // } else {
-  //       //   print('User dismissed the install prompt');
-  //       // }
-  //       setState(() {
-  //         _deferredPrompt = null; // Reset after showing the prompt
-  //       });
-  //     });
-  //   }
-  // }
+// void _handleInstallPrompt() {
+//   _showInstallButton = PWAInstallerMixin.checkBrowserAndAppMode();
+//   PWAInstallerMixin.registerForInstallPrompt((event) {
+//     setState(() {
+//       _deferredPrompt = event;
+//     });
+//   });
+// }
+//
+// void _runInstallPrompt() {
+//   print("_runInstallPrompt: _deferredPrompt is $_deferredPrompt");
+//
+//   if (_deferredPrompt != null) {
+//     // Show the install prompt
+//     _deferredPrompt?.prompt();
+//
+//     // Handle the user's response
+//     _deferredPrompt?.userChoice.then((result) {
+//       print("_runInstallPrompt: result is $result");
+//       // if (result?.outcome == 'accepted') {
+//       //   print('User accepted the install prompt');
+//       // } else {
+//       //   print('User dismissed the install prompt');
+//       // }
+//       setState(() {
+//         _deferredPrompt = null; // Reset after showing the prompt
+//       });
+//     });
+//   }
+// }
 }

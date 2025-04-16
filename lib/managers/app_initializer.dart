@@ -7,6 +7,8 @@ import 'package:flutter_example/firebase_options.dart';
 import 'package:flutter_example/common/globals.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_example/auth/authenticator.dart';
+import 'package:flutter_example/mixin/app_locale.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 import '../common/consts.dart';
 
@@ -21,6 +23,7 @@ class AppInitializer {
     bool isAlreadyEnteredTodos = false;
     await EncryptedSharedPreferencesHelper.initialize();
     await EncryptionHelper.initialize();
+    await initLanguages();
     // MobileAds.instance.initialize();
     try {
       await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
@@ -72,5 +75,17 @@ class AppInitializer {
     // AnalytixManager().setUserProperty('isAdmin', isAdmin == true ? "true" : "false");
     // AnalytixManager().setUserProperty('isLoggedIn', isLoggedIn == true ? "true" : "false");
     // AnalytixManager().setUserProperty('isAnonymous', currentUser?.isAnonymous == true ? "true" : "false");
+  }
+
+  static Future<void> initLanguages() async {
+    await FlutterLocalization.instance.init(
+      mapLocales: [
+        const MapLocale('en', AppLocale.EN),
+        const MapLocale('he', AppLocale.HE),
+      ],
+      initLanguageCode: 'en',
+    );
+    currentLocaleStr = await EncryptedSharedPreferencesHelper
+        .getString(kCurrentLocaleSavedPrefs) ?? currentLocaleStr;
   }
 }

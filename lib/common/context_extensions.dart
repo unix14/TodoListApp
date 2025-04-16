@@ -4,14 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:flutter_example/common/consts.dart';
+import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart';
 import 'package:flutter_example/main.dart';
 import 'package:flutter_example/common/dialog_extensions.dart';
 import 'package:flutter_example/auth/authenticator.dart';
 import 'package:flutter_example/managers/app_initializer.dart';
+import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/models/user.dart' as MyUser;
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/screens/homepage.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 
 extension ContextExtension on BuildContext { // todo rename to auth extensions?
@@ -31,7 +34,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
       context: this,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Login'),
+          title: Text(AppLocale.login.getString(context)),
           content: AutofillGroup(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -39,8 +42,8 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
                 TextField(
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.email],
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
+                  decoration: InputDecoration(
+                    labelText: AppLocale.email.getString(context),
                   ),
                   controller: emailController,
                   onSubmitted: (_) => FocusScope.of(context).nextFocus(),
@@ -58,8 +61,8 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
                   child: TextField(
                     textInputAction: TextInputAction.done,
                     autofillHints: const [AutofillHints.password],
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
+                    decoration: InputDecoration(
+                      labelText: AppLocale.password.getString(context),
                     ),
                     obscureText: true,
                     controller: passwordController,
@@ -67,15 +70,15 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
                     focusNode: passwordFocusNode,
                   ),
                 ),
-                shouldShowSignupButton ? orWidget : const SizedBox
+                shouldShowSignupButton ? orWidget(context) : const SizedBox
                     .shrink(),
                 shouldShowSignupButton ? TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                     showSignupDialog();
                   },
-                  child: const Text('Signup',
-                    style: TextStyle(color: Colors.black, fontSize: 12,),),
+                  child: Text(AppLocale.signup.getString(context),
+                    style: const TextStyle(color: Colors.black, fontSize: 12,),),
                 ) : const SizedBox.shrink(),
               ],
             ),
@@ -85,15 +88,15 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text(
-                'Cancel', style: TextStyle(color: Colors.black),),
+              child: Text(
+                AppLocale.cancel.getString(context), style: const TextStyle(color: Colors.black),),
             ),
             TextButton(
               onPressed: () async {
                 onLoginClicked(context, emailController, passwordController);
               },
-              child: const Text(
-                'Login', style: TextStyle(color: Colors.black),),
+              child: Text(
+                AppLocale.login.getString(context), style: const TextStyle(color: Colors.black),),
             ),
           ],
         );
@@ -114,7 +117,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
         context: this,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Signup'),
+            title: Text(AppLocale.signup.getString(context)),
             content: AutofillGroup(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -122,8 +125,8 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
                   TextField(
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
+                    decoration: InputDecoration(
+                      labelText: AppLocale.email.getString(context),
                     ),
                     controller: emailController,
                     onSubmitted: (_) => FocusScope.of(context).nextFocus(),
@@ -138,8 +141,8 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
                     child: TextField(
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
+                      decoration: InputDecoration(
+                        labelText: AppLocale.password.getString(context),
                       ),
                       obscureText: true,
                       controller: passwordController,
@@ -155,13 +158,13 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: const Text('Cancel', style: TextStyle(color: Colors.black),),
+                child: Text(AppLocale.cancel.getString(context), style: const TextStyle(color: Colors.black),),
               ),
               TextButton(
                 onPressed: () async {
                   onSignupClicked(context, emailController, passwordController);
                 },
-                child: const Text('Signup', style: TextStyle(color: Colors.black),),
+                child: Text(AppLocale.signup.getString(context), style: const TextStyle(color: Colors.black),),
               ),
             ],
           );
@@ -192,7 +195,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
 
 
       Future.delayed(const Duration(milliseconds: 500), () async {
-        Navigator.of(this).pushReplacement(MaterialPageRoute(builder: (context) => const HomePage(title: 'Todo Later')));
+        Navigator.of(this).pushReplacement(MaterialPageRoute(builder: (context) => const HomePage()));
       });
     } else {
       showAlertDialog("Login failed", "Please try again");
@@ -242,7 +245,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
       // currentPage = pageData;
 
       Future.delayed(const Duration(milliseconds: 500), () async {
-        Navigator.of(this).pushReplacement(MaterialPageRoute(builder: (context) => const HomePage(title: 'Todo Later')));
+        Navigator.of(this).pushReplacement(MaterialPageRoute(builder: (context) => const HomePage()));
       });
     } else {
       showAlertDialog("Signup failed", "Please try again");
@@ -254,21 +257,28 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
     // });
   }
 
-  // Future<void> onLogoutClicked(Function() onLogout) async {
-  //   showAreYouSureDialog("Logout", "Are you sure you want to logout?", () async {
-  //     AnalytixManager().logEvent('user_click', 'logout');
-  //     await Authenticator.signOut();
-  //     await Future.delayed(Duration.zero, () async {
-  //       Navigator.of(this).popUntil((route) => route.isFirst);
-  //       currentUser = null;
-  //       isLoggedIn = false;
-  //       isAdmin = false;
-  //       await onLogout();
-  //     });
-  //
-  //     showSnackBar("You are logged out");
-  //   });
-  // }
+  Future<void> onLogoutClicked(Function() onLogout) async {
+    showAreYouSureDialog("Logout", "Are you sure you want to logout?", () async {
+      // AnalytixManager().logEvent('user_click', 'logout');
+      await Authenticator.signOut();
+
+      currentLocaleStr = "en";
+
+      await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, "");
+      await EncryptedSharedPreferencesHelper.setString(kCurrentLocaleSavedPrefs, currentLocaleStr);
+
+
+      showSnackBar("You are logged out");
+      await Future.delayed(Duration.zero, () async {
+        Navigator.of(this).popUntil((route) => route.isFirst);
+        currentUser = null;
+        myCurrentUser= null;
+        isLoggedIn = false;
+        // isAdmin = false;
+      });
+      await onLogout();
+    });
+  }
 
 
 }

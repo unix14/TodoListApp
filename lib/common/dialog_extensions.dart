@@ -24,18 +24,13 @@ extension DialogExtensions on BuildContext {
 
 
   Future<String> getAppVersion() async {
-    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
-      print("Package info is not supported on this platform.");
-      return "Unknown - todo";
-    }
-
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       print('App Version: ${packageInfo.version}');
       return packageInfo.version;
     } catch (e) {
       print('Failed to get app version: $e');
-      return "-1";
+      return "1.0";
     }
   }
 

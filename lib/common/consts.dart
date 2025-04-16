@@ -1,5 +1,7 @@
 
 // import 'package:intl/intl.dart';
+import 'dart:js_interop';
+
 import 'package:flutter/material.dart';
 
 // String getFormattedDate(_date) {
@@ -11,8 +13,12 @@ import 'package:flutter/material.dart';
 
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_localization/flutter_localization.dart';
+
+import '../mixin/app_locale.dart';
 
 const String kAllListSavedPrefs = "LIST";
+const String kCurrentLocaleSavedPrefs = "CURRENT_LOCALE";
 
 
 const String kAdUnitIdDebug  = "ca-app-pub-3940256099942544/6300978111";
@@ -42,16 +48,16 @@ final simpleDivider = Container(
 double fabOpacityOff = 0.42;
 
 
-/*static*/ Widget orWidget = Padding(
+  Widget orWidget(BuildContext context) => Padding(
   padding: const EdgeInsets.only(top: 28, bottom: 8),
   child: Row(
     mainAxisSize: MainAxisSize.max,
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       verticalDivider,
-      const Padding(
-        padding: EdgeInsets.all(8.0),
-        child: Text("or", style: TextStyle(color: Colors.grey, fontSize: 12,),),
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(AppLocale.or.getString(context), style: const TextStyle(color: Colors.grey, fontSize: 12,),),
       ),
       verticalDivider,
     ],
