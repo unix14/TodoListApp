@@ -57,7 +57,22 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
   //todo refactor and extract code to widgets
 
   bool isLoading = true;
-  late RoundedTextInputField todoInputField;
+
+  late RoundedTextInputField todoInputField = RoundedTextInputField(
+    hintText: AppLocale.enterTodoTextPlaceholder.getString(context),
+    onChanged: (newValue) {
+      setState(() {
+        inputText = newValue;
+        fabOpacity = newValue.isNotEmpty ? 1 : fabOpacityOff;
+        enteredAtLeast1Todo = true;
+      });
+    },
+    focusNode: _todoLineFocusNode,
+    callback: () {
+      print("Clicked enter");
+      _onAddItem();
+    },
+  );
 
   /// Ads
   BannerAd? myBanner;
@@ -281,21 +296,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                todoInputField = RoundedTextInputField(
-                  hintText: AppLocale.enterTodoTextPlaceholder.getString(context),
-                  onChanged: (newValue) {
-                    setState(() {
-                      inputText = newValue;
-                      fabOpacity = newValue.isNotEmpty ? 1 : fabOpacityOff;
-                      enteredAtLeast1Todo = true;
-                    });
-                  },
-                  focusNode: _todoLineFocusNode,
-                  callback: () {
-                    print("Clicked enter");
-                    _onAddItem();
-                  },
-                ),
+                todoInputField,
                 SizedBox(
                   height: 69.0,
                   width: enteredAtLeast1Todo ? 80 : 0,
@@ -331,7 +332,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
         fabOpacity = fabOpacityOff;
       });
     } else {
-      DialogHelper.showAlertDialog(context, "Empty Todo", "Please write a Todo",
+      DialogHelper.showAlertDialog(context, "Empty Todo", "Please write a Todo", // todo lang
           () {
         // Ok
         Navigator.of(context).pop(); // dismiss dialog
@@ -442,18 +443,18 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                                     onPressed: () {
                                       DialogHelper.showAlertDialog(
                                           context,
-                                          "Do you want to delete?",
-                                          "This can't be undone", () {
+                                          AppLocale.doUwant2Delete.getString(context),
+                                          AppLocale.thisCantBeUndone.getString(context), () {
                                         // dismiss dialog
                                         setState(() {
                                           items.remove(todo);
+                                          itemOnEditIndex = -1;
                                           _updateList();
                                         });
                                         Navigator.of(context).pop();
                                       }, () {
                                         // Cancel
-                                        Navigator.of(context)
-                                            .pop(); // dismiss dialog
+                                        Navigator.of(context).pop(); // dismiss dialog
                                       });
                                     },
                                     child: const Icon(
@@ -506,9 +507,8 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
 
     if (listStr.isNotEmpty) {
       List<dynamic> decodedList = jsonDecode(listStr);
-      List<TodoListItem> sharedPrefsTodoList = decodedList.isNotEmpty
-          ? decodedList.map((item) => TodoListItem.fromJson(item)).toList()
-          : [];
+      List<TodoListItem> sharedPrefsTodoList = decodedList.isNotEmpty ?
+      decodedList.map((item) => TodoListItem.fromJson(item)).toList() : [];
 
       if (isLoggedIn && currentUser != null) {
         /// fetch from firebase
@@ -519,8 +519,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
           print("Loading first time the data from the DB");
         }
 
-        print(
-            "the result for ${currentUser!.uid} is ${myCurrentUser?.todoListItems?.length ?? -1}");
+        print("the result for ${currentUser!.uid} is ${myCurrentUser?.todoListItems?.length ?? -1}");
         if (myCurrentUser != null && myCurrentUser?.todoListItems != null) {
           print("Loading from the DB");
 
@@ -717,35 +716,4 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
       Navigator.of(context).pop(); // dismiss dialog
     });
   }
-
-// void _handleInstallPrompt() {
-//   _showInstallButton = PWAInstallerMixin.checkBrowserAndAppMode();
-//   PWAInstallerMixin.registerForInstallPrompt((event) {
-//     setState(() {
-//       _deferredPrompt = event;
-//     });
-//   });
-// }
-//
-// void _runInstallPrompt() {
-//   print("_runInstallPrompt: _deferredPrompt is $_deferredPrompt");
-//
-//   if (_deferredPrompt != null) {
-//     // Show the install prompt
-//     _deferredPrompt?.prompt();
-//
-//     // Handle the user's response
-//     _deferredPrompt?.userChoice.then((result) {
-//       print("_runInstallPrompt: result is $result");
-//       // if (result?.outcome == 'accepted') {
-//       //   print('User accepted the install prompt');
-//       // } else {
-//       //   print('User dismissed the install prompt');
-//       // }
-//       setState(() {
-//         _deferredPrompt = null; // Reset after showing the prompt
-//       });
-//     });
-//   }
-// }
 }

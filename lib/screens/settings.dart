@@ -6,6 +6,7 @@ import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart'
 import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:flutter_example/screens/homepage.dart';
 import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 
@@ -87,7 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 context: context,
                 builder: (BuildContext context) {
                   return SimpleDialog(
-                    title: const Text("Select Language"),
+                    title: Text(AppLocale.selectLanguage.getString(context)),
                     children: <Widget>[
                       SimpleDialogOption(
                         onPressed: () {
@@ -172,6 +173,8 @@ class _SettingsScreenState extends State<SettingsScreen>
         kCurrentLocaleSavedPrefs, currentLocaleStr);
     FlutterLocalization.instance.translate(currentLocaleStr);
     Navigator.pop(context);
+    Navigator.pop(context);
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));
   }
 
   void deleteAll() async {

@@ -34,6 +34,9 @@ mixin AppLocale {
   static const String logoutText = "logoutText";
   static const String areUsure = "areUsure";
   static const String deleteAllSubtext = "deleteAllSubtext";
+  static const String doUwant2Delete = "doUwant2Delete";
+  static const String thisCantBeUndone = "thisCantBeUndone";
+  static const String selectLanguage = "selectLanguage";
 
   static const Map<String, dynamic> EN = {
     title: 'Todo List',
@@ -71,6 +74,9 @@ mixin AppLocale {
     logoutText: "Are you sure you want to logout?",
     areUsure: "Are you sure?",
     deleteAllSubtext: "Deleting all Todos will result in an empty list and an empty archive list. Do you really want to delete everything?",
+    doUwant2Delete: "Do you want to delete?",
+    thisCantBeUndone: "This can't be undone",
+    selectLanguage: "Select Language",
   };
   static const Map<String, dynamic> HE = {
     title: 'המשימות שלי',
@@ -108,5 +114,8 @@ mixin AppLocale {
     logoutText: "האם ברצונכם להתנתק מהמשתמש?",
     areUsure: "האם אתם בטוחים?",
     deleteAllSubtext: "מחיקת כל המשימות תגרום לרשימה שלכם להיות ריקה, ולארכיון להתרוקן. האם אתם בטוחים שזה מה שאתם רוצים לעשות?",
+    doUwant2Delete: "האם למחוק?",
+    thisCantBeUndone: "פעולה זו בלתי הפיכה",
+    selectLanguage: "בחר שפה",
   };
 }
