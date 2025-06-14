@@ -20,7 +20,7 @@ extension DialogExtensions on BuildContext {
     // copy to clipboard
     await Clipboard.setData(ClipboardData(text: text));
     // copied successfully
-    showSnackBar(S.of(this).copiedToClipboard(text: text));
+    showSnackBar(S.of(this).copiedToClipboard(text));
   }
 
 
@@ -108,8 +108,8 @@ extension DialogExtensions on BuildContext {
       Function() callback,
       {Widget? bottomWidget,
         // Default values are placeholders that signal to use localization if not overridden by caller.
-        String firstButtonTextOverride = "OK",
-        String secondButtonTextOverride = "Cancel",
+        String firstButtonText = "OK",
+        String secondButtonText = "Cancel",
         String? thirdButtonText,
         Function()? thirdButtonCallback,
         bool thirdButtonShouldClose = true,
@@ -117,12 +117,12 @@ extension DialogExtensions on BuildContext {
     final S s = S.of(context);
     // Use localized text if the default placeholder ("OK"/"Cancel") is passed,
     // otherwise use the text provided by the caller.
-    final String actualFirstButtonText = (firstButtonTextOverride == "OK")
+    final String actualFirstButtonText = (firstButtonText == "OK")
         ? s.okButton
-        : firstButtonTextOverride;
-    final String actualSecondButtonText = (secondButtonTextOverride == "Cancel")
+        : firstButtonText;
+    final String actualSecondButtonText = (secondButtonText == "Cancel")
         ? s.cancelButton
-        : secondButtonTextOverride;
+        : secondButtonText;
 
     return AlertDialog(
       title: Text(title),
