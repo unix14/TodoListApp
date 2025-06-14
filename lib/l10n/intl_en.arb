@@ -2,5 +2,6 @@
     "randomTaskMenuButton": "Random Task",
     "randomTaskDialogTitle": "Randomly Selected Task",
     "noTasksAvailableDialogTitle": "No Tasks",
-    "noTasksAvailableDialogMessage": "There are no tasks available to pick from."
+    "noTasksAvailableDialogMessage": "There are no tasks available to pick from.",
+    "all": "All"
 }

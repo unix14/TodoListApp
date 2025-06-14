@@ -34,12 +34,17 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with PWAInstallerMixin {
+class _HomePageState extends State<HomePage>
+    with PWAInstallerMixin, TickerProviderStateMixin {
   String inputText = "";
   bool enteredAtLeast1Todo = false;
 
   List<TodoListItem> items = [];
   late Future<List<TodoListItem>> _loadingData;
+
+  TabController? _tabController;
+  List<String> _categories = []; // Will be initialized in didChangeDependencies
+  List<String> _customCategories = [];
 
   bool isEditMode(TodoListItem todoItem) {
     bool sizeValidation =
@@ -119,25 +124,55 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Initialize categories and TabController here because context is available
+    // and AppLocale needs it.
+    _initializeTabs();
     // Load ad after build is complete
     Future.delayed(Duration.zero, () {
       myBanner?.load();
     });
   }
 
+  void _initializeTabs() async {
+    // Dispose old controller if exists
+    _tabController?.removeListener(_handleTabSelection);
+    _tabController?.dispose();
+
+    _customCategories = await EncryptedSharedPreferencesHelper.loadCategories();
+    setState(() {
+      _categories = [
+        AppLocale.all.getString(context), ..._customCategories
+      ];
+      _tabController = TabController(length: _categories.length, vsync: this);
+      _tabController!.addListener(_handleTabSelection);
+    });
+  }
+
+  void _handleTabSelection() {
+    if (_tabController != null && _tabController!.indexIsChanging) {
+      // Optional: Add logic here if something needs to happen on tab selection
+      // beyond what TabBarView handles. For now, setState might be enough if
+      // filtering logic depends on the selected tab index directly.
+      setState(() {});
+    }
+  }
+
   @override
   void dispose() {
-    super.dispose();
+    _tabController?.removeListener(_handleTabSelection);
+    _tabController?.dispose();
     myBanner?.dispose();
     _todoLineFocusNode.dispose(); // Dispose of the FocusNode
+    super.dispose();
   }
 
   @override
   void initState() {
+    super.initState();
     _loadingData = loadList();
     if (false) initAds();
     initializeInstallPrompt();
-    super.initState();
+    // _initializeTabs will be called from didChangeDependencies
   }
 
   @override
@@ -146,10 +181,22 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
       appBar: AppBar(
         centerTitle: true,
         title: Text(AppLocale.title.getString(context)),
+        bottom: _tabController == null || _categories.isEmpty
+            ? null
+            : TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabs: _categories.map((String name) => Tab(text: name)).toList(),
+              ),
         actions: [
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  tooltip: 'Add new category', // TODO: Localize this
+                  onPressed: _promptForNewCategory,
+                ),
                 PopupMenuButton<String>(
                   onSelected: (value) {
-                    if(value == kInstallMenuButtonName) {
+                    if (value == kInstallMenuButtonName) {
                       showInstallPrompt();
                       context.showSnackBar(AppLocale.appIsInstalled.getString(context));
                     }
@@ -275,33 +322,53 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
       body: Column(
         children: [
           Expanded(
-            child: FutureBuilder<List<TodoListItem>>(
-              future: _loadingData,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                } else if (snapshot.hasError) {
-                  return Center(
-                    child: Text('Error: ${snapshot.error}'),
-                  );
-                } else {
-                  items = snapshot.data ?? [];
-                  return ListView.builder(
-                    itemCount: items.where((item) => !item.isArchived).length,
-                    itemBuilder: (context, position) {
-                      final activeItems = items.reversed
-                          .where((item) => !item.isArchived)
-                          .toList();
-                      final TodoListItem currentTodo = activeItems[position];
+            child: _tabController == null || _categories.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+                    controller: _tabController,
+                    children: _categories.map((String categoryName) {
+                      return FutureBuilder<List<TodoListItem>>(
+                        future: _loadingData,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          } else if (snapshot.hasError) {
+                            return Center(
+                              child: Text('Error: ${snapshot.error}'),
+                            );
+                          } else {
+                            final allLoadedItems = snapshot.data ?? [];
+                            items = allLoadedItems; // Keep the main 'items' list updated
 
-                      return getListTile(currentTodo);
-                    },
-                  );
-                }
-              },
-            ),
+                            List<TodoListItem> displayedItems;
+                            if (categoryName == AppLocale.all.getString(context)) {
+                              displayedItems = allLoadedItems.reversed
+                                  .where((item) => !item.isArchived)
+                                  .toList();
+                            } else {
+                              displayedItems = allLoadedItems.reversed
+                                  .where((item) =>
+                                      !item.isArchived &&
+                                      item.category == categoryName)
+                                  .toList();
+                            }
+
+                            return ListView.builder(
+                              itemCount: displayedItems.length,
+                              itemBuilder: (context, position) {
+                                final TodoListItem currentTodo =
+                                    displayedItems[position];
+                                return getListTile(currentTodo);
+                              },
+                            );
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
           ),
           Container(
             alignment: Alignment.bottomCenter,
@@ -342,9 +409,23 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
 
   void _onAddItem() {
     if (inputText.isNotEmpty) {
+      String? currentCategory;
+      if (_tabController != null && _categories.isNotEmpty) {
+        final selectedCategoryName = _categories[_tabController!.index];
+        if (selectedCategoryName != AppLocale.all.getString(context)) {
+          currentCategory = selectedCategoryName;
+        }
+      }
+
       setState(() {
-        items.add(TodoListItem(inputText.trim()));
-        _updateList();
+        items.add(TodoListItem(inputText.trim(), category: currentCategory));
+        _updateList(); // This should persist the full 'items' list
+
+        // Reload data to reflect in FutureBuilder, or manage state more granularly
+        // For simplicity, we can rely on setState and FutureBuilder re-running.
+        // If _loadingData is not re-fetched, new items might not show until next full load.
+        // A better approach might be to update the snapshot data directly or re-fetch.
+        // For now, we assume _updateList and subsequent setState will refresh UI.
 
         inputText = "";
         todoInputField.clear();
@@ -764,5 +845,74 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
         null,
       );
     }
+  }
+
+  void _promptForNewCategory() async {
+    final TextEditingController categoryController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('New Category'), // TODO: Localize
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: ListBody(
+                children: <Widget>[
+                  TextFormField(
+                    controller: categoryController,
+                    decoration: const InputDecoration(hintText: "Category name"), // TODO: Localize
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Category name cannot be empty.'; // TODO: Localize
+                      }
+                      if (_categories.any((cat) => cat.toLowerCase() == value.trim().toLowerCase())) {
+                        return 'Category already exists.'; // TODO: Localize
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(AppLocale.cancel.getString(context)),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            TextButton(
+              child: Text(AppLocale.ok.getString(context)),
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  final newCategory = categoryController.text.trim();
+                  setState(() {
+                    _customCategories.add(newCategory);
+                    EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+
+                    _categories = [AppLocale.all.getString(context), ..._customCategories];
+
+                    _tabController?.removeListener(_handleTabSelection);
+                    _tabController?.dispose();
+                    _tabController = TabController(
+                      length: _categories.length,
+                      vsync: this,
+                      initialIndex: _categories.length - 1, // Select the new tab
+                    );
+                    _tabController!.addListener(_handleTabSelection);
+                  });
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }
