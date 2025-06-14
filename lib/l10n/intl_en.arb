@@ -17,5 +17,21 @@
     "selectCategoryDialogTitle": "Select Category",
     "uncategorizedCategory": "Uncategorized",
     "itemMovedSnackbar": "Item moved to {categoryName}",
-    "itemUncategorizedSnackbar": "Item moved to Uncategorized"
+    "itemUncategorizedSnackbar": "Item moved to Uncategorized",
+    "motivationalSentence1": "The secret of getting ahead is getting started.",
+    "motivationalSentence2": "Don't watch the clock; do what it does. Keep going.",
+    "motivationalSentence3": "The only way to do great work is to love what you do.",
+    "motivationalSentence4": "Your limitation—it's only your imagination.",
+    "motivationalSentence5": "Push yourself, because no one else is going to do it for you.",
+    "taskCount": "{count,plural, =0{No tasks} =1{{count} task} other{{count} tasks}}",
+    "@taskCount": {
+        "description": "Task count display string",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "emptyTodoDialogTitle": "Empty Todo",
+    "emptyTodoDialogMessage": "Please write something for your todo."
 }

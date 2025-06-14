@@ -14,6 +14,7 @@ import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:sum_todo/generated/l10n.dart';
 import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
@@ -49,16 +50,14 @@ class _HomePageState extends State<HomePage>
   List<String> _customCategories = [];
   bool _isPromptingForCategory = false;
 
+  TodoListItem? _editingTodo; // New state variable for currently edited item
+  late TextEditingController _textEditingController; // Controller for inline editing
+
   bool isEditMode(TodoListItem todoItem) {
-    bool sizeValidation =
-        itemOnEditIndex > -1 && itemOnEditIndex < items.length;
-    var index = items.indexOf(todoItem);
-    bool indexValidation = index > -1;
-    bool sameIndexValidation = itemOnEditIndex == index;
-    return sizeValidation && indexValidation && sameIndexValidation;
+    return _editingTodo == todoItem; // Simplified edit mode check
   }
 
-  int itemOnEditIndex = -1;
+  // int itemOnEditIndex = -1; // Removed
 
   // Add a variable to control the opacity of the FloatingActionButton
   double fabOpacity = fabOpacityOff;
@@ -240,16 +239,31 @@ class _HomePageState extends State<HomePage>
     _tabController?.dispose();
     myBanner?.dispose();
     _todoLineFocusNode.dispose(); // Dispose of the FocusNode
+    _textEditingController.dispose(); // Dispose the text controller
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    _textEditingController = TextEditingController(); // Initialize the controller
     _loadingData = loadList();
     if (false) initAds();
     initializeInstallPrompt();
     // _initializeTabs will be called from didChangeDependencies
+  }
+
+  void _setEditingTodo(TodoListItem? todo) {
+    setState(() {
+      _editingTodo = todo;
+      if (todo != null) {
+        _textEditingController.text = todo.text;
+        // Optionally, request focus for the TextField if it's now visible.
+        // This might require passing a FocusNode to the TextField in getListTile.
+      } else {
+        _textEditingController.clear();
+      }
+    });
   }
 
   bool _isCurrentCategoryCustom() {
@@ -361,6 +375,22 @@ class _HomePageState extends State<HomePage>
                         ),
                       ));
                     }
+                    //Check if should show Install App prompt button
+                    if (isInstallable()) {
+                      popupMenuItems.add(PopupMenuItem<String>(
+                        value: kInstallMenuButtonName,
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.install_mobile,
+                              color: Colors.blue,
+                            ),
+                            const SizedBox(width: 8.0),
+                            Text(AppLocale.installApp.getString(context)),
+                          ],
+                        ),
+                      ));
+                    }
                     //Check if should show Archive Button
                     if (items.any((item) => item.isArchived)) {
                       popupMenuItems.add(PopupMenuItem<String>(
@@ -398,23 +428,6 @@ class _HomePageState extends State<HomePage>
                             const Icon(Icons.delete_outline, color: Colors.red), // Or another appropriate icon
                             const SizedBox(width: 8.0),
                             Text(AppLocale.deleteCategoryMenuButton.getString(context), style: const TextStyle(color: Colors.red)),
-                          ],
-                        ),
-                      ));
-                    }
-
-                    //Check if should show Install App prompt button (comes before Random Task now)
-                    if (isInstallable()) {
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kInstallMenuButtonName,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.install_mobile,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 8.0),
-                            Text(AppLocale.installApp.getString(context)),
                           ],
                         ),
                       ));
@@ -492,14 +505,88 @@ class _HomePageState extends State<HomePage>
                                   .toList();
                             }
 
-                            return ListView.builder(
-                              itemCount: displayedItems.length,
-                              itemBuilder: (context, position) {
-                                final TodoListItem currentTodo =
-                                    displayedItems[position];
-                                return getListTile(currentTodo);
-                              },
-                            );
+                            if (categoryName == AppLocale.all.getString(context) && displayedItems.isEmpty) {
+                              final motivationalSentences = [
+                                S.of(context).motivationalSentence1,
+                                S.of(context).motivationalSentence2,
+                                S.of(context).motivationalSentence3,
+                                S.of(context).motivationalSentence4,
+                                S.of(context).motivationalSentence5,
+                              ];
+                              final randomSentence = motivationalSentences[Random().nextInt(motivationalSentences.length)];
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Text(
+                                    randomSentence,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.grey,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            // Widget to display below count (either ListView or motivational text if "All" is empty)
+                            Widget listContentWidget;
+                            if (categoryName == AppLocale.all.getString(context) && displayedItems.isEmpty) {
+                              // This is already handled by the motivational sentence block above,
+                              // so this specific `if` for listContentWidget is for the ListView.
+                              // The motivational sentence block returns directly.
+                              // So, if we reach here and displayedItems is empty, it's NOT the "All" tab's empty case.
+                              // This means for custom categories that are empty, they'll show an empty ListView.
+                              // Let's re-evaluate the structure based on the return for motivational sentence.
+
+                              // The motivational sentence is already returned.
+                              // So, if we are here, it means either:
+                              // 1. "All" tab and displayedItems is NOT empty.
+                              // 2. A custom category tab (items might be empty or not).
+                              listContentWidget = ListView.builder(
+                                itemCount: displayedItems.length,
+                                itemBuilder: (context, position) {
+                                  final TodoListItem currentTodo = displayedItems[position];
+                                  return getListTile(currentTodo);
+                                },
+                              );
+                            } else {
+                              // This covers all cases where displayedItems is not empty OR
+                              // it's an empty custom category list.
+                              listContentWidget = ListView.builder(
+                                itemCount: displayedItems.length,
+                                itemBuilder: (context, position) {
+                                  final TodoListItem currentTodo = displayedItems[position];
+                                  return getListTile(currentTodo);
+                                },
+                              );
+                            }
+
+                            if (displayedItems.isNotEmpty) {
+                              return Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                                    child: Text(
+                                      S.of(context).taskCount(displayedItems.length),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 13.0,
+                                        color: Colors.blueGrey,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(child: listContentWidget), // This is the ListView
+                                ],
+                              );
+                            } else {
+                              // This case is for custom categories that are empty.
+                              // "All" tab empty case is handled by the motivational sentence block which returns.
+                              // So, listContentWidget here would be an empty ListView.
+                              return listContentWidget;
+                            }
                           }
                         },
                       );
@@ -568,7 +655,10 @@ class _HomePageState extends State<HomePage>
         fabOpacity = fabOpacityOff;
       });
     } else {
-      DialogHelper.showAlertDialog(context, "Empty Todo", "Please write a Todo", // todo lang
+      DialogHelper.showAlertDialog(
+          context,
+          S.of(context).emptyTodoDialogTitle,
+          S.of(context).emptyTodoDialogMessage,
           () {
         // Ok
         Navigator.of(context).pop(); // dismiss dialog
@@ -684,7 +774,10 @@ class _HomePageState extends State<HomePage>
                                         // dismiss dialog
                                         setState(() {
                                           items.remove(todo);
-                                          itemOnEditIndex = -1;
+                                          // itemOnEditIndex = -1; // Removed
+                                          if (_editingTodo == todo) {
+                                            _setEditingTodo(null); // Clear editing state if deleted item was being edited
+                                          }
                                           _updateList();
                                         });
                                         Navigator.of(context).pop();
@@ -808,73 +901,86 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget getListTile(TodoListItem currentTodo) {
-    var isOnEditMode = isEditMode(currentTodo);
-    var currentTodoEditInput = RoundedTextInputField(
-      initialText: currentTodo.text,
-      hintText: "Edit your ToDo here!",
-      onChanged: (newValue) {
-        setState(() {
-          //todo update the current tile here
-          var index = items.indexOf(currentTodo);
-          // items[index].text = newValue;
-          items[index].dateTime = DateTime.now();
-          _updateList();
-          // inputText = newValue;
-        });
-      },
-      focusNode: FocusNode(),
-      callback: () {
-        print("Clicked enter from edit");
-        _onAddItem();
-      },
-    );
+    // var currentTodoEditInput = RoundedTextInputField( ... ); // This seems to be for the old edit mode. Will remove/replace.
+
     return InkWell(
       onLongPress: () {
+        // If onLongPress always toggles edit mode for this item:
         if (isEditMode(currentTodo)) {
-          toggleEditMode(currentTodo); // Optionally exit edit mode
+          // If already editing this item, long press could save and exit, or just exit.
+          // Let's make it save and exit.
+          _saveTodo(currentTodo, _textEditingController.text);
+          // _setEditingTodo(null); // _saveTodo will handle this
         } else {
-          _showTodoContextMenu(currentTodo);
+          // If not editing this item, or editing another, start editing this one.
+          // If another item was being edited, its changes might be lost if not saved.
+          // Consider saving pending changes from _editingTodo if it's not null and different from currentTodo.
+          if (_editingTodo != null && _editingTodo != currentTodo) {
+            _saveTodo(_editingTodo!, _textEditingController.text); // Save previous
+          }
+          _setEditingTodo(currentTodo);
         }
       },
       onTap: () {
-        if (isOnEditMode) {
-          var updatedTodoText = currentTodoEditInput.getText();
-          updateTile(currentTodo, updatedTodoText); // todo impl and debug
-          toggleEditMode(currentTodo);
+        if (isEditMode(currentTodo)) {
+          // Tapped on an item that is already in edit mode.
+          // As per plan, this should save and exit edit mode.
+           _saveTodo(currentTodo, _textEditingController.text);
+          // _setEditingTodo(null); // _saveTodo will handle this
         } else {
-          toggleCheckBox(currentTodo, !currentTodo.isChecked);
+          // Tapped on an item not in edit mode for THIS item.
+          if (_editingTodo != null) {
+            // Another item is being edited. Save it first.
+            _saveTodo(_editingTodo!, _textEditingController.text);
+          }
+          // Then, start editing the current one.
+          // _setEditingTodo(currentTodo); // This would immediately go into edit mode.
+                                        // The subtask says "toggleCheckBox" if not in edit mode.
+                                        // This conflicts with "If already in edit mode for a different item, switch edit mode to the tapped item."
+                                        // Let's prioritize: if any item is being edited, tap manages edit state. If NO item is being edited, tap toggles checkbox.
+
+          if (_editingTodo != null) { // If something WAS being edited (and now saved)
+             _setEditingTodo(currentTodo); // Then start editing the new one
+          } else { // Nothing was being edited
+            toggleCheckBox(currentTodo, !currentTodo.isChecked); // Original behavior for non-edit mode tap
+          }
         }
       },
       child: SizedBox(
         child: ListTile(
-          leading: isOnEditMode
-              ? TextButton(
+          leading: isEditMode(currentTodo)
+              ? IconButton(
+                  icon: const Icon(Icons.save),
                   onPressed: () {
-                    var updatedTodoText = currentTodoEditInput.getText();
-                    updateTile(
-                        currentTodo, updatedTodoText); // todo impl and debug
-                    toggleEditMode(currentTodo);
+                    _saveTodo(currentTodo, _textEditingController.text);
+                    // _setEditingTodo(null); // _saveTodo will handle this
                   },
-                  child: const Icon(
-                    Icons.save,
-                    color: Colors.black12,
-                  ))
+                )
               : Checkbox(
                   value: currentTodo.isChecked,
                   onChanged: (bool? value) {
                     toggleCheckBox(currentTodo, value);
                   },
                 ),
-          title: Text(
-            currentTodo.text,
-            style: TextStyle(
-              decoration: currentTodo.isChecked
-                  ? TextDecoration.lineThrough
-                  : TextDecoration.none,
-            ),
-          ),
-          subtitle: isOnEditMode
-              ? Container()
+          title: isEditMode(currentTodo)
+              ? TextField(
+                  controller: _textEditingController,
+                  autofocus: true, // Automatically focus when edit mode starts
+                  onSubmitted: (newText) { // Optional: save on keyboard submit action
+                    _saveTodo(currentTodo, newText);
+                    // _setEditingTodo(null); // _saveTodo will handle this
+                  },
+                )
+              : Text(
+                  currentTodo.text,
+                  style: TextStyle(
+                    decoration: currentTodo.isChecked
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
+                  ),
+                ),
+          subtitle: isEditMode(currentTodo)
+              ? null // No subtitle in edit mode
               : Text(
                   getFormattedDate(currentTodo.dateTime.toString()),
                   style: TextStyle(
@@ -883,64 +989,78 @@ class _HomePageState extends State<HomePage>
                         : TextDecoration.none,
                   ),
                 ),
-          trailing: isOnEditMode
-              ? TextButton(
-                  onPressed: () {
-                    DialogHelper.showAlertDialog(context,
-                        "Do you want to delete?", "This can't be undone", () {
-                      Navigator.of(context).pop(); // dismiss dialog
-                      setState(() {
-                        items.remove(currentTodo);
-                        _updateList();
-                      });
-                    }, () {
-                      // Cancel
-                      Navigator.of(context).pop(); // dismiss dialog
-                    });
-                  },
-                  child: const Icon(
-                    Icons.delete,
-                    color: Colors.black12,
-                  ))
-              : null,
+          trailing: IconButton( // Kept delete button, could be conditional
+              icon: const Icon(Icons.delete, color: Colors.grey), // Made color a bit more subtle
+              onPressed: () {
+                 _confirmDeleteItem(currentTodo); // Use existing delete confirmation
+              },
+            )
         ),
       ),
     );
   }
 
+  void _saveTodo(TodoListItem todo, String newText) {
+    if (newText.trim().isEmpty) {
+      // Optional: Show a snackbar or dialog if text is empty, or just don't save.
+      // For now, let's prevent saving an empty todo and exit edit mode.
+      _setEditingTodo(null);
+      // Maybe delete if original was not empty and new is empty? For now, just revert.
+      return;
+    }
+    setState(() {
+      if (todo.text != newText.trim()) {
+        todo.text = newText.trim();
+        todo.dateTime = DateTime.now();
+      }
+      _updateList();
+    });
+    _setEditingTodo(null); // Exit edit mode after saving
+  }
+
+
   void toggleCheckBox(TodoListItem currentTodo, bool? value) {
+    // Ensure not to toggle if in edit mode for THIS item by tapping checkbox area (though checkbox is not shown)
+    if (isEditMode(currentTodo)) return;
+
+    // If editing another item, save it before toggling checkbox for current item
+    if (_editingTodo != null && _editingTodo != currentTodo) {
+       _saveTodo(_editingTodo!, _textEditingController.text);
+    }
+    _setEditingTodo(null); // Ensure exiting edit mode for any other item
+
     setState(() {
       currentTodo.isChecked = value ?? false;
       _updateList();
     });
   }
 
-  void toggleEditMode(TodoListItem currentTodo) {
-    setState(() {
-      if (itemOnEditIndex == -1) {
-        var index = items.indexOf(currentTodo);
-        itemOnEditIndex = index;
-      } else {
-        itemOnEditIndex = -1;
-      }
-    });
-  }
+  // void toggleEditMode(TodoListItem currentTodo) { // Replaced by _setEditingTodo
+  //   setState(() {
+  //     if (itemOnEditIndex == -1) {
+  //       var index = items.indexOf(currentTodo);
+  //       itemOnEditIndex = index;
+  //     } else {
+  //       itemOnEditIndex = -1;
+  //     }
+  //   });
+  // }
 
-  void updateTile(TodoListItem currentTodo, String todoText) {
-    setState(() {
-      var index = items.indexOf(currentTodo);
-      var didChanged = false;
-      if (todoText.isNotEmpty) {
-        didChanged = currentTodo.text != todoText;
-        currentTodo.text = todoText; // todo fix issues w updating the text
-      }
-      if (didChanged) {
-        currentTodo.dateTime = DateTime.now();
-      }
-      items[index] = currentTodo;
-      _updateList();
-    });
-  }
+  // void updateTile(TodoListItem currentTodo, String todoText) { // Replaced by _saveTodo
+  //   setState(() {
+  //     var index = items.indexOf(currentTodo);
+  //     var didChanged = false;
+  //     if (todoText.isNotEmpty) {
+  //       didChanged = currentTodo.text != todoText;
+  //       currentTodo.text = todoText; // todo fix issues w updating the text
+  //     }
+  //     if (didChanged) {
+  //       currentTodo.dateTime = DateTime.now();
+  //     }
+  //     items[index] = currentTodo;
+  //     _updateList();
+  //   });
+  // }
 
   void deleteAll() {
     DialogHelper.showAlertDialog(context, AppLocale.areUsure.getString(context),
@@ -1104,7 +1224,12 @@ class _HomePageState extends State<HomePage>
                 title: Text(AppLocale.editMenuItem.getString(context)),
                 onTap: () {
                   Navigator.of(bottomSheetContext).pop();
-                  toggleEditMode(todoItem);
+                  if (_editingTodo != null && _editingTodo != todoItem) {
+                    // If another item is being edited, save it first.
+                    _saveTodo(_editingTodo!, _textEditingController.text);
+                  }
+                  // Then, set the current item to be in edit mode.
+                  _setEditingTodo(todoItem);
                 },
               ),
               ListTile(
@@ -1137,14 +1262,15 @@ class _HomePageState extends State<HomePage>
         AppLocale.thisCantBeUndone.getString(context), // Assuming this key exists
         () {
       Navigator.of(context).pop(); // dismiss confirmation dialog
+      _setEditingTodo(null); // Exit edit mode if the item being deleted was in edit mode
       setState(() {
         items.remove(todoItem);
-        if (itemOnEditIndex >= items.length) { // Adjust if delete was last item
-          itemOnEditIndex = -1;
-        } else if (items.isNotEmpty && itemOnEditIndex != -1 && items[itemOnEditIndex] == todoItem) {
-           // If the deleted item was the one being edited.
-           itemOnEditIndex = -1;
-        }
+        // if (itemOnEditIndex >= items.length) { // Adjust if delete was last item // Removed
+        //   itemOnEditIndex = -1;
+        // } else if (items.isNotEmpty && itemOnEditIndex != -1 && items[itemOnEditIndex] == todoItem) {
+        //    // If the deleted item was the one being edited.
+        //    itemOnEditIndex = -1;
+        // }
         _updateList();
       });
     }, () {

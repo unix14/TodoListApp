@@ -219,6 +219,89 @@ class S {
       args: [],
     );
   }
+
+  /// `The secret of getting ahead is getting started.`
+  String get motivationalSentence1 {
+    return Intl.message(
+      'The secret of getting ahead is getting started.',
+      name: 'motivationalSentence1',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Don't watch the clock; do what it does. Keep going.`
+  String get motivationalSentence2 {
+    return Intl.message(
+      'Don\'t watch the clock; do what it does. Keep going.',
+      name: 'motivationalSentence2',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The only way to do great work is to love what you do.`
+  String get motivationalSentence3 {
+    return Intl.message(
+      'The only way to do great work is to love what you do.',
+      name: 'motivationalSentence3',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Your limitation—it's only your imagination.`
+  String get motivationalSentence4 {
+    return Intl.message(
+      'Your limitation—it\'s only your imagination.',
+      name: 'motivationalSentence4',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Push yourself, because no one else is going to do it for you.`
+  String get motivationalSentence5 {
+    return Intl.message(
+      'Push yourself, because no one else is going to do it for you.',
+      name: 'motivationalSentence5',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Task count display string`
+  String taskCount(int count) {
+    return Intl.plural(
+      count,
+      zero: 'No tasks',
+      one: '$count task',
+      other: '$count tasks',
+      name: 'taskCount',
+      desc: 'Task count display string',
+      args: [count],
+    );
+  }
+
+  /// `Empty Todo`
+  String get emptyTodoDialogTitle {
+    return Intl.message(
+      'Empty Todo',
+      name: 'emptyTodoDialogTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please write something for your todo.`
+  String get emptyTodoDialogMessage {
+    return Intl.message(
+      'Please write something for your todo.',
+      name: 'emptyTodoDialogMessage',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

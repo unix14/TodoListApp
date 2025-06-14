@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sum_todo/generated/l10n.dart';
 
 class DialogHelper {
   static showAlertDialog(BuildContext context, String title, String text,
@@ -8,12 +9,12 @@ class DialogHelper {
 
     // set up the button
     Widget okButton = TextButton(
-      child: const Text("OK"),
+      child: Text(S.of(context).okButtonText),
       onPressed: onOkButton,
     );
 
     Widget cancelButton = TextButton(
-      child: const Text("Cancel"),
+      child: Text(S.of(context).cancelButtonText),
       onPressed: onCancelButton,
     );
 

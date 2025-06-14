@@ -67,5 +67,31 @@ class MessageLookup extends MessageLookupByLibrary {
     "uncategorizedCategory": MessageLookupByLibrary.simpleMessage(
       "Uncategorized",
     ),
+    "motivationalSentence1": MessageLookupByLibrary.simpleMessage(
+      "The secret of getting ahead is getting started.",
+    ),
+    "motivationalSentence2": MessageLookupByLibrary.simpleMessage(
+      "Don't watch the clock; do what it does. Keep going.",
+    ),
+    "motivationalSentence3": MessageLookupByLibrary.simpleMessage(
+      "The only way to do great work is to love what you do.",
+    ),
+    "motivationalSentence4": MessageLookupByLibrary.simpleMessage(
+      "Your limitation—it's only your imagination.",
+    ),
+    "motivationalSentence5": MessageLookupByLibrary.simpleMessage(
+      "Push yourself, because no one else is going to do it for you.",
+    ),
+    "taskCount": (int count) => Intl.pluralLogic(
+          count,
+          locale: 'en',
+          zero: 'No tasks',
+          one: '${count} task',
+          other: '${count} tasks',
+        ),
+    "emptyTodoDialogTitle": MessageLookupByLibrary.simpleMessage("Empty Todo"),
+    "emptyTodoDialogMessage": MessageLookupByLibrary.simpleMessage(
+      "Please write something for your todo.",
+    )
   };
 }
