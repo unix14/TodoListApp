@@ -4,11 +4,21 @@ import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart'
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/managers/app_initializer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:flutter_example/mixin/app_locale.dart';
 
 import 'screens/homepage.dart';
 import 'screens/onboarding.dart';
 
 void main() {
+  // Initialize FlutterLocalization
+  FlutterLocalization.instance.init(
+    mapLocales: [
+      const MapLocale('en', AppLocale.EN, countryCode: 'US'),
+      const MapLocale('he', AppLocale.HE, countryCode: 'IL'),
+    ],
+    initLanguageCode: currentLocaleStr, // Using global currentLocaleStr from globals.dart
+  );
+
   AppInitializer.initialize(andThen: (isAlreadyEnteredTodos) {
     runApp(MyApp(isAlreadyEnteredTodos: isAlreadyEnteredTodos));
   });
@@ -49,7 +59,12 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       locale: _currentLocale, // Set this dynamically
       supportedLocales: FlutterLocalization.instance.supportedLocales,
-      localizationsDelegates: FlutterLocalization.instance.localizationsDelegates,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        FlutterLocalization.delegate, // Using the static delegate getter
+      ],
       theme: ThemeData(
         useMaterial3: false,
         primarySwatch: Colors.blue,

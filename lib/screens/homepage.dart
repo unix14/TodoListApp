@@ -18,7 +18,6 @@ import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:flutter_example/generated/l10n.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:html' as html;
 
@@ -152,7 +151,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                   onSelected: (value) {
                     if(value == kInstallMenuButtonName) {
                       showInstallPrompt();
-                      context.showSnackBar(S.of(context).appIsInstalled);
+                      context.showSnackBar(AppLocale.appIsInstalled.getString(context));
                     }
                     if (value == kArchiveMenuButtonName) {
                       showArchivedTodos();
@@ -333,7 +332,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                 onPressed: () {
                   _onAddItem();
                 },
-                tooltip: AppLocale.deleteAllSubtitle.getString(context),
+                tooltip: AppLocale.add.getString(context),
                 child: const Icon(Icons.add),
               ),
             )
@@ -352,7 +351,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
         fabOpacity = fabOpacityOff;
       });
     } else {
-      DialogHelper.showAlertDialog(context, S.of(context).emptyTodoTitle, S.of(context).emptyTodoMessage,
+      DialogHelper.showAlertDialog(context, AppLocale.emptyTodoTitle.getString(context), AppLocale.emptyTodoMessage.getString(context),
           () {
         // Ok
         Navigator.of(context).pop(); // dismiss dialog
@@ -595,7 +594,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
     var isOnEditMode = isEditMode(currentTodo);
     var currentTodoEditInput = RoundedTextInputField(
       initialText: currentTodo.text,
-      hintText: S.of(context).editTodoHint,
+      hintText: AppLocale.editTodoHint.getString(context),
       onChanged: (newValue) {
         setState(() {
           //todo update the current tile here
@@ -667,7 +666,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
               ? TextButton(
                   onPressed: () {
                     DialogHelper.showAlertDialog(context,
-                        S.of(context).deleteTodoTitle, S.of(context).deleteTodoMessage, () {
+                        AppLocale.doUwant2Delete.getString(context), AppLocale.thisCantBeUndone.getString(context), () {
                       Navigator.of(context).pop(); // dismiss dialog
                       setState(() {
                         items.remove(currentTodo);
