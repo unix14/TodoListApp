@@ -2,5 +2,31 @@
     "randomTaskMenuButton": "Random Task",
     "randomTaskDialogTitle": "Randomly Selected Task",
     "noTasksAvailableDialogTitle": "No Tasks",
-    "noTasksAvailableDialogMessage": "There are no tasks available to pick from."
+    "noTasksAvailableDialogMessage": "There are no tasks available to pick from.",
+    "okButton": "OK",
+    "cancelButton": "Cancel",
+    "closeButton": "Close",
+    "emptyTodoTitle": "Empty Todo",
+    "emptyTodoMessage": "Please write a Todo",
+    "editTodoHint": "Edit your ToDo here!",
+    "deleteTodoTitle": "Do you want to delete?",
+    "deleteTodoMessage": "This can't be undone",
+    "appIsInstalled": "App is installed",
+    "loginFailedTitle": "Login failed",
+    "signupFailedTitle": "Signup failed",
+    "loggedInWelcomeMessage": "You are now logged in, Welcome",
+    "authNoUserFound": "No user found for that email.",
+    "authWrongPassword": "Wrong password provided for that user.",
+    "authWeakPassword": "The password provided is too weak.",
+    "authEmailAlreadyInUse": "The account already exists for that email.",
+    "copiedToClipboard": "Copied to clipboard: {text}",
+    "@copiedToClipboard": {
+        "description": "Snackbar message when text is copied",
+        "placeholders": {
+            "text": {
+                "type": "String",
+                "example": "Hello"
+            }
+        }
+    }
 }

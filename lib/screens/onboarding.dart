@@ -10,6 +10,8 @@ import 'package:flutter_example/screens/homepage.dart';
 import '../widgets/white_round_button.dart';
 import '../common/context_extensions.dart';
 import '../auth/authenticator.dart';
+import 'package:flutter_example/generated/l10n.dart';
+import 'package:flutter_example/common/DialogHelper.dart';
 
 
 //todo refactor package name
@@ -24,7 +26,40 @@ class OnboardingScreen extends StatefulWidget {
 //todo find suitable font
 // todo add option to do repeating tasks
 
+// JULES_TODO: Review all AppLocale.xyz.getString(context) usages in this file.
+// If corresponding keys (e.g., 'loginWEmail', 'loginAsGuest') have been added to your ARB files for the S class,
+// please update them to use S.of(context).yourKey format.
 class _OnboardingScreenState extends State<OnboardingScreen> {
+
+  void _showAuthErrorDialog(BuildContext context, String title, String errorKey) {
+    String message;
+    switch (errorKey) {
+      case 'authNoUserFound':
+        message = S.of(context).authNoUserFound;
+        break;
+      case 'authWrongPassword':
+        message = S.of(context).authWrongPassword;
+        break;
+      case 'authWeakPassword':
+        message = S.of(context).authWeakPassword;
+        break;
+      case 'authEmailAlreadyInUse':
+        message = S.of(context).authEmailAlreadyInUse;
+        break;
+      case 'authUnknownError':
+        // It's good practice to have a generic unknown error string in ARB files
+        // For now, using a hardcoded fallback if S.of(context).authUnknownError is not defined
+        message = S.of(context).authUnknownError ?? "An unexpected error occurred. Please try again.";
+        break;
+      default:
+        message = "An unexpected error: $errorKey"; // Should ideally be localized too
+    }
+    DialogHelper.showAlertDialog(context, title, message, () {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    }, null);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +106,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const Spacer(),
               WhiteRoundButton(text: AppLocale.loginWEmail.getString(context), onPressed: () async {
+      // JULES_TODO: Refactor login logic below to use Authenticator.signIn and handle results:
+      // 1. Obtain email and password from your dialog (e.g., context.showLoginDialog).
+      // 2. Call: var result = await Authenticator.signIn(email, password);
+      // 3. If result is User: show S.of(context).loggedInWelcomeMessage snackbar, navigate to HomePage.
+      //    (Ensure widget is mounted if async operations are involved before BuildContext use)
+      //    if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.of(context).loggedInWelcomeMessage))); }
+      //    if (mounted) { Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage())); }
+      // 4. If result is String (error key): call _showAuthErrorDialog(context, S.of(context).loginFailedTitle, result);
+      //    if (mounted) { _showAuthErrorDialog(context, S.of(context).loginFailedTitle, result); }
+      // 5. Handle any other cases (e.g., null result from dialog) appropriately.
+      // Remember to replace AppLocale.loginWEmail.getString(context) with S.of(context).yourLoginButtonKey if you added one.
                 // todo Implement email login functionality
                 /// go to email login screen
                 context.showLoginDialog();//(_a, emailController, passwordController) async {

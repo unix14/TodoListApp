@@ -18,6 +18,7 @@ import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:flutter_example/generated/l10n.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:html' as html;
 
@@ -151,7 +152,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                   onSelected: (value) {
                     if(value == kInstallMenuButtonName) {
                       showInstallPrompt();
-                      context.showSnackBar(AppLocale.appIsInstalled.getString(context));
+                      context.showSnackBar(S.of(context).appIsInstalled);
                     }
                     if (value == kArchiveMenuButtonName) {
                       showArchivedTodos();
@@ -351,7 +352,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
         fabOpacity = fabOpacityOff;
       });
     } else {
-      DialogHelper.showAlertDialog(context, "Empty Todo", "Please write a Todo", // todo lang
+      DialogHelper.showAlertDialog(context, S.of(context).emptyTodoTitle, S.of(context).emptyTodoMessage,
           () {
         // Ok
         Navigator.of(context).pop(); // dismiss dialog
@@ -594,7 +595,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
     var isOnEditMode = isEditMode(currentTodo);
     var currentTodoEditInput = RoundedTextInputField(
       initialText: currentTodo.text,
-      hintText: "Edit your ToDo here!",
+      hintText: S.of(context).editTodoHint,
       onChanged: (newValue) {
         setState(() {
           //todo update the current tile here
@@ -666,7 +667,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
               ? TextButton(
                   onPressed: () {
                     DialogHelper.showAlertDialog(context,
-                        "Do you want to delete?", "This can't be undone", () {
+                        S.of(context).deleteTodoTitle, S.of(context).deleteTodoMessage, () {
                       Navigator.of(context).pop(); // dismiss dialog
                       setState(() {
                         items.remove(currentTodo);

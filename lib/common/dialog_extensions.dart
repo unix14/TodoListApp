@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_example/generated/l10n.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -19,7 +20,7 @@ extension DialogExtensions on BuildContext {
     // copy to clipboard
     await Clipboard.setData(ClipboardData(text: text));
     // copied successfully
-    showSnackBar("Copied to clipboard: $text");
+    showSnackBar(S.of(this).copiedToClipboard(text: text));
   }
 
 
@@ -52,7 +53,7 @@ extension DialogExtensions on BuildContext {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('OK', style: TextStyle(color: Colors.black),),
+              child: Text(S.of(context).okButton, style: const TextStyle(color: Colors.black),),
             ),
           ],
         );
@@ -66,8 +67,8 @@ extension DialogExtensions on BuildContext {
       String message,
       Function() callback,
       {Widget? bottomWidget,
-        String firstButtonText = "OK",
-        String secondButtonText = "Cancel",
+        String? firstButtonText,
+        String? secondButtonText,
         String? thirdButtonText,
         Function()? thirdButtonCallback,
         bool thirdButtonShouldClose = true,
@@ -77,17 +78,22 @@ extension DialogExtensions on BuildContext {
     //   'message': message,
     //   'thirdButtonText': thirdButtonText ?? "",
     // });
+
+    final S s = S.of(this); // 'this' is the BuildContext of DialogExtensions
+    final String actualFirstButtonText = firstButtonText ?? s.okButton;
+    final String actualSecondButtonText = secondButtonText ?? s.cancelButton;
+
     showDialog(
       context: this,
-      builder: (context) {
+      builder: (dialogContext) { // Renamed to avoid confusion
         return getDialog(
-          context,
+          dialogContext,
           title,
           message,
           callback,
           bottomWidget: bottomWidget,
-          firstButtonText: firstButtonText,
-          secondButtonText: secondButtonText,
+          firstButtonText: actualFirstButtonText,
+          secondButtonText: actualSecondButtonText,
           thirdButtonText: thirdButtonText,
           thirdButtonCallback: thirdButtonCallback,
           thirdButtonShouldClose: thirdButtonShouldClose,);
@@ -101,12 +107,23 @@ extension DialogExtensions on BuildContext {
       String message,
       Function() callback,
       {Widget? bottomWidget,
-        String firstButtonText = "OK",
-        String secondButtonText = "Cancel",
+        // Default values are placeholders that signal to use localization if not overridden by caller.
+        String firstButtonTextOverride = "OK",
+        String secondButtonTextOverride = "Cancel",
         String? thirdButtonText,
         Function()? thirdButtonCallback,
         bool thirdButtonShouldClose = true,
       }) {
+    final S s = S.of(context);
+    // Use localized text if the default placeholder ("OK"/"Cancel") is passed,
+    // otherwise use the text provided by the caller.
+    final String actualFirstButtonText = (firstButtonTextOverride == "OK")
+        ? s.okButton
+        : firstButtonTextOverride;
+    final String actualSecondButtonText = (secondButtonTextOverride == "Cancel")
+        ? s.cancelButton
+        : secondButtonTextOverride;
+
     return AlertDialog(
       title: Text(title),
       content: Text(message),
@@ -132,14 +149,14 @@ extension DialogExtensions on BuildContext {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text(secondButtonText, style: TextStyle(color: Colors.black),),
+                  child: Text(actualSecondButtonText, style: const TextStyle(color: Colors.black),),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                     callback();
                   },
-                  child: Text(firstButtonText, style: TextStyle(color: Colors.black),),
+                  child: Text(actualFirstButtonText, style: const TextStyle(color: Colors.black),),
                 ),
               ],
             ),
