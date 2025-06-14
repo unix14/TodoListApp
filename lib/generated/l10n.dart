@@ -54,13 +54,61 @@ class S {
   static S? maybeOf(BuildContext context) {
     return Localizations.of<S>(context, S);
   }
+
+  /// `Random Task`
+  String get randomTaskMenuButton {
+    return Intl.message(
+      'Random Task',
+      name: 'randomTaskMenuButton',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Randomly Selected Task`
+  String get randomTaskDialogTitle {
+    return Intl.message(
+      'Randomly Selected Task',
+      name: 'randomTaskDialogTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No Tasks`
+  String get noTasksAvailableDialogTitle {
+    return Intl.message(
+      'No Tasks',
+      name: 'noTasksAvailableDialogTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `There are no tasks available to pick from.`
+  String get noTasksAvailableDialogMessage {
+    return Intl.message(
+      'There are no tasks available to pick from.',
+      name: 'noTasksAvailableDialogMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All`
+  String get all {
+    return Intl.message('All', name: 'all', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {
   const AppLocalizationDelegate();
 
   List<Locale> get supportedLocales {
-    return const <Locale>[Locale.fromSubtags(languageCode: 'en')];
+    return const <Locale>[
+      Locale.fromSubtags(languageCode: 'en'),
+      Locale.fromSubtags(languageCode: 'he'),
+    ];
   }
 
   @override

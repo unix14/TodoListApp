@@ -42,6 +42,7 @@ mixin AppLocale {
   static const String randomTaskDialogTitle = 'randomTaskDialogTitle';
   static const String noTasksAvailableDialogTitle = 'noTasksAvailableDialogTitle';
   static const String noTasksAvailableDialogMessage = 'noTasksAvailableDialogMessage';
+  static const String all = "all";
 
   static const Map<String, dynamic> EN = {
     title: 'Todo List',
@@ -82,10 +83,11 @@ mixin AppLocale {
     doUwant2Delete: "Do you want to delete?",
     thisCantBeUndone: "This can't be undone",
     selectLanguage: "Select Language",
-    AppLocale.randomTaskMenuButton: "Random Task",
-    AppLocale.randomTaskDialogTitle: "Randomly Selected Task",
-    AppLocale.noTasksAvailableDialogTitle: "No Tasks",
-    AppLocale.noTasksAvailableDialogMessage: "There are no tasks available to pick from.",
+    randomTaskMenuButton: "Random Task",
+    randomTaskDialogTitle: "Randomly Selected Task",
+    noTasksAvailableDialogTitle: "No Tasks",
+    noTasksAvailableDialogMessage: "There are no tasks available to pick from.",
+    all: "All",
   };
   static const Map<String, dynamic> HE = {
     title: 'המשימות שלי',
@@ -126,9 +128,10 @@ mixin AppLocale {
     doUwant2Delete: "האם למחוק?",
     thisCantBeUndone: "פעולה זו בלתי הפיכה",
     selectLanguage: "בחר שפה",
-    AppLocale.randomTaskMenuButton: "משימה אקראית",
-    AppLocale.randomTaskDialogTitle: "משימה שנבחרה בצורה אקראית",
-    AppLocale.noTasksAvailableDialogTitle: "אין משימות",
-    AppLocale.noTasksAvailableDialogMessage: "אין כרגע משימות שעלייך לבצע",
+    randomTaskMenuButton: "משימה אקראית",
+    randomTaskDialogTitle: "משימה שנבחרה בצורה אקראית",
+    noTasksAvailableDialogTitle: "אין משימות",
+    noTasksAvailableDialogMessage: "אין כרגע משימות שעלייך לבצע",
+    all: "הכל"
   };
 }
