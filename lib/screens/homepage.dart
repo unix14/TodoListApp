@@ -136,7 +136,7 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  void _initializeTabs() async {
+  Future<void> _initializeTabs() async {
     // Store the current tab index to restore it after re-initialization
     int previousIndex = _tabController?.index ?? 0;
 
@@ -305,7 +305,7 @@ class _HomePageState extends State<HomePage>
                     } else if (value == kRenameCategoryMenuButtonName) {
                       if (_isCurrentCategoryCustom()) {
                         final currentCategoryName = _categories[_tabController!.index];
-                        _promptRenameCategory(currentCategoryName);
+                        _promptRenameCategory(context, currentCategoryName);
                       }
                     } else if (value == kDeleteCategoryMenuButtonName) {
                       if (_isCurrentCategoryCustom()) {
@@ -1238,12 +1238,8 @@ class _HomePageState extends State<HomePage>
       }
     });
   }
-}
 
-// Define a constant for the "Add New Category" option to avoid magic strings
-const String kAddNewCategoryOption = 'add_new_category_option_val'; // Made it more unique
-
-  Future<String?> _promptRenameCategory(String oldCategoryName) async {
+  Future<String?> _promptRenameCategory(BuildContext context, String oldCategoryName) async {
     final TextEditingController categoryController = TextEditingController(text: oldCategoryName);
     final formKey = GlobalKey<FormState>();
     String? newCategoryName;
@@ -1349,3 +1345,7 @@ const String kAddNewCategoryOption = 'add_new_category_option_val'; // Made it m
       return null;
     }
   }
+}
+
+// Define a constant for the "Add New Category" option to avoid magic strings
+const String kAddNewCategoryOption = 'add_new_category_option_val'; // Made it more unique
