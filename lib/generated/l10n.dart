@@ -99,6 +99,126 @@ class S {
   String get all {
     return Intl.message('All', name: 'all', desc: '', args: []);
   }
+
+  /// `Add New Category`
+  String get addCategoryDialogTitle {
+    return Intl.message(
+      'Add New Category',
+      name: 'addCategoryDialogTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Category Name`
+  String get categoryNameHintText {
+    return Intl.message(
+      'Category Name',
+      name: 'categoryNameHintText',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Category name cannot be empty.`
+  String get categoryNameEmptyError {
+    return Intl.message(
+      'Category name cannot be empty.',
+      name: 'categoryNameEmptyError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This category name already exists.`
+  String get categoryNameExistsError {
+    return Intl.message(
+      'This category name already exists.',
+      name: 'categoryNameExistsError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `OK`
+  String get okButtonText {
+    return Intl.message('OK', name: 'okButtonText', desc: '', args: []);
+  }
+
+  /// `Cancel`
+  String get cancelButtonText {
+    return Intl.message('Cancel', name: 'cancelButtonText', desc: '', args: []);
+  }
+
+  /// `Add new category`
+  String get addCategoryTooltip {
+    return Intl.message(
+      'Add new category',
+      name: 'addCategoryTooltip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Edit`
+  String get editMenuItem {
+    return Intl.message('Edit', name: 'editMenuItem', desc: '', args: []);
+  }
+
+  /// `Delete`
+  String get deleteMenuItem {
+    return Intl.message('Delete', name: 'deleteMenuItem', desc: '', args: []);
+  }
+
+  /// `Move to category`
+  String get moveToCategoryMenuItem {
+    return Intl.message(
+      'Move to category',
+      name: 'moveToCategoryMenuItem',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select Category`
+  String get selectCategoryDialogTitle {
+    return Intl.message(
+      'Select Category',
+      name: 'selectCategoryDialogTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Uncategorized`
+  String get uncategorizedCategory {
+    return Intl.message(
+      'Uncategorized',
+      name: 'uncategorizedCategory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Item moved to {categoryName}`
+  String itemMovedSnackbar(Object categoryName) {
+    return Intl.message(
+      'Item moved to $categoryName',
+      name: 'itemMovedSnackbar',
+      desc: '',
+      args: [categoryName],
+    );
+  }
+
+  /// `Item moved to Uncategorized`
+  String get itemUncategorizedSnackbar {
+    return Intl.message(
+      'Item moved to Uncategorized',
+      name: 'itemUncategorizedSnackbar',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

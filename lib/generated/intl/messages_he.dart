@@ -20,8 +20,43 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'he';
 
+  static String m0(categoryName) => "הפריט הועבר אל ${categoryName}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+    "addCategoryDialogTitle": MessageLookupByLibrary.simpleMessage(
+      "הוסף קטגוריה חדשה",
+    ),
+    "addCategoryTooltip": MessageLookupByLibrary.simpleMessage(
+      "הוסף קטגוריה חדשה",
+    ),
     "all": MessageLookupByLibrary.simpleMessage("הכל"),
+    "cancelButtonText": MessageLookupByLibrary.simpleMessage("ביטול"),
+    "categoryNameEmptyError": MessageLookupByLibrary.simpleMessage(
+      "שם קטגוריה לא יכול להיות ריק.",
+    ),
+    "categoryNameExistsError": MessageLookupByLibrary.simpleMessage(
+      "שם קטגוריה זה כבר קיים.",
+    ),
+    "categoryNameHintText": MessageLookupByLibrary.simpleMessage("שם הקטגוריה"),
+    "deleteMenuItem": MessageLookupByLibrary.simpleMessage("מחק"),
+    "editMenuItem": MessageLookupByLibrary.simpleMessage("ערוך"),
+    "itemMovedSnackbar": m0,
+    "itemUncategorizedSnackbar": MessageLookupByLibrary.simpleMessage(
+      "הפריט הועבר אל ללא קטגוריה",
+    ),
+    "moveToCategoryMenuItem": MessageLookupByLibrary.simpleMessage(
+      "העבר לקטגוריה",
+    ),
+    "noTasksAvailableDialogMessage": MessageLookupByLibrary.simpleMessage(
+      "אין כרגע משימות לבחור מהן",
+    ),
+    "okButtonText": MessageLookupByLibrary.simpleMessage("אישור"),
+    "selectCategoryDialogTitle": MessageLookupByLibrary.simpleMessage(
+      "בחר קטגוריה",
+    ),
+    "uncategorizedCategory": MessageLookupByLibrary.simpleMessage(
+      "ללא קטגוריה",
+    ),
   };
 }
