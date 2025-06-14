@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:html' as html;
 
 import 'onboarding.dart';
+
+const String kRandomTaskMenuButtonName = 'randomTask';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -164,6 +167,8 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                           context,
                           MaterialPageRoute(
                               builder: (context) => const SettingsScreen()));
+                    } else if (value == kRandomTaskMenuButtonName) {
+                      _showRandomTask();
                     }
                   },
                   itemBuilder: (BuildContext context) {
@@ -245,6 +250,20 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                           ),
                           const SizedBox(width: 8.0),
                           Text(AppLocale.settings.getString(context)),
+                        ],
+                      ),
+                    ));
+                    // Add Random Task button
+                    popupMenuItems.add(PopupMenuItem<String>(
+                      value: kRandomTaskMenuButtonName,
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.shuffle,
+                            color: Colors.blue,
+                          ),
+                          const SizedBox(width: 8.0),
+                          Text(AppLocale.randomTaskMenuButton.getString(context)),
                         ],
                       ),
                     ));
@@ -715,5 +734,35 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
       // Cancel
       Navigator.of(context).pop(); // dismiss dialog
     });
+  }
+
+  void _showRandomTask() {
+    final availableTasks = items
+        .where((item) => !item.isArchived && !item.isChecked)
+        .toList();
+
+    if (availableTasks.isEmpty) {
+      DialogHelper.showAlertDialog(
+        context,
+        AppLocale.noTasksAvailableDialogTitle.getString(context),
+        AppLocale.noTasksAvailableDialogMessage.getString(context),
+        () {
+          Navigator.of(context).pop(); // dismiss dialog
+        },
+        null,
+      );
+    } else {
+      final randomIndex = Random().nextInt(availableTasks.length);
+      final randomTask = availableTasks[randomIndex];
+      DialogHelper.showAlertDialog(
+        context,
+        AppLocale.randomTaskDialogTitle.getString(context),
+        randomTask.text,
+        () {
+          Navigator.of(context).pop(); // dismiss dialog
+        },
+        null,
+      );
+    }
   }
 }
