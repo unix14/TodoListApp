@@ -45,6 +45,7 @@ class _HomePageState extends State<HomePage>
   TabController? _tabController;
   List<String> _categories = []; // Will be initialized in didChangeDependencies
   List<String> _customCategories = [];
+  bool _isPromptingForCategory = false;
 
   bool isEditMode(TodoListItem todoItem) {
     bool sizeValidation =
@@ -134,27 +135,75 @@ class _HomePageState extends State<HomePage>
   }
 
   void _initializeTabs() async {
-    // Dispose old controller if exists
+    // Store the current tab index to restore it after re-initialization
+    int previousIndex = _tabController?.index ?? 0;
+
+    // Dispose old controller if exists BEFORE async operations
     _tabController?.removeListener(_handleTabSelection);
     _tabController?.dispose();
+    _tabController = null; // Set to null immediately
 
+    // Perform async operation
     _customCategories = await EncryptedSharedPreferencesHelper.loadCategories();
-    setState(() {
-      _categories = [
-        AppLocale.all.getString(context), ..._customCategories
-      ];
-      int initialIndex = 0; // Default to first tab
-      // Potentially load and set a saved initialIndex here
-      if (initialIndex >= _categories.length +1) initialIndex = 0;
+
+    // This part should be synchronous and use the updated context from didChangeDependencies
+    List<String> newCategories = [
+      AppLocale.all.getString(context), // This uses the potentially new context
+      ..._customCategories
+    ];
+
+    // Ensure previousIndex is valid for the new categories length
+    // The TabController length will be newCategories.length + 1 (for the '+' tab)
+    // So, valid indices for actual categories are 0 to newCategories.length - 1
+    // and the '+' tab will be at index newCategories.length.
+    if (previousIndex >= newCategories.length + 1) {
+      previousIndex = 0; // Default to first tab if out of bounds
+    }
+
+    // If previous index was the '+' tab (which is at newCategories.length after new list is formed)
+    // or if it points to an index that would be the '+' tab in the new setup.
+    // For example, if newCategories is empty, previousIndex could be 0, which is the '+' tab.
+    // If newCategories has 1 item, prevInd 1 is '+'. If 2 items, prevInd 2 is '+'.
+    if (previousIndex == newCategories.length) {
+       // If the previous tab was the '+' icon, default to the first actual category.
+       // If there are no actual categories, it will correctly be 0 (which will be the '+' tab).
+       previousIndex = 0;
+    }
+    // A simpler check: if previousIndex would now point to the '+' tab or beyond, reset to 0.
+    // The maximum valid index for an *actual category tab* is `newCategories.length - 1`.
+    // If `newCategories` is empty, this results in -1, so `previousIndex` should be 0.
+    // The `TabController` will have `newCategories.length + 1` tabs.
+    // `initialIndex` must be between 0 and `newCategories.length`.
+    if (previousIndex > newCategories.length) { // If it's beyond the '+' tab index
+        previousIndex = 0;
+    }
+    // If newCategories is empty, previousIndex must be 0 (the '+' tab).
+    if (newCategories.isEmpty) {
+        previousIndex = 0;
+    }
 
 
-      _tabController = TabController(length: _categories.length + 1, vsync: this, initialIndex: initialIndex);
-      _tabController!.addListener(_handleTabSelection);
-    });
+    TabController newTabController = TabController(
+      length: newCategories.length + 1, // +1 for the '+' tab
+      vsync: this,
+      initialIndex: previousIndex,
+    );
+    newTabController.addListener(_handleTabSelection);
+
+    if (mounted) { // Check if the widget is still in the tree
+      setState(() {
+        _categories = newCategories;
+        _tabController = newTabController;
+      });
+    } else {
+      // If not mounted, dispose the newly created controller to avoid leaks
+      newTabController.dispose();
+    }
   }
 
   void _handleTabSelection() {
     if (_tabController == null) return;
+    if (_isPromptingForCategory) return;
 
     // Check if the controller is still valid (not disposed)
     // and if the index is for the "+" button
@@ -169,6 +218,7 @@ class _HomePageState extends State<HomePage>
         // Check if the tab controller is still at the "+" tab before prompting
         // This can prevent issues if multiple taps occur quickly or state changes rapidly
         if (_tabController!.index == _categories.length) {
+          _isPromptingForCategory = true;
           _promptForNewCategory(selectedIndexToRestore: previousIndex);
         }
       });
@@ -880,80 +930,87 @@ class _HomePageState extends State<HomePage>
     final formKey = GlobalKey<FormState>();
     bool categoryAddedSuccessfully = false;
 
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button for explicit action
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(AppLocale.addCategoryDialogTitle.getString(dialogContext)),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: ListBody(
-                children: <Widget>[
-                  TextFormField(
-                    controller: categoryController,
-                    decoration: InputDecoration(hintText: AppLocale.categoryNameHintText.getString(dialogContext)),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return AppLocale.categoryNameEmptyError.getString(dialogContext);
-                      }
-                      // Check against _customCategories for uniqueness, "All" is not a custom category.
-                      if (_customCategories.any((cat) => cat.toLowerCase() == value.trim().toLowerCase())) {
-                        return AppLocale.categoryNameExistsError.getString(dialogContext);
-                      }
-                      return null;
-                    },
-                  ),
-                ],
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false, // user must tap button for explicit action
+        builder: (BuildContext dialogContext) {
+          return AlertDialog(
+            title: Text(AppLocale.addCategoryDialogTitle.getString(dialogContext)),
+            content: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: ListBody(
+                  children: <Widget>[
+                    TextFormField(
+                      controller: categoryController,
+                      decoration: InputDecoration(hintText: AppLocale.categoryNameHintText.getString(dialogContext)),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return AppLocale.categoryNameEmptyError.getString(dialogContext);
+                        }
+                        // Check against _customCategories for uniqueness, "All" is not a custom category.
+                        if (_customCategories.any((cat) => cat.toLowerCase() == value.trim().toLowerCase())) {
+                          return AppLocale.categoryNameExistsError.getString(dialogContext);
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-            ),
-            TextButton(
-              child: Text(AppLocale.okButtonText.getString(dialogContext)),
-              onPressed: () async {
-                if (formKey.currentState!.validate()) {
-                  final newCategory = categoryController.text.trim();
-                  setState(() {
-                    _customCategories.add(newCategory);
-                    EncryptedSharedPreferencesHelper.saveCategories(_customCategories); // No need to await if not critical path for UI
+            actions: <Widget>[
+              TextButton(
+                child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              TextButton(
+                child: Text(AppLocale.okButtonText.getString(dialogContext)),
+                onPressed: () async {
+                  if (formKey.currentState!.validate()) {
+                    final newCategory = categoryController.text.trim();
+                    setState(() {
+                      _customCategories.add(newCategory);
+                      EncryptedSharedPreferencesHelper.saveCategories(_customCategories); // No need to await if not critical path for UI
 
-                    _categories = [AppLocale.all.getString(context), ..._customCategories];
+                      _categories = [AppLocale.all.getString(context), ..._customCategories];
 
-                    final newCategoryIndexInCategories = _categories.length - 1; // Index of the newly added category tab
+                      final newCategoryIndexInCategories = _categories.length - 1; // Index of the newly added category tab
 
-                    _tabController?.removeListener(_handleTabSelection);
-                    _tabController?.dispose();
-                    _tabController = TabController(
-                      length: _categories.length + 1, // +1 for the "+" tab itself
-                      vsync: this,
-                      initialIndex: newCategoryIndexInCategories, // Select the newly added actual category tab
-                    );
-                    _tabController!.addListener(_handleTabSelection);
-                    categoryAddedSuccessfully = true;
-                  });
-                  Navigator.of(dialogContext).pop(); // Close dialog on success
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
+                      _tabController?.removeListener(_handleTabSelection);
+                      _tabController?.dispose();
+                      _tabController = TabController(
+                        length: _categories.length + 1, // +1 for the "+" tab itself
+                        vsync: this,
+                        initialIndex: newCategoryIndexInCategories, // Select the newly added actual category tab
+                      );
+                      _tabController!.addListener(_handleTabSelection);
+                      categoryAddedSuccessfully = true;
+                    });
+                    Navigator.of(dialogContext).pop(); // Close dialog on success
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      setState(() {
+        _isPromptingForCategory = false;
+      });
+    }
 
     // If the dialog was dismissed without adding a category (e.g., pressed cancel or validation failed after trying)
     // and a selectedIndexToRestore is provided, ensure the tab selection is reverted.
     if (!categoryAddedSuccessfully && selectedIndexToRestore != null && _tabController != null) {
       // Only revert if the current index is still the "+" button's potential index
       // This check is important because if the user somehow managed to change tabs while dialog was open, we shouldn't interfere.
-      if (_tabController!.index == _categories.length) {
+      // Also ensure the controller is not disposed before animating.
+      if (_tabController!.index == _categories.length && mounted) { // `mounted` check for safety
         _tabController!.animateTo(selectedIndexToRestore);
       }
     }
