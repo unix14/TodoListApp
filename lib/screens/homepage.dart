@@ -143,19 +143,44 @@ class _HomePageState extends State<HomePage>
       _categories = [
         AppLocale.all.getString(context), ..._customCategories
       ];
-      _tabController = TabController(length: _categories.length, vsync: this);
+      int initialIndex = 0; // Default to first tab
+      // Potentially load and set a saved initialIndex here
+      if (initialIndex >= _categories.length +1) initialIndex = 0;
+
+
+      _tabController = TabController(length: _categories.length + 1, vsync: this, initialIndex: initialIndex);
       _tabController!.addListener(_handleTabSelection);
     });
   }
 
   void _handleTabSelection() {
-    if (_tabController != null && _tabController!.indexIsChanging) {
-      // Optional: Add logic here if something needs to happen on tab selection
-      // beyond what TabBarView handles. For now, setState might be enough if
-      // filtering logic depends on the selected tab index directly.
-      setState(() {});
+    if (_tabController == null) return;
+
+    // Check if the controller is still valid (not disposed)
+    // and if the index is for the "+" button
+    if (_tabController!.index == _categories.length) {
+      final previousIndex = _tabController!.previousIndex;
+
+      // It's crucial to ensure that the tab index is changed *before* showing the dialog,
+      // so the UI doesn't get stuck on the "+" tab visually.
+      // However, changing it immediately might cause a flicker if the dialog is cancelled.
+      // The postFrameCallback helps schedule the dialog prompt after the current build cycle.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Check if the tab controller is still at the "+" tab before prompting
+        // This can prevent issues if multiple taps occur quickly or state changes rapidly
+        if (_tabController!.index == _categories.length) {
+          _promptForNewCategory(selectedIndexToRestore: previousIndex);
+        }
+      });
+    } else {
+       if (_tabController!.indexIsChanging) {
+         setState(() {
+           // Handle regular tab changes, e.g., save the index
+         });
+       }
     }
   }
+
 
   @override
   void dispose() {
@@ -181,19 +206,17 @@ class _HomePageState extends State<HomePage>
       appBar: AppBar(
         centerTitle: true,
         title: Text(AppLocale.title.getString(context)),
-        bottom: _tabController == null || _categories.isEmpty
+        bottom: _tabController == null
             ? null
             : TabBar(
                 controller: _tabController,
                 isScrollable: true,
-                tabs: _categories.map((String name) => Tab(text: name)).toList(),
+                tabs: [
+                  ..._categories.map((String name) => Tab(text: name)).toList(),
+                  Tab(icon: Tooltip(message: AppLocale.addCategoryTooltip.getString(context), child: const Icon(Icons.add))),
+                ],
               ),
         actions: [
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  tooltip: 'Add new category', // TODO: Localize this
-                  onPressed: _promptForNewCategory,
-                ),
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == kInstallMenuButtonName) {
@@ -326,9 +349,10 @@ class _HomePageState extends State<HomePage>
                 ? const Center(child: CircularProgressIndicator())
                 : TabBarView(
                     controller: _tabController,
+                    // Children count should only be for actual categories, not the "+" tab
                     children: _categories.map((String categoryName) {
                       return FutureBuilder<List<TodoListItem>>(
-                        future: _loadingData,
+                        future: _loadingData, // This future now correctly reloads all items
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -694,7 +718,11 @@ class _HomePageState extends State<HomePage>
     );
     return InkWell(
       onLongPress: () {
-        toggleEditMode(currentTodo);
+        if (isEditMode(currentTodo)) {
+          toggleEditMode(currentTodo); // Optionally exit edit mode
+        } else {
+          _showTodoContextMenu(currentTodo);
+        }
       },
       onTap: () {
         if (isOnEditMode) {
@@ -847,16 +875,17 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  void _promptForNewCategory() async {
+  void _promptForNewCategory({int? selectedIndexToRestore}) async {
     final TextEditingController categoryController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    bool categoryAddedSuccessfully = false;
 
-    return showDialog<void>(
+    await showDialog<void>(
       context: context,
-      barrierDismissible: false, // user must tap button!
+      barrierDismissible: false, // user must tap button for explicit action
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('New Category'), // TODO: Localize
+          title: Text(AppLocale.addCategoryDialogTitle.getString(dialogContext)),
           content: SingleChildScrollView(
             child: Form(
               key: formKey,
@@ -864,13 +893,14 @@ class _HomePageState extends State<HomePage>
                 children: <Widget>[
                   TextFormField(
                     controller: categoryController,
-                    decoration: const InputDecoration(hintText: "Category name"), // TODO: Localize
+                    decoration: InputDecoration(hintText: AppLocale.categoryNameHintText.getString(dialogContext)),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Category name cannot be empty.'; // TODO: Localize
+                        return AppLocale.categoryNameEmptyError.getString(dialogContext);
                       }
-                      if (_categories.any((cat) => cat.toLowerCase() == value.trim().toLowerCase())) {
-                        return 'Category already exists.'; // TODO: Localize
+                      // Check against _customCategories for uniqueness, "All" is not a custom category.
+                      if (_customCategories.any((cat) => cat.toLowerCase() == value.trim().toLowerCase())) {
+                        return AppLocale.categoryNameExistsError.getString(dialogContext);
                       }
                       return null;
                     },
@@ -881,32 +911,35 @@ class _HomePageState extends State<HomePage>
           ),
           actions: <Widget>[
             TextButton(
-              child: Text(AppLocale.cancel.getString(context)),
+              child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
             ),
             TextButton(
-              child: Text(AppLocale.ok.getString(context)),
+              child: Text(AppLocale.okButtonText.getString(dialogContext)),
               onPressed: () async {
                 if (formKey.currentState!.validate()) {
                   final newCategory = categoryController.text.trim();
                   setState(() {
                     _customCategories.add(newCategory);
-                    EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+                    EncryptedSharedPreferencesHelper.saveCategories(_customCategories); // No need to await if not critical path for UI
 
                     _categories = [AppLocale.all.getString(context), ..._customCategories];
+
+                    final newCategoryIndexInCategories = _categories.length - 1; // Index of the newly added category tab
 
                     _tabController?.removeListener(_handleTabSelection);
                     _tabController?.dispose();
                     _tabController = TabController(
-                      length: _categories.length,
+                      length: _categories.length + 1, // +1 for the "+" tab itself
                       vsync: this,
-                      initialIndex: _categories.length - 1, // Select the new tab
+                      initialIndex: newCategoryIndexInCategories, // Select the newly added actual category tab
                     );
                     _tabController!.addListener(_handleTabSelection);
+                    categoryAddedSuccessfully = true;
                   });
-                  Navigator.of(dialogContext).pop();
+                  Navigator.of(dialogContext).pop(); // Close dialog on success
                 }
               },
             ),
@@ -914,5 +947,130 @@ class _HomePageState extends State<HomePage>
         );
       },
     );
+
+    // If the dialog was dismissed without adding a category (e.g., pressed cancel or validation failed after trying)
+    // and a selectedIndexToRestore is provided, ensure the tab selection is reverted.
+    if (!categoryAddedSuccessfully && selectedIndexToRestore != null && _tabController != null) {
+      // Only revert if the current index is still the "+" button's potential index
+      // This check is important because if the user somehow managed to change tabs while dialog was open, we shouldn't interfere.
+      if (_tabController!.index == _categories.length) {
+        _tabController!.animateTo(selectedIndexToRestore);
+      }
+    }
+  }
+
+  void _showTodoContextMenu(TodoListItem todoItem) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext bottomSheetContext) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.edit),
+                title: Text(AppLocale.editMenuItem.getString(context)),
+                onTap: () {
+                  Navigator.of(bottomSheetContext).pop();
+                  toggleEditMode(todoItem);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.category),
+                title: Text(AppLocale.moveToCategoryMenuItem.getString(context)),
+                onTap: () {
+                  Navigator.of(bottomSheetContext).pop();
+                  _promptMoveToCategory(todoItem);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: Text(AppLocale.deleteMenuItem.getString(context), style: const TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.of(bottomSheetContext).pop();
+                  _confirmDeleteItem(todoItem);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteItem(TodoListItem todoItem) {
+     DialogHelper.showAlertDialog(
+        context,
+        AppLocale.doUwant2Delete.getString(context), // Assuming this key exists
+        AppLocale.thisCantBeUndone.getString(context), // Assuming this key exists
+        () {
+      Navigator.of(context).pop(); // dismiss confirmation dialog
+      setState(() {
+        items.remove(todoItem);
+        if (itemOnEditIndex >= items.length) { // Adjust if delete was last item
+          itemOnEditIndex = -1;
+        } else if (items.isNotEmpty && itemOnEditIndex != -1 && items[itemOnEditIndex] == todoItem) {
+           // If the deleted item was the one being edited.
+           itemOnEditIndex = -1;
+        }
+        _updateList();
+      });
+    }, () {
+      // Cancel
+      Navigator.of(context).pop(); // dismiss dialog
+    });
+  }
+
+  void _promptMoveToCategory(TodoListItem todoItem) async {
+    List<String> availableCategories = List.from(_customCategories);
+    // String? currentItemCategory = todoItem.category; // Not strictly needed for display logic here
+
+    showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return SimpleDialog(
+          title: Text(AppLocale.selectCategoryDialogTitle.getString(dialogContext)),
+          children: <Widget>[
+            SimpleDialogOption(
+              onPressed: () {
+                Navigator.pop(dialogContext, null); // Represents "Uncategorized"
+              },
+              child: Text(AppLocale.uncategorizedCategory.getString(dialogContext)),
+            ),
+            ...availableCategories.map((category) {
+              return SimpleDialogOption(
+                onPressed: () {
+                  Navigator.pop(dialogContext, category);
+                },
+                child: Text(category),
+              );
+            }).toList(),
+          ],
+        );
+      },
+    ).then((selectedCategoryName) {
+      if (selectedCategoryName != todoItem.category || (selectedCategoryName == null && todoItem.category != null) || (selectedCategoryName != null && todoItem.category == null) ) { // check if category actually changed
+        bool categoryWasActuallySelected = true; // A bit of a misnomer, this means a choice was made, even if it's "Uncategorized"
+        if(selectedCategoryName == null && todoItem.category == null) { // If chose uncategorized and it was already uncategorized
+            categoryWasActuallySelected = false;
+        }
+
+
+        if (categoryWasActuallySelected) {
+          setState(() {
+            todoItem.category = selectedCategoryName;
+            _updateList();
+          });
+          // Show feedback to the user
+          final snackBar = SnackBar(
+            content: Text(
+              selectedCategoryName == null
+                  ? AppLocale.itemUncategorizedSnackbar.getString(context)
+                  : AppLocale.itemMovedSnackbar.getString(context).replaceAll('{categoryName}', selectedCategoryName),
+            ),
+          );
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        }
+      }
+    });
   }
 }

@@ -1,3 +1,18 @@
 {
-    "all": "הכל"
+    "all": "הכל",
+    "noTasksAvailableDialogMessage": "אין כרגע משימות לבחור מהן",
+    "addCategoryDialogTitle": "הוסף קטגוריה חדשה",
+    "categoryNameHintText": "שם הקטגוריה",
+    "categoryNameEmptyError": "שם קטגוריה לא יכול להיות ריק.",
+    "categoryNameExistsError": "שם קטגוריה זה כבר קיים.",
+    "okButtonText": "אישור",
+    "cancelButtonText": "ביטול",
+    "addCategoryTooltip": "הוסף קטגוריה חדשה",
+    "editMenuItem": "ערוך",
+    "deleteMenuItem": "מחק",
+    "moveToCategoryMenuItem": "העבר לקטגוריה",
+    "selectCategoryDialogTitle": "בחר קטגוריה",
+    "uncategorizedCategory": "ללא קטגוריה",
+    "itemMovedSnackbar": "הפריט הועבר אל {categoryName}",
+    "itemUncategorizedSnackbar": "הפריט הועבר אל ללא קטגוריה"
 }
