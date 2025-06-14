@@ -5,7 +5,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_example/generated/l10n.dart';
+import 'package:flutter_localization/flutter_localization.dart';
+import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -20,7 +21,7 @@ extension DialogExtensions on BuildContext {
     // copy to clipboard
     await Clipboard.setData(ClipboardData(text: text));
     // copied successfully
-    showSnackBar(S.of(this).copiedToClipboard(text: text));
+    showSnackBar(AppLocale.copiedToClipboard.getString(this, {'text': text}));
   }
 
 
@@ -53,7 +54,7 @@ extension DialogExtensions on BuildContext {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text(S.of(context).okButton, style: const TextStyle(color: Colors.black),),
+              child: Text(AppLocale.ok.getString(context), style: const TextStyle(color: Colors.black),),
             ),
           ],
         );
@@ -79,9 +80,9 @@ extension DialogExtensions on BuildContext {
     //   'thirdButtonText': thirdButtonText ?? "",
     // });
 
-    final S s = S.of(this); // 'this' is the BuildContext of DialogExtensions
-    final String actualFirstButtonText = firstButtonText ?? s.okButton;
-    final String actualSecondButtonText = secondButtonText ?? s.cancelButton;
+    // 'this' is the BuildContext of DialogExtensions
+    final String actualFirstButtonText = firstButtonText ?? AppLocale.ok.getString(this);
+    final String actualSecondButtonText = secondButtonText ?? AppLocale.cancel.getString(this);
 
     showDialog(
       context: this,
@@ -114,14 +115,13 @@ extension DialogExtensions on BuildContext {
         Function()? thirdButtonCallback,
         bool thirdButtonShouldClose = true,
       }) {
-    final S s = S.of(context);
     // Use localized text if the default placeholder ("OK"/"Cancel") is passed,
     // otherwise use the text provided by the caller.
     final String actualFirstButtonText = (firstButtonTextOverride == "OK")
-        ? s.okButton
+        ? AppLocale.ok.getString(context)
         : firstButtonTextOverride;
     final String actualSecondButtonText = (secondButtonTextOverride == "Cancel")
-        ? s.cancelButton
+        ? AppLocale.cancel.getString(context)
         : secondButtonTextOverride;
 
     return AlertDialog(

@@ -10,7 +10,6 @@ import 'package:flutter_example/screens/homepage.dart';
 import '../widgets/white_round_button.dart';
 import '../common/context_extensions.dart';
 import '../auth/authenticator.dart';
-import 'package:flutter_example/generated/l10n.dart';
 import 'package:flutter_example/common/DialogHelper.dart';
 
 
@@ -26,35 +25,34 @@ class OnboardingScreen extends StatefulWidget {
 //todo find suitable font
 // todo add option to do repeating tasks
 
-// JULES_TODO: Review all AppLocale.xyz.getString(context) usages in this file.
-// If corresponding keys (e.g., 'loginWEmail', 'loginAsGuest') have been added to your ARB files for the S class,
-// please update them to use S.of(context).yourKey format.
 class _OnboardingScreenState extends State<OnboardingScreen> {
 
-  void _showAuthErrorDialog(BuildContext context, String title, String errorKey) {
-    String message;
-    switch (errorKey) {
-      case 'authNoUserFound':
-        message = S.of(context).authNoUserFound;
+  // Helper function to display authentication errors using AppLocale keys
+  void _showAuthErrorDialog(BuildContext context, String titleLocaleKey, String rawAuthErrorKey) {
+    String localizedDialogTitle = titleLocaleKey.getString(context); // e.g., AppLocale.loginFailedTitle.getString(context)
+    String localizedMessage;
+
+    switch (rawAuthErrorKey) {
+      case AppLocale.authNoUserFound: // Compares raw string "authNoUserFound" with AppLocale.authNoUserFound (which is 'authNoUserFound')
+        localizedMessage = AppLocale.authNoUserFound.getString(context);
         break;
-      case 'authWrongPassword':
-        message = S.of(context).authWrongPassword;
+      case AppLocale.authWrongPassword:
+        localizedMessage = AppLocale.authWrongPassword.getString(context);
         break;
-      case 'authWeakPassword':
-        message = S.of(context).authWeakPassword;
+      case AppLocale.authWeakPassword:
+        localizedMessage = AppLocale.authWeakPassword.getString(context);
         break;
-      case 'authEmailAlreadyInUse':
-        message = S.of(context).authEmailAlreadyInUse;
+      case AppLocale.authEmailAlreadyInUse:
+        localizedMessage = AppLocale.authEmailAlreadyInUse.getString(context);
         break;
-      case 'authUnknownError':
-        // It's good practice to have a generic unknown error string in ARB files
-        // For now, using a hardcoded fallback if S.of(context).authUnknownError is not defined
-        message = S.of(context).authUnknownError ?? "An unexpected error occurred. Please try again.";
+      // Use AppLocale.authUnknownError for any other error key from Authenticator or if it's explicitly returned
+      case AppLocale.authUnknownError:
+      default: // Catches any other string from Authenticator or if "authUnknownError" was passed directly
+        localizedMessage = AppLocale.authUnknownError.getString(context);
         break;
-      default:
-        message = "An unexpected error: $errorKey"; // Should ideally be localized too
     }
-    DialogHelper.showAlertDialog(context, title, message, () {
+
+    DialogHelper.showAlertDialog(context, localizedDialogTitle, localizedMessage, () {
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
@@ -107,16 +105,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               const Spacer(),
               WhiteRoundButton(text: AppLocale.loginWEmail.getString(context), onPressed: () async {
       // JULES_TODO: Refactor login logic below to use Authenticator.signIn and handle results:
-      // 1. Obtain email and password from your dialog (e.g., context.showLoginDialog).
+      // 1. Obtain email and password from your dialog (e.g., by adapting context.showLoginDialog or a new dialog).
       // 2. Call: var result = await Authenticator.signIn(email, password);
-      // 3. If result is User: show S.of(context).loggedInWelcomeMessage snackbar, navigate to HomePage.
+      // 3. If result is User: show AppLocale.loggedInWelcomeMessage.getString(context) snackbar, navigate to HomePage.
       //    (Ensure widget is mounted if async operations are involved before BuildContext use)
-      //    if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.of(context).loggedInWelcomeMessage))); }
+      //    if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.loggedInWelcomeMessage.getString(context)))); }
       //    if (mounted) { Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage())); }
-      // 4. If result is String (error key): call _showAuthErrorDialog(context, S.of(context).loginFailedTitle, result);
-      //    if (mounted) { _showAuthErrorDialog(context, S.of(context).loginFailedTitle, result); }
-      // 5. Handle any other cases (e.g., null result from dialog) appropriately.
-      // Remember to replace AppLocale.loginWEmail.getString(context) with S.of(context).yourLoginButtonKey if you added one.
+      // 4. If result is String (error key from Authenticator): call _showAuthErrorDialog(context, AppLocale.loginFailedTitle, result);
+      //    (The 'result' is the raw error string like "authNoUserFound", which _showAuthErrorDialog now handles)
+      //    if (mounted) { _showAuthErrorDialog(context, AppLocale.loginFailedTitle, result); }
+      // 5. Handle any other cases (e.g., null result from dialog if it can return that) appropriately.
+      // Note: AppLocale.loginWEmail.getString(context) is already used for the button text.
                 // todo Implement email login functionality
                 /// go to email login screen
                 context.showLoginDialog();//(_a, emailController, passwordController) async {
