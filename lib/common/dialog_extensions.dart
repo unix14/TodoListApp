@@ -21,7 +21,7 @@ extension DialogExtensions on BuildContext {
     // copy to clipboard
     await Clipboard.setData(ClipboardData(text: text));
     // copied successfully
-    showSnackBar(AppLocale.copiedToClipboard.getString(this, {'text': text}));
+    showSnackBar(AppLocale.copiedToClipboard.getString(this) + " $text");
   }
 
 

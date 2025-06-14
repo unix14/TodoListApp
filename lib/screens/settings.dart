@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_example/common/DialogHelper.dart';
 import 'package:flutter_example/common/context_extensions.dart';
@@ -140,8 +142,9 @@ class _SettingsScreenState extends State<SettingsScreen>
               AppLocale.deleteAllSubtitle.getString(context),
               style: redSubTextsStyle,
             ),
-            onTap: () {
-              deleteAll();
+            onTap: () async {
+              await deleteAll();
+              setState(() {});
             },
           ),
           // ListTile( // todo think about this
@@ -177,7 +180,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));
   }
 
-  void deleteAll() async {
+  Future<void> deleteAll() async {
     DialogHelper.showAlertDialog(context, AppLocale.areUsure.getString(context),
         AppLocale.deleteAllSubtext.getString(context),
         () async {
@@ -195,8 +198,11 @@ class _SettingsScreenState extends State<SettingsScreen>
         if (didSuccess == true) {
           print("success save to DB");
         }
-        Navigator.of(context).pop(); // dismiss dialog
+      } else {
+        // user is not logged in
+        myCurrentUser?.todoListItems = [];
       }
+      Navigator.of(context).pop(); // dismiss dialog
     }, () {
       // Cancel
       Navigator.of(context).pop(); // dismiss dialog
