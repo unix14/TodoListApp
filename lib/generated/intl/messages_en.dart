@@ -21,17 +21,5 @@ class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
   final messages = _notInlinedMessages(_notInlinedMessages);
-  static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-    "all": MessageLookupByLibrary.simpleMessage("All"),
-    "noTasksAvailableDialogMessage": MessageLookupByLibrary.simpleMessage(
-      "There are no tasks available to pick from.",
-    ),
-    "noTasksAvailableDialogTitle": MessageLookupByLibrary.simpleMessage(
-      "No Tasks",
-    ),
-    "randomTaskDialogTitle": MessageLookupByLibrary.simpleMessage(
-      "Randomly Selected Task",
-    ),
-    "randomTaskMenuButton": MessageLookupByLibrary.simpleMessage("Random Task"),
-  };
+  static Map<String, Function> _notInlinedMessages(_) => <String, Function>{};
 }
