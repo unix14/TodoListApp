@@ -5,6 +5,7 @@ import 'package:encrypt/encrypt.dart';
 
 class EncryptedSharedPreferencesHelper {
   static late EncryptedSharedPreferences _prefs;
+  static const String kCategoriesListPrefs = 'categories_list_prefs';
 
   /// Initialize the EncryptedSharedPreferences with the given key
   static Future<void> initialize() async {
@@ -48,5 +49,26 @@ class EncryptedSharedPreferencesHelper {
   /// Remove a value from the encrypted shared preferences
   static Future<void> remove(String key) async {
     await _prefs.remove(key);
+  }
+
+  /// Save a list of categories to the encrypted shared preferences
+  static Future<void> saveCategories(List<String> categories) async {
+    final String jsonString = json.encode(categories);
+    await setString(kCategoriesListPrefs, jsonString);
+  }
+
+  /// Load a list of categories from the encrypted shared preferences
+  static Future<List<String>> loadCategories() async {
+    final String? jsonString = await getString(kCategoriesListPrefs);
+    if (jsonString != null && jsonString.isNotEmpty) {
+      try {
+        final List<dynamic> decodedList = json.decode(jsonString);
+        return decodedList.map((category) => category.toString()).toList();
+      } catch (e) {
+        print('Error decoding categories from JSON: $e');
+        return [];
+      }
+    }
+    return [];
   }
 }

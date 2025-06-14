@@ -43,6 +43,22 @@ mixin AppLocale {
   static const String noTasksAvailableDialogTitle = 'noTasksAvailableDialogTitle';
   static const String noTasksAvailableDialogMessage = 'noTasksAvailableDialogMessage';
 
+  static const String addCategoryTooltip = 'addCategoryTooltip';
+  static const String uncategorizedCategory = 'uncategorizedCategory';
+  static const String itemUncategorizedSnackbar = 'itemUncategorizedSnackbar';
+  static const String itemMovedSnackbar = 'itemMovedSnackbar';
+  static const String all = 'all';
+  static const String addCategoryDialogTitle = 'addCategoryDialogTitle';
+  static const String categoryNameHintText = 'categoryNameHintText';
+  static const String categoryNameEmptyError = 'categoryNameEmptyError';
+  static const String categoryNameExistsError = 'categoryNameExistsError';
+  static const String cancelButtonText = 'cancelButtonText';
+  static const String okButtonText = 'okButtonText';
+  static const String editMenuItem = 'editMenuItem';
+  static const String moveToCategoryMenuItem = 'moveToCategoryMenuItem';
+  static const String deleteMenuItem = 'deleteMenuItem';
+  static const String selectCategoryDialogTitle = 'selectCategoryDialogTitle';
+
   static const Map<String, dynamic> EN = {
     title: 'Todo List',
     lang: 'Language',
@@ -86,6 +102,21 @@ mixin AppLocale {
     AppLocale.randomTaskDialogTitle: "Randomly Selected Task",
     AppLocale.noTasksAvailableDialogTitle: "No Tasks",
     AppLocale.noTasksAvailableDialogMessage: "There are no tasks available to pick from.",
+    AppLocale.addCategoryTooltip: 'Add new category',
+    AppLocale.uncategorizedCategory: 'Uncategorized',
+    AppLocale.itemUncategorizedSnackbar: 'Item moved to Uncategorized',
+    AppLocale.itemMovedSnackbar: 'Item moved to {categoryName}',
+    AppLocale.all: 'All',
+    AppLocale.addCategoryDialogTitle: 'Add New Category',
+    AppLocale.categoryNameHintText: 'Category name',
+    AppLocale.categoryNameEmptyError: 'Category name cannot be empty',
+    AppLocale.categoryNameExistsError: 'Category name already exists',
+    AppLocale.cancelButtonText: 'Cancel',
+    AppLocale.okButtonText: 'OK',
+    AppLocale.editMenuItem: 'Edit',
+    AppLocale.moveToCategoryMenuItem: 'Move to category',
+    AppLocale.deleteMenuItem: 'Delete',
+    AppLocale.selectCategoryDialogTitle: 'Select Category',
   };
   static const Map<String, dynamic> HE = {
     title: 'המשימות שלי',
@@ -130,5 +161,20 @@ mixin AppLocale {
     AppLocale.randomTaskDialogTitle: "משימה שנבחרה בצורה אקראית",
     AppLocale.noTasksAvailableDialogTitle: "אין משימות",
     AppLocale.noTasksAvailableDialogMessage: "אין כרגע משימות שעלייך לבצע",
+    AppLocale.addCategoryTooltip: 'הוסף קטגוריה חדשה',
+    AppLocale.uncategorizedCategory: 'ללא קטגוריה',
+    AppLocale.itemUncategorizedSnackbar: 'הפריט הועבר ללא קטגוריה',
+    AppLocale.itemMovedSnackbar: 'הפריט הועבר לקטגוריה {categoryName}',
+    AppLocale.all: 'הכל',
+    AppLocale.addCategoryDialogTitle: 'הוסף קטגוריה חדשה',
+    AppLocale.categoryNameHintText: 'שם הקטגוריה',
+    AppLocale.categoryNameEmptyError: 'שם קטגוריה לא יכול להיות ריק',
+    AppLocale.categoryNameExistsError: 'שם הקטגוריה כבר קיים',
+    AppLocale.cancelButtonText: 'ביטול',
+    AppLocale.okButtonText: 'אישור',
+    AppLocale.editMenuItem: 'עריכה',
+    AppLocale.moveToCategoryMenuItem: 'העבר לקטגוריה',
+    AppLocale.deleteMenuItem: 'מחק',
+    AppLocale.selectCategoryDialogTitle: 'בחר קטגוריה',
   };
 }

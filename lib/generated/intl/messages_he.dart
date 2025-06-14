@@ -1,5 +1,5 @@
 // DO NOT EDIT. This is code generated via package:intl/generate_localized.dart
-// This is a library that provides messages for a en locale. All the
+// This is a library that provides messages for a he locale. All the
 // messages from the main program should be duplicated here with the same
 // function name.
 
@@ -18,54 +18,45 @@ final messages = new MessageLookup();
 typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 
 class MessageLookup extends MessageLookupByLibrary {
-  String get localeName => 'en';
+  String get localeName => 'he';
 
-  static String m0(categoryName) => "Item moved to ${categoryName}";
+  static String m0(categoryName) => "הפריט הועבר אל ${categoryName}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "addCategoryDialogTitle": MessageLookupByLibrary.simpleMessage(
-      "Add New Category",
+      "הוסף קטגוריה חדשה",
     ),
     "addCategoryTooltip": MessageLookupByLibrary.simpleMessage(
-      "Add new category",
+      "הוסף קטגוריה חדשה",
     ),
-    "all": MessageLookupByLibrary.simpleMessage("All"),
-    "cancelButtonText": MessageLookupByLibrary.simpleMessage("Cancel"),
+    "all": MessageLookupByLibrary.simpleMessage("הכל"),
+    "cancelButtonText": MessageLookupByLibrary.simpleMessage("ביטול"),
     "categoryNameEmptyError": MessageLookupByLibrary.simpleMessage(
-      "Category name cannot be empty.",
+      "שם קטגוריה לא יכול להיות ריק.",
     ),
     "categoryNameExistsError": MessageLookupByLibrary.simpleMessage(
-      "This category name already exists.",
+      "שם קטגוריה זה כבר קיים.",
     ),
-    "categoryNameHintText": MessageLookupByLibrary.simpleMessage(
-      "Category Name",
-    ),
-    "deleteMenuItem": MessageLookupByLibrary.simpleMessage("Delete"),
-    "editMenuItem": MessageLookupByLibrary.simpleMessage("Edit"),
+    "categoryNameHintText": MessageLookupByLibrary.simpleMessage("שם הקטגוריה"),
+    "deleteMenuItem": MessageLookupByLibrary.simpleMessage("מחק"),
+    "editMenuItem": MessageLookupByLibrary.simpleMessage("ערוך"),
     "itemMovedSnackbar": m0,
     "itemUncategorizedSnackbar": MessageLookupByLibrary.simpleMessage(
-      "Item moved to Uncategorized",
+      "הפריט הועבר אל ללא קטגוריה",
     ),
     "moveToCategoryMenuItem": MessageLookupByLibrary.simpleMessage(
-      "Move to category",
+      "העבר לקטגוריה",
     ),
     "noTasksAvailableDialogMessage": MessageLookupByLibrary.simpleMessage(
-      "There are no tasks available to pick from.",
+      "אין כרגע משימות לבחור מהן",
     ),
-    "noTasksAvailableDialogTitle": MessageLookupByLibrary.simpleMessage(
-      "No Tasks",
-    ),
-    "okButtonText": MessageLookupByLibrary.simpleMessage("OK"),
-    "randomTaskDialogTitle": MessageLookupByLibrary.simpleMessage(
-      "Randomly Selected Task",
-    ),
-    "randomTaskMenuButton": MessageLookupByLibrary.simpleMessage("Random Task"),
+    "okButtonText": MessageLookupByLibrary.simpleMessage("אישור"),
     "selectCategoryDialogTitle": MessageLookupByLibrary.simpleMessage(
-      "Select Category",
+      "בחר קטגוריה",
     ),
     "uncategorizedCategory": MessageLookupByLibrary.simpleMessage(
-      "Uncategorized",
+      "ללא קטגוריה",
     ),
   };
 }
