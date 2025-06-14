@@ -14,7 +14,7 @@ import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
-import 'package:sum_todo/generated/l10n.dart';
+// import 'package:sum_todo/generated/l10n.dart'; // Removed S class import
 import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
@@ -505,20 +505,21 @@ class _HomePageState extends State<HomePage>
                                   .toList();
                             }
 
+                            // If "All" is empty, show a random motivational sentence.
                             if (categoryName == AppLocale.all.getString(context) && displayedItems.isEmpty) {
-                              final motivationalSentences = [
-                                S.of(context).motivationalSentence1,
-                                S.of(context).motivationalSentence2,
-                                S.of(context).motivationalSentence3,
-                                S.of(context).motivationalSentence4,
-                                S.of(context).motivationalSentence5,
+                              final List<String> motivationalKeys = [
+                                AppLocale.motivationalSentence1,
+                                AppLocale.motivationalSentence2,
+                                AppLocale.motivationalSentence3,
+                                AppLocale.motivationalSentence4,
+                                AppLocale.motivationalSentence5,
                               ];
-                              final randomSentence = motivationalSentences[Random().nextInt(motivationalSentences.length)];
+                              final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
                               return Center(
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Text(
-                                    randomSentence,
+                                    randomKey.getString(context),
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 18,
@@ -530,46 +531,28 @@ class _HomePageState extends State<HomePage>
                               );
                             }
 
-                            // Widget to display below count (either ListView or motivational text if "All" is empty)
-                            Widget listContentWidget;
-                            if (categoryName == AppLocale.all.getString(context) && displayedItems.isEmpty) {
-                              // This is already handled by the motivational sentence block above,
-                              // so this specific `if` for listContentWidget is for the ListView.
-                              // The motivational sentence block returns directly.
-                              // So, if we reach here and displayedItems is empty, it's NOT the "All" tab's empty case.
-                              // This means for custom categories that are empty, they'll show an empty ListView.
-                              // Let's re-evaluate the structure based on the return for motivational sentence.
-
-                              // The motivational sentence is already returned.
-                              // So, if we are here, it means either:
-                              // 1. "All" tab and displayedItems is NOT empty.
-                              // 2. A custom category tab (items might be empty or not).
-                              listContentWidget = ListView.builder(
-                                itemCount: displayedItems.length,
-                                itemBuilder: (context, position) {
-                                  final TodoListItem currentTodo = displayedItems[position];
-                                  return getListTile(currentTodo);
-                                },
-                              );
-                            } else {
-                              // This covers all cases where displayedItems is not empty OR
-                              // it's an empty custom category list.
-                              listContentWidget = ListView.builder(
-                                itemCount: displayedItems.length,
-                                itemBuilder: (context, position) {
-                                  final TodoListItem currentTodo = displayedItems[position];
-                                  return getListTile(currentTodo);
-                                },
-                              );
-                            }
-
+                            // If not empty, potentially show count and then the list
                             if (displayedItems.isNotEmpty) {
+                              String taskCountString;
+                              if (displayedItems.length == 1) {
+                                taskCountString = AppLocale.tasksCountSingular.getString(context);
+                              } else {
+                                // For 0 or >1, use tasksCount (which might be "{count} tasks" or "No tasks" via tasksCountZero if we made it that smart)
+                                // The current AppLocale setup has tasksCountZero, tasksCountSingular, tasksCount.
+                                // tasksCountZero is for "No tasks" - but this block is displayedItems.isNotEmpty
+                                // tasksCountSingular is for "1 task"
+                                // tasksCount is for "{count} tasks"
+                                taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', displayedItems.length.toString());
+                              }
+                              // The tasksCountZero is defined, but this condition (displayedItems.isNotEmpty) means it won't be used here.
+                              // If displayedItems.isEmpty, we are in the motivational sentence block or just an empty ListView for other categories.
+
                               return Column(
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                                     child: Text(
-                                      S.of(context).taskCount(displayedItems.length),
+                                      taskCountString,
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                         fontSize: 13.0,
@@ -578,14 +561,24 @@ class _HomePageState extends State<HomePage>
                                       ),
                                     ),
                                   ),
-                                  Expanded(child: listContentWidget), // This is the ListView
+                                  Expanded(
+                                    child: ListView.builder(
+                                      itemCount: displayedItems.length,
+                                      itemBuilder: (context, position) {
+                                        final TodoListItem currentTodo = displayedItems[position];
+                                        return getListTile(currentTodo);
+                                      },
+                                    ),
+                                  ),
                                 ],
                               );
                             } else {
-                              // This case is for custom categories that are empty.
-                              // "All" tab empty case is handled by the motivational sentence block which returns.
-                              // So, listContentWidget here would be an empty ListView.
-                              return listContentWidget;
+                              // This path is for custom categories that are empty.
+                              // "All" empty case is handled by the motivational sentence block.
+                              return ListView.builder( // Returns an empty list view
+                                itemCount: 0,
+                                itemBuilder: (context, position) => Container(),
+                              );
                             }
                           }
                         },
@@ -657,8 +650,8 @@ class _HomePageState extends State<HomePage>
     } else {
       DialogHelper.showAlertDialog(
           context,
-          S.of(context).emptyTodoDialogTitle,
-          S.of(context).emptyTodoDialogMessage,
+          AppLocale.emptyTodoDialogTitle.getString(context),
+          AppLocale.emptyTodoDialogMessage.getString(context),
           () {
         // Ok
         Navigator.of(context).pop(); // dismiss dialog
