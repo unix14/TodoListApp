@@ -25,7 +25,7 @@ class Authenticator {
     }
   }
 
-  static Future<User?> signIn(String email, String password) async {
+  static Future<dynamic> signIn(String email, String password) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -35,14 +35,21 @@ class Authenticator {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
         print('No user found for that email.');
+        return 'authNoUserFound';
       } else if (e.code == 'wrong-password') {
         print('Wrong password provided for that user.');
+        return 'authWrongPassword';
       }
-      return null;
+      // For other FirebaseAuthException codes
+      print('FirebaseAuthException in signIn: ${e.code} - ${e.message}');
+      return 'authUnknownError';
+    } catch (e) {
+      print('Unknown error in signIn: $e');
+      return 'authUnknownError';
     }
   }
 
-  static Future<User?> signUp(String email, String password) async {
+  static Future<dynamic> signUp(String email, String password) async {
     try {
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -52,13 +59,17 @@ class Authenticator {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         print('The password provided is too weak.');
+        return 'authWeakPassword';
       } else if (e.code == 'email-already-in-use') {
         print('The account already exists for that email.');
+        return 'authEmailAlreadyInUse';
       }
-      return null;
+      // For other FirebaseAuthException codes
+      print('FirebaseAuthException in signUp: ${e.code} - ${e.message}');
+      return 'authUnknownError';
     } catch (e) {
-      print(e);
-      return null;
+      print('Unknown error in signUp: $e');
+      return 'authUnknownError';
     }
   }
 

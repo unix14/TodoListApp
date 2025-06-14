@@ -332,7 +332,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
                 onPressed: () {
                   _onAddItem();
                 },
-                tooltip: AppLocale.deleteAllSubtitle.getString(context),
+                tooltip: AppLocale.add.getString(context),
                 child: const Icon(Icons.add),
               ),
             )
@@ -351,7 +351,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
         fabOpacity = fabOpacityOff;
       });
     } else {
-      DialogHelper.showAlertDialog(context, "Empty Todo", "Please write a Todo", // todo lang
+      DialogHelper.showAlertDialog(context, AppLocale.emptyTodoTitle.getString(context), AppLocale.emptyTodoMessage.getString(context),
           () {
         // Ok
         Navigator.of(context).pop(); // dismiss dialog
@@ -594,7 +594,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
     var isOnEditMode = isEditMode(currentTodo);
     var currentTodoEditInput = RoundedTextInputField(
       initialText: currentTodo.text,
-      hintText: "Edit your ToDo here!",
+      hintText: AppLocale.editTodoHint.getString(context),
       onChanged: (newValue) {
         setState(() {
           //todo update the current tile here
@@ -666,7 +666,7 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
               ? TextButton(
                   onPressed: () {
                     DialogHelper.showAlertDialog(context,
-                        "Do you want to delete?", "This can't be undone", () {
+                        AppLocale.doUwant2Delete.getString(context), AppLocale.thisCantBeUndone.getString(context), () {
                       Navigator.of(context).pop(); // dismiss dialog
                       setState(() {
                         items.remove(currentTodo);

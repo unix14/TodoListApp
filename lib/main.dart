@@ -4,6 +4,7 @@ import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart'
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/managers/app_initializer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:flutter_example/mixin/app_locale.dart';
 
 import 'screens/homepage.dart';
 import 'screens/onboarding.dart';
