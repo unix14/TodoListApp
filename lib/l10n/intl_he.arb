@@ -12,7 +12,8 @@
     "deleteMenuItem": "מחק",
     "moveToCategoryMenuItem": "העבר לקטגוריה",
     "selectCategoryDialogTitle": "בחר קטגוריה",
-    "uncategorizedCategory": "ללא קטגוריה",
+    "uncategorizedCategory": "הכל",
     "itemMovedSnackbar": "הפריט הועבר אל {categoryName}",
-    "itemUncategorizedSnackbar": "הפריט הועבר אל ללא קטגוריה"
+    "itemUncategorizedSnackbar": "הפריט הועבר להכל",
+    "addNewCategoryMenuItem": "הוסף קטגוריה חדשה"
 }

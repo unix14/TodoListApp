@@ -58,6 +58,15 @@ mixin AppLocale {
   static const String moveToCategoryMenuItem = 'moveToCategoryMenuItem';
   static const String deleteMenuItem = 'deleteMenuItem';
   static const String selectCategoryDialogTitle = 'selectCategoryDialogTitle';
+  static const String addNewCategoryMenuItem = 'addNewCategoryMenuItem'; // This was actually added in the previous step, ensure it's here or matches.
+  static const String renameCategoryDialogTitle = 'renameCategoryDialogTitle';
+  static const String renameButtonText = 'renameButtonText';
+  static const String categoryRenamedSnackbar = 'categoryRenamedSnackbar';
+  static const String renameCategoryMenuButton = 'renameCategoryMenuButton';
+  static const String deleteCategoryMenuButton = 'deleteCategoryMenuButton';
+  static const String deleteCategoryConfirmationTitle = 'deleteCategoryConfirmationTitle';
+  static const String deleteCategoryConfirmationMessage = 'deleteCategoryConfirmationMessage';
+  static const String categoryDeletedSnackbar = 'categoryDeletedSnackbar';
 
   static const Map<String, dynamic> EN = {
     title: 'Todo List',
@@ -103,10 +112,19 @@ mixin AppLocale {
     AppLocale.noTasksAvailableDialogTitle: "No Tasks",
     AppLocale.noTasksAvailableDialogMessage: "There are no tasks available to pick from.",
     AppLocale.addCategoryTooltip: 'Add new category',
-    AppLocale.uncategorizedCategory: 'Uncategorized',
-    AppLocale.itemUncategorizedSnackbar: 'Item moved to Uncategorized',
+    AppLocale.uncategorizedCategory: 'All',
+    AppLocale.itemUncategorizedSnackbar: 'Item moved to All',
     AppLocale.itemMovedSnackbar: 'Item moved to {categoryName}',
     AppLocale.all: 'All',
+    AppLocale.addNewCategoryMenuItem: 'Add New Category', // Ensure this line is present and correct from previous step
+    AppLocale.renameCategoryDialogTitle: 'Rename Category',
+    AppLocale.renameButtonText: 'Rename',
+    AppLocale.categoryRenamedSnackbar: "Category '{oldName}' renamed to '{newName}'",
+    AppLocale.renameCategoryMenuButton: "Rename Current Category",
+    AppLocale.deleteCategoryMenuButton: "Delete Current Category",
+    AppLocale.deleteCategoryConfirmationTitle: "Delete Category?",
+    AppLocale.deleteCategoryConfirmationMessage: "Are you sure you want to delete the category '{categoryName}'? All items in this category will be moved to 'All'.",
+    AppLocale.categoryDeletedSnackbar: "Category '{categoryName}' deleted.",
     AppLocale.addCategoryDialogTitle: 'Add New Category',
     AppLocale.categoryNameHintText: 'Category name',
     AppLocale.categoryNameEmptyError: 'Category name cannot be empty',
@@ -162,10 +180,19 @@ mixin AppLocale {
     AppLocale.noTasksAvailableDialogTitle: "אין משימות",
     AppLocale.noTasksAvailableDialogMessage: "אין כרגע משימות שעלייך לבצע",
     AppLocale.addCategoryTooltip: 'הוסף קטגוריה חדשה',
-    AppLocale.uncategorizedCategory: 'ללא קטגוריה',
-    AppLocale.itemUncategorizedSnackbar: 'הפריט הועבר ללא קטגוריה',
+    AppLocale.uncategorizedCategory: 'הכל',
+    AppLocale.itemUncategorizedSnackbar: 'הפריט הועבר להכל',
     AppLocale.itemMovedSnackbar: 'הפריט הועבר לקטגוריה {categoryName}',
     AppLocale.all: 'הכל',
+    AppLocale.addNewCategoryMenuItem: 'הוסף קטגוריה חדשה', // Ensure this line is present and correct from previous step
+    AppLocale.renameCategoryDialogTitle: 'שנה שם קטגוריה',
+    AppLocale.renameButtonText: 'שנה שם',
+    AppLocale.categoryRenamedSnackbar: "קטגוריה '{oldName}' שונתה ל '{newName}'",
+    AppLocale.renameCategoryMenuButton: "שנה שם קטגוריה נוכחית",
+    AppLocale.deleteCategoryMenuButton: "מחק קטגוריה נוכחית",
+    AppLocale.deleteCategoryConfirmationTitle: "למחוק קטגוריה?",
+    AppLocale.deleteCategoryConfirmationMessage: "האם אתה בטוח שברצונך למחוק את הקטגוריה '{categoryName}'? כל הפריטים בקטגוריה זו יועברו ל'הכל'.",
+    AppLocale.categoryDeletedSnackbar: "קטגוריה '{categoryName}' נמחקה.",
     AppLocale.addCategoryDialogTitle: 'הוסף קטגוריה חדשה',
     AppLocale.categoryNameHintText: 'שם הקטגוריה',
     AppLocale.categoryNameEmptyError: 'שם קטגוריה לא יכול להיות ריק',

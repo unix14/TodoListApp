@@ -24,6 +24,8 @@ import 'dart:html' as html;
 import 'onboarding.dart';
 
 const String kRandomTaskMenuButtonName = 'randomTask';
+const String kRenameCategoryMenuButtonName = 'rename_category';
+const String kDeleteCategoryMenuButtonName = 'delete_category';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -250,6 +252,20 @@ class _HomePageState extends State<HomePage>
     // _initializeTabs will be called from didChangeDependencies
   }
 
+  bool _isCurrentCategoryCustom() {
+    if (_tabController == null || _categories.isEmpty) {
+      return false;
+    }
+    // Ensure index is valid for _categories before accessing.
+    // _tabController.index can be out of bounds if tabs are being re-initialized,
+    // or if it points to the "+" button which is not a category in _categories list.
+    if (_tabController!.index < 0 || _tabController!.index >= _categories.length) {
+      return false;
+    }
+    // Check if the selected category is NOT the "All" category.
+    return _categories[_tabController!.index] != AppLocale.all.getString(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -272,11 +288,8 @@ class _HomePageState extends State<HomePage>
                     if (value == kInstallMenuButtonName) {
                       showInstallPrompt();
                       context.showSnackBar(AppLocale.appIsInstalled.getString(context));
-                    }
-                    if (value == kArchiveMenuButtonName) {
+                    } else if (value == kArchiveMenuButtonName) {
                       showArchivedTodos();
-                    } else if (value == kDeleteAllMenuButtonName) {
-                      deleteAll();
                     } else if (value == kLoginButtonMenu) {
                       Navigator.pushReplacement(
                           context,
@@ -289,6 +302,45 @@ class _HomePageState extends State<HomePage>
                               builder: (context) => const SettingsScreen()));
                     } else if (value == kRandomTaskMenuButtonName) {
                       _showRandomTask();
+                    } else if (value == kRenameCategoryMenuButtonName) {
+                      if (_isCurrentCategoryCustom()) {
+                        final currentCategoryName = _categories[_tabController!.index];
+                        _promptRenameCategory(currentCategoryName);
+                      }
+                    } else if (value == kDeleteCategoryMenuButtonName) {
+                      if (_isCurrentCategoryCustom()) {
+                        final currentCategoryName = _categories[_tabController!.index];
+                        DialogHelper.showAlertDialog(
+                          context,
+                          AppLocale.deleteCategoryConfirmationTitle.getString(context),
+                          AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', currentCategoryName),
+                          () { // onOkButton
+                            Navigator.of(context).pop(); // Dismiss confirmation dialog
+                            setState(() {
+                              _customCategories.removeWhere((cat) => cat.toLowerCase() == currentCategoryName.toLowerCase());
+                              for (var item in items) {
+                                if (item.category == currentCategoryName) {
+                                  item.category = null; // Move to "All"
+                                }
+                              }
+                              EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+                              _updateList();
+                              // Re-initialize tabs and then switch to "All" tab.
+                              _initializeTabs().then((_) {
+                                if (mounted && _tabController != null) {
+                                   _tabController!.index = 0;
+                                }
+                              });
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', currentCategoryName)),
+                            ));
+                          },
+                          () { // onCancelButton
+                            Navigator.of(context).pop(); // Dismiss confirmation dialog
+                          },
+                        );
+                      }
                     }
                   },
                   itemBuilder: (BuildContext context) {
@@ -325,7 +377,33 @@ class _HomePageState extends State<HomePage>
                         ),
                       ));
                     }
-                    //Check if should show Install App prompt button
+
+                    // Add "Rename Current Category" button if a custom category is selected
+                    if (_isCurrentCategoryCustom()) {
+                      popupMenuItems.add(PopupMenuItem<String>(
+                        value: kRenameCategoryMenuButtonName,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.edit, color: Colors.blue), // Or another appropriate icon
+                            const SizedBox(width: 8.0),
+                            Text(AppLocale.renameCategoryMenuButton.getString(context)),
+                          ],
+                        ),
+                      ));
+                      // Add "Delete Current Category" button if a custom category is selected
+                      popupMenuItems.add(PopupMenuItem<String>(
+                        value: kDeleteCategoryMenuButtonName,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.delete_outline, color: Colors.red), // Or another appropriate icon
+                            const SizedBox(width: 8.0),
+                            Text(AppLocale.deleteCategoryMenuButton.getString(context), style: const TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ));
+                    }
+
+                    //Check if should show Install App prompt button (comes before Random Task now)
                     if (isInstallable()) {
                       popupMenuItems.add(PopupMenuItem<String>(
                         value: kInstallMenuButtonName,
@@ -341,38 +419,7 @@ class _HomePageState extends State<HomePage>
                         ),
                       ));
                     }
-                    //Check if should show Delete Button
-                    if (items.isNotEmpty) {
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kDeleteAllMenuButtonName,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.delete_forever,
-                              color: Colors.red,
-                            ),
-                            const SizedBox(width: 8.0),
-                            Text(
-                              AppLocale.deleteAll.getString(context),
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                          ],
-                        ),
-                      ));
-                    }
-                    popupMenuItems.add(PopupMenuItem<String>(
-                      value: kSettingsMenuButtonName,
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.settings_outlined,
-                            color: Colors.blue,
-                          ),
-                          const SizedBox(width: 8.0),
-                          Text(AppLocale.settings.getString(context)),
-                        ],
-                      ),
-                    ));
+
                     // Add Random Task button
                     popupMenuItems.add(PopupMenuItem<String>(
                       value: kRandomTaskMenuButtonName,
@@ -384,6 +431,21 @@ class _HomePageState extends State<HomePage>
                           ),
                           const SizedBox(width: 8.0),
                           Text(AppLocale.randomTaskMenuButton.getString(context)),
+                        ],
+                      ),
+                    ));
+
+                    // Settings button is typically last or near last
+                    popupMenuItems.add(PopupMenuItem<String>(
+                      value: kSettingsMenuButtonName,
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.settings_outlined,
+                            color: Colors.blue,
+                          ),
+                          const SizedBox(width: 8.0),
+                          Text(AppLocale.settings.getString(context)),
                         ],
                       ),
                     ));
@@ -925,15 +987,22 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  void _promptForNewCategory({int? selectedIndexToRestore}) async {
+  Future<String?> _promptForNewCategory({int? selectedIndexToRestore}) async {
     final TextEditingController categoryController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    bool categoryAddedSuccessfully = false;
+    String? newCategoryName; // To store the name of the category if added
+
+    // Set _isPromptingForCategory at the beginning
+    // It's important _isPromptingForCategory is true during the dialog display
+    // setState(() { // Not strictly necessary to call setState just for this flag if no UI depends on it immediately
+    //   _isPromptingForCategory = true;
+    // });
 
     try {
-      await showDialog<void>(
+      // The dialog's result will be the new category name or null
+      newCategoryName = await showDialog<String>(
         context: context,
-        barrierDismissible: false, // user must tap button for explicit action
+        barrierDismissible: false,
         builder: (BuildContext dialogContext) {
           return AlertDialog(
             title: Text(AppLocale.addCategoryDialogTitle.getString(dialogContext)),
@@ -949,7 +1018,6 @@ class _HomePageState extends State<HomePage>
                         if (value == null || value.trim().isEmpty) {
                           return AppLocale.categoryNameEmptyError.getString(dialogContext);
                         }
-                        // Check against _customCategories for uniqueness, "All" is not a custom category.
                         if (_customCategories.any((cat) => cat.toLowerCase() == value.trim().toLowerCase())) {
                           return AppLocale.categoryNameExistsError.getString(dialogContext);
                         }
@@ -964,7 +1032,7 @@ class _HomePageState extends State<HomePage>
               TextButton(
                 child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
                 onPressed: () {
-                  Navigator.of(dialogContext).pop();
+                  Navigator.of(dialogContext).pop(null); // Dialog returns null
                 },
               ),
               TextButton(
@@ -972,25 +1040,9 @@ class _HomePageState extends State<HomePage>
                 onPressed: () async {
                   if (formKey.currentState!.validate()) {
                     final newCategory = categoryController.text.trim();
-                    setState(() {
-                      _customCategories.add(newCategory);
-                      EncryptedSharedPreferencesHelper.saveCategories(_customCategories); // No need to await if not critical path for UI
-
-                      _categories = [AppLocale.all.getString(context), ..._customCategories];
-
-                      final newCategoryIndexInCategories = _categories.length - 1; // Index of the newly added category tab
-
-                      _tabController?.removeListener(_handleTabSelection);
-                      _tabController?.dispose();
-                      _tabController = TabController(
-                        length: _categories.length + 1, // +1 for the "+" tab itself
-                        vsync: this,
-                        initialIndex: newCategoryIndexInCategories, // Select the newly added actual category tab
-                      );
-                      _tabController!.addListener(_handleTabSelection);
-                      categoryAddedSuccessfully = true;
-                    });
-                    Navigator.of(dialogContext).pop(); // Close dialog on success
+                    // No setState here, state updates will be handled after dialog closes if category was added.
+                    // This simplifies the dialog's responsibility to just returning the name.
+                    Navigator.of(dialogContext).pop(newCategory); // Dialog returns the new category name
                   }
                 },
               ),
@@ -998,22 +1050,46 @@ class _HomePageState extends State<HomePage>
           );
         },
       );
+
+      // After the dialog closes, 'newCategoryName' holds the result.
+      if (newCategoryName != null) {
+        // If a category name was returned (not null), then proceed to update state.
+        setState(() {
+          _customCategories.add(newCategoryName!);
+          EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+
+          _categories = [AppLocale.all.getString(context), ..._customCategories];
+
+          final newCategoryIndexInCategories = _categories.lastIndexOf(newCategoryName!);
+
+          _tabController?.removeListener(_handleTabSelection);
+          _tabController?.dispose();
+          _tabController = TabController(
+            length: _categories.length + 1, // +1 for '+' tab
+            vsync: this,
+            initialIndex: newCategoryIndexInCategories,
+          );
+          _tabController!.addListener(_handleTabSelection);
+          // _isPromptingForCategory is reset in finally
+        });
+      }
     } finally {
+      // Ensure _isPromptingForCategory is reset regardless of outcome
       setState(() {
         _isPromptingForCategory = false;
       });
     }
 
-    // If the dialog was dismissed without adding a category (e.g., pressed cancel or validation failed after trying)
-    // and a selectedIndexToRestore is provided, ensure the tab selection is reverted.
-    if (!categoryAddedSuccessfully && selectedIndexToRestore != null && _tabController != null) {
-      // Only revert if the current index is still the "+" button's potential index
-      // This check is important because if the user somehow managed to change tabs while dialog was open, we shouldn't interfere.
-      // Also ensure the controller is not disposed before animating.
-      if (_tabController!.index == _categories.length && mounted) { // `mounted` check for safety
+    // Handle tab restoration if no category was added and an index was provided
+    if (newCategoryName == null && selectedIndexToRestore != null && _tabController != null) {
+      if (_tabController!.index == _categories.length && mounted) {
+        // Check if current context is still valid before animating.
+        // This ensures we only try to animate if the widget is still in the tree.
         _tabController!.animateTo(selectedIndexToRestore);
       }
     }
+
+    return newCategoryName; // Return the new category name or null
   }
 
   void _showTodoContextMenu(TodoListItem todoItem) {
@@ -1101,33 +1177,175 @@ class _HomePageState extends State<HomePage>
                 child: Text(category),
               );
             }).toList(),
+            SimpleDialogOption(
+              onPressed: () {
+                Navigator.pop(dialogContext, kAddNewCategoryOption); // Special value for "Add New"
+              },
+              // Assuming AppLocale.addNewCategoryMenuItem will be added to your localization files
+              // For now, using a placeholder string or you can add it to AppLocale.dart
+              child: Text(AppLocale.addNewCategoryMenuItem.getString(dialogContext)),
+            ),
           ],
         );
       },
-    ).then((selectedCategoryName) {
-      if (selectedCategoryName != todoItem.category || (selectedCategoryName == null && todoItem.category != null) || (selectedCategoryName != null && todoItem.category == null) ) { // check if category actually changed
-        bool categoryWasActuallySelected = true; // A bit of a misnomer, this means a choice was made, even if it's "Uncategorized"
-        if(selectedCategoryName == null && todoItem.category == null) { // If chose uncategorized and it was already uncategorized
-            categoryWasActuallySelected = false;
-        }
+    ).then((selectedCategoryNameOrAction) {
+      if (selectedCategoryNameOrAction == kAddNewCategoryOption) {
+        // User selected "Add New Category"
+        _promptForNewCategory().then((newlyCreatedCategoryName) {
+          if (newlyCreatedCategoryName != null && newlyCreatedCategoryName.isNotEmpty) {
+            // New category was created
+            setState(() {
+              todoItem.category = newlyCreatedCategoryName;
+              _updateList(); // Save the change
+            });
+            _initializeTabs(); // Refresh tab bar, this will re-initialize tabs and controller
 
+            // Show SnackBar confirmation
+            final snackBar = SnackBar(
+              content: Text(
+                AppLocale.itemMovedSnackbar.getString(context).replaceAll('{categoryName}', newlyCreatedCategoryName),
+              ),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          }
+          // If newlyCreatedCategoryName is null, user cancelled creation, do nothing further.
+        });
+      } else {
+        // User selected an existing category or "Uncategorized"
+        final selectedCategoryName = selectedCategoryNameOrAction as String?; // Cast to String? as it can be null
 
-        if (categoryWasActuallySelected) {
-          setState(() {
-            todoItem.category = selectedCategoryName;
-            _updateList();
-          });
-          // Show feedback to the user
-          final snackBar = SnackBar(
-            content: Text(
-              selectedCategoryName == null
-                  ? AppLocale.itemUncategorizedSnackbar.getString(context)
-                  : AppLocale.itemMovedSnackbar.getString(context).replaceAll('{categoryName}', selectedCategoryName),
-            ),
-          );
-          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        if (selectedCategoryName != todoItem.category || (selectedCategoryName == null && todoItem.category != null) || (selectedCategoryName != null && todoItem.category == null) ) {
+          bool categoryWasActuallySelected = true;
+          if(selectedCategoryName == null && todoItem.category == null) {
+              categoryWasActuallySelected = false;
+          }
+
+          if (categoryWasActuallySelected) {
+            setState(() {
+              todoItem.category = selectedCategoryName;
+              _updateList();
+            });
+            final snackBar = SnackBar(
+              content: Text(
+                selectedCategoryName == null
+                    ? AppLocale.itemUncategorizedSnackbar.getString(context)
+                    : AppLocale.itemMovedSnackbar.getString(context).replaceAll('{categoryName}', selectedCategoryName),
+              ),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          }
         }
       }
     });
   }
 }
+
+// Define a constant for the "Add New Category" option to avoid magic strings
+const String kAddNewCategoryOption = 'add_new_category_option_val'; // Made it more unique
+
+  Future<String?> _promptRenameCategory(String oldCategoryName) async {
+    final TextEditingController categoryController = TextEditingController(text: oldCategoryName);
+    final formKey = GlobalKey<FormState>();
+    String? newCategoryName;
+
+    try {
+      newCategoryName = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return AlertDialog(
+            title: Text(AppLocale.renameCategoryDialogTitle.getString(dialogContext)),
+            content: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: ListBody(
+                  children: <Widget>[
+                    TextFormField(
+                      controller: categoryController,
+                      decoration: InputDecoration(hintText: AppLocale.categoryNameHintText.getString(dialogContext)),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return AppLocale.categoryNameEmptyError.getString(dialogContext);
+                        }
+                        final newNameTrimmed = value.trim();
+                        if (newNameTrimmed.toLowerCase() == AppLocale.all.getString(dialogContext).toLowerCase()) {
+                          return AppLocale.categoryNameExistsError.getString(dialogContext); // Or a more specific error
+                        }
+                        // Check against _customCategories for uniqueness,
+                        // unless it's the original name (allowing case changes)
+                        if (newNameTrimmed.toLowerCase() != oldCategoryName.toLowerCase() &&
+                            _customCategories.any((cat) => cat.toLowerCase() == newNameTrimmed.toLowerCase())) {
+                          return AppLocale.categoryNameExistsError.getString(dialogContext);
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(null); // Dialog returns null
+                },
+              ),
+              TextButton(
+                child: Text(AppLocale.renameButtonText.getString(dialogContext)),
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    Navigator.of(dialogContext).pop(categoryController.text.trim());
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+
+      if (newCategoryName != null && newCategoryName != oldCategoryName) {
+        // If a new valid name was returned and it's different from the old one
+        setState(() {
+          final oldNameIndex = _customCategories.indexWhere((cat) => cat.toLowerCase() == oldCategoryName.toLowerCase());
+          if (oldNameIndex != -1) {
+            _customCategories[oldNameIndex] = newCategoryName!;
+          }
+
+          // Update items
+          for (var item in items) {
+            if (item.category == oldCategoryName) {
+              item.category = newCategoryName;
+            }
+          }
+
+          EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+          _updateList(); // Persist item changes
+          _initializeTabs(); // Refresh UI
+
+          // Show SnackBar
+          final snackBar = SnackBar(
+            content: Text(
+              AppLocale.categoryRenamedSnackbar.getString(context)
+                  .replaceAll('{oldName}', oldCategoryName)
+                  .replaceAll('{newName}', newCategoryName!),
+            ),
+          );
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        });
+      } else if (newCategoryName != null && newCategoryName == oldCategoryName) {
+        // Name is the same (possibly different case, but validation passes this)
+        // We still might want to update if the casing changed and categories are case-sensitive in storage
+        // For this implementation, if only casing changed, we effectively treat it as "no change" for persistence,
+        // but we return the potentially case-changed newCategoryName.
+        // If strict case persistence is needed, _customCategories and item.category should be updated.
+        // For now, we assume the main goal is achieved if the name (ignoring case for comparison) is "the same".
+      }
+      return newCategoryName; // Return the new name or null if cancelled
+
+    } catch (e) {
+      // Handle any errors during the process
+      print("Error in _promptRenameCategory: $e");
+      return null;
+    }
+  }
