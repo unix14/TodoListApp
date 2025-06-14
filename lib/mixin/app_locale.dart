@@ -38,6 +38,11 @@ mixin AppLocale {
   static const String thisCantBeUndone = "thisCantBeUndone";
   static const String selectLanguage = "selectLanguage";
 
+  static const String randomTaskMenuButton = 'randomTaskMenuButton';
+  static const String randomTaskDialogTitle = 'randomTaskDialogTitle';
+  static const String noTasksAvailableDialogTitle = 'noTasksAvailableDialogTitle';
+  static const String noTasksAvailableDialogMessage = 'noTasksAvailableDialogMessage';
+
   static const Map<String, dynamic> EN = {
     title: 'Todo List',
     lang: 'Language',
