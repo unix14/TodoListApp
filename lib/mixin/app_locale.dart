@@ -100,7 +100,7 @@ mixin AppLocale {
   static const String uploadProfilePictureButton = 'uploadProfilePictureButton'; // May be same as 'change'
   static const String profilePictureUpdated = 'profilePictureUpdated';
   static const String errorUploadingProfilePicture = 'errorUploadingProfilePicture';
-  // static const String defaultProfilePicUrl = 'defaultProfilePicUrl'; // Asset path or URL, might be better in Globals or as actual asset. Placeholder if used as locale key.
+  static const String defaultProfilePicUrl = 'defaultProfilePicUrl';
 
   // Sharing Dialog (ShareListDialog)
   static const String shareDialogTitle = 'shareDialogTitle'; // Takes {categoryName}
@@ -235,7 +235,7 @@ mixin AppLocale {
     AppLocale.uploadProfilePictureButton: 'Upload Picture',
     AppLocale.profilePictureUpdated: 'Profile picture updated!',
     AppLocale.errorUploadingProfilePicture: 'Error uploading profile picture',
-    // AppLocale.defaultProfilePicUrl: 'assets/images/default_avatar.png', // Example if used as locale
+    AppLocale.defaultProfilePicUrl: 'assets/images/default_avatar.png', // Example if used as locale
 
     // Sharing Dialog (ShareListDialog)
     AppLocale.shareDialogTitle: 'Share \'{categoryName}\'',

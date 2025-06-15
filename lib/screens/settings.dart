@@ -197,7 +197,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildProfileSection(BuildContext context) {
     String displayName = FlutterLocalization.instance.getString(context, AppLocale.guest);
     String displayEmail = "";
-    String? profilePicUrl = Globals.defaultProfilePicUrl;
+    String? profilePicUrl = AppLocale.defaultProfilePicUrl;
 
     if (!_isGuest && _currentUser != null) {
       displayName = _currentUser!.name ?? FlutterLocalization.instance.getString(context, AppLocale.unknown);
