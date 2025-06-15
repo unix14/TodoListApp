@@ -182,7 +182,9 @@ class _SettingsScreenState extends State<SettingsScreen>
         AppLocale.deleteAllSubtext.getString(context),
         () async {
       await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, "");
-      print("Delete all list from settings");
+      // Clear custom categories
+      await EncryptedSharedPreferencesHelper.saveCategories([]);
+      print("Delete all list and categories from settings");
 
       // update realtime DB if logged in
       if (isLoggedIn && currentUser?.uid.isNotEmpty == true) {

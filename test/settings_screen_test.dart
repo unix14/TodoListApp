@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter/material.dart';
 import 'package:flutter_example/common/consts.dart';
+import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart'; // Import for kCategoriesListPrefs
 import 'package:flutter_example/models/todo_list_item.dart'; // Import TodoListItem
 // Real EncryptedSharedPreferencesHelper will be used, relying on SharedPreferences.setMockInitialValues
 import 'package:flutter_example/models/user.dart' as app_user; // Alias for local User model
@@ -78,8 +79,6 @@ void main() {
       localizationsDelegates: localization.localizationsDelegates,
       supportedLocales: localization.supportedLocales,
       locale: const Locale('en'),
-      // Adding routes if direct navigation to SettingsScreen is needed in other tests,
-      // though for this flow, we start at HomePage.
       routes: {
         '/settings': (context) => const SettingsScreen(),
       },
@@ -95,10 +94,14 @@ void main() {
       ],
       initLanguageCode: 'en',
     );
+    // Initialize EncryptedSharedPreferencesHelper for tests if it's not already
+    // This is tricky as it's async and uses rootBundle. For widget tests,
+    // we often rely on SharedPreferences.setMockInitialValues to bypass deeper init.
+    // If EncryptedSharedPreferencesHelper.initialize() is strictly needed for kCategoriesListPrefs to be defined,
+    // this setup might need more work, but typically static consts are available.
   });
 
   setUp(() async {
-    // Clear all preferences and reset global state
     SharedPreferences.setMockInitialValues({});
     isLoggedIn = false;
     currentUser = null;
@@ -109,6 +112,7 @@ void main() {
 
   testWidgets('deleteAll confirmation and action - Logged-out user',
       (WidgetTester tester) async {
+    // This test remains as is, focusing on SettingsScreen isolation
     await tester.pumpWidget(buildTestableWidget(const SettingsScreen()));
     await tester.pumpAndSettle();
 
@@ -129,10 +133,13 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     expect(prefs.getString(kAllListSavedPrefs), "");
+    // Also check categories are cleared if this test implies full delete action
+    expect(prefs.getString(EncryptedSharedPreferencesHelper.kCategoriesListPrefs), "[]");
   });
 
   testWidgets('deleteAll confirmation and action - Logged-in user',
       (WidgetTester tester) async {
+    // This test remains as is, focusing on SettingsScreen isolation
     isLoggedIn = true;
     currentUser = MockFbUser(uid: 'testuid123', email: 'test@example.com');
     myCurrentUser = app_user.User(uid: "testuid123", email: "test@example.com", todoListItems: [TodoListItem("item1", DateTime.now(), false)]);
@@ -157,95 +164,95 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     expect(prefs.getString(kAllListSavedPrefs), "");
+    // Also check categories are cleared
+    expect(prefs.getString(EncryptedSharedPreferencesHelper.kCategoriesListPrefs), "[]");
   });
 
   testWidgets('Full "delete all and refresh" flow from HomePage', (WidgetTester tester) async {
-    // 1. Setup initial SharedPreferences state with some items
     final initialItems = [
       TodoListItem("Test Item 1", DateTime.now(), false),
       TodoListItem("Test Item 2", DateTime.now(), true),
     ];
+    final initialCategories = ["Work", "Personal"];
     final String initialItemsJson = jsonEncode(initialItems.map((item) => item.toJson()).toList());
+    final String initialCategoriesJson = jsonEncode(initialCategories);
+
     SharedPreferences.setMockInitialValues({
       kAllListSavedPrefs: initialItemsJson,
-      // Ensure other prefs used by HomePage or SettingsScreen are initialized if necessary
-      // For example, categories if HomePage depends on them immediately.
-      kCategoriesSavedPrefs: jsonEncode(["Work", "Personal"]),
+      EncryptedSharedPreferencesHelper.kCategoriesListPrefs: initialCategoriesJson,
     });
 
-    // Reset globals that might affect initial state (isLoggedIn for menu items etc.)
-    isLoggedIn = false; // Example: test as logged-out user for simplicity of Firebase interaction
+    isLoggedIn = false;
     currentUser = null;
     myCurrentUser = null;
 
-    // 2. Pump HomePage
     await tester.pumpWidget(buildTestableWidget(const HomePage()));
-    await tester.pumpAndSettle(); // Allow HomePage to loadList and build
+    await tester.pumpAndSettle();
 
-    // Verify initial items are present (optional, but good for sanity check)
-    // This depends on how HomePage displays items, e.g., by text in ListTile
-    // HomePage's FutureBuilder needs to complete.
+    // Verify initial items
     expect(find.text("Test Item 1"), findsOneWidget);
     expect(find.text("Test Item 2"), findsOneWidget);
 
-    // 3. Navigate from HomePage to SettingsScreen
-    // Find settings icon/button (assuming it's an Icon for this example)
-    // The settings button is in a PopupMenuButton. First tap the menu button.
-    final moreButton = find.byTooltip("More options"); // Or specific icon if PopupMenuButton has one
-    if (moreButton.evaluate().isNotEmpty) { // Check if a more specific tooltip/icon exists
-         await tester.tap(moreButton);
-    } else {
-        // Fallback to generic PopupMenuButton icon if specific not found
-        await tester.tap(find.byIcon(Icons.more_vert));
-    }
-    await tester.pumpAndSettle(); // For menu to appear
+    // Verify initial tabs
+    final homePageElementInitial = tester.element(find.byType(HomePage));
+    final String allTextInitial = AppLocale.all.getString(homePageElementInitial);
+    expect(find.widgetWithText(Tab, allTextInitial), findsOneWidget);
+    expect(find.widgetWithText(Tab, "Work"), findsOneWidget);
+    expect(find.widgetWithText(Tab, "Personal"), findsOneWidget);
+    expect(find.widgetWithIcon(Tab, Icons.add), findsOneWidget);
+    expect(find.byType(Tab), findsNWidgets(initialCategories.length + 2)); // "All", custom_cats, "+"
 
-    // Find "Settings" text in the menu. Need context for AppLocale.
-    // Since HomePage is on screen, its context can be used.
-    final homePageElement = tester.element(find.byType(HomePage));
-    final String settingsText = AppLocale.settings.getString(homePageElement);
+    // Navigate to Settings
+    final moreButton = find.byIcon(Icons.more_vert); // Assuming this is the primary way
+    expect(moreButton, findsOneWidget);
+    await tester.tap(moreButton);
+    await tester.pumpAndSettle();
+
+    final String settingsText = AppLocale.settings.getString(homePageElementInitial);
     await tester.tap(find.text(settingsText));
-    await tester.pumpAndSettle(); // For navigation to SettingsScreen
+    await tester.pumpAndSettle();
 
-    // Now on SettingsScreen
+    // On SettingsScreen, perform Delete All
     expect(find.byType(SettingsScreen), findsOneWidget);
     final settingsScreenElement = tester.element(find.byType(SettingsScreen));
-
-    // 4. Perform "Delete All" on SettingsScreen
     final String deleteAllText = AppLocale.deleteAll.getString(settingsScreenElement);
     await tester.tap(find.text(deleteAllText));
-    await tester.pumpAndSettle(); // For confirmation dialog
+    await tester.pumpAndSettle();
 
     final String areYouSureText = AppLocale.areUsure.getString(settingsScreenElement);
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.text(areYouSureText), findsOneWidget);
 
-    await tester.tap(find.text('OK')); // Assuming 'OK' is the text for the confirm button
-    await tester.pumpAndSettle(); // For delete, dialog pop, SettingsScreen pop, and HomePage rebuild
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
 
-    // 5. Verify HomePage state
-    // Check that HomePage is the current screen again
+    // Back on HomePage
     expect(find.byType(HomePage), findsOneWidget);
     expect(find.byType(SettingsScreen), findsNothing);
 
-    // Verify SharedPreferences was cleared for kAllListSavedPrefs
+    // Verify SharedPreferences cleared
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     expect(prefs.getString(kAllListSavedPrefs), "");
+    expect(prefs.getString(EncryptedSharedPreferencesHelper.kCategoriesListPrefs), "[]");
 
-    // Verify HomePage UI reflects an empty list
-    // Items should be gone after loadList() re-fetches from now-empty prefs
+    // Verify HomePage UI reflects empty list
     expect(find.text("Test Item 1"), findsNothing);
     expect(find.text("Test Item 2"), findsNothing);
+    // More specific check for item ListTiles if possible, for now, byType(ListTile) might be okay if no other ListTiles exist
+    // Assuming HomePage shows no ListTiles when items are empty and not part of scaffold.
+    // This check needs to be robust. If HomePage has other ListTiles, it will fail.
+    // A better way: ensure no ListTile contains text of deleted items. (Already covered by text findsNothing)
+    // Or ensure a specific "empty state" widget appears.
 
-    // If HomePage shows a specific widget for empty list, find that.
-    // For example, if it shows "No items yet!", then:
-    // expect(find.text("No items yet!"), findsOneWidget);
-    // For now, just checking that the ListTiles for items are gone is sufficient.
-    // The ListView itself might still exist, but be empty.
-    // A common way items are displayed is via ListTile, check for absence of any.
-    // This is a bit generic; more specific checks depend on HomePage's item widget structure.
-    expect(find.byType(ListTile), findsNothing); // Assuming items are in ListTiles
-                                                // This might be too broad if HomePage uses ListTiles for other things.
-                                                // A more specific check would be to find ListTiles that contain item text.
+    // Verify TabBar UI update
+    final homePageElementAfterDelete = tester.element(find.byType(HomePage));
+    final String allTextAfterDelete = AppLocale.all.getString(homePageElementAfterDelete);
+
+    expect(find.widgetWithText(Tab, allTextAfterDelete), findsOneWidget);
+    expect(find.widgetWithIcon(Tab, Icons.add), findsOneWidget);
+    expect(find.byType(Tab), findsNWidgets(2)); // Only "All" and "+" tabs should remain
+
+    expect(find.text("Work"), findsNothing);
+    expect(find.text("Personal"), findsNothing);
   });
 }
