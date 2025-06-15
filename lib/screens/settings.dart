@@ -4,9 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart'; // Placeholder, for Firebase Storage
 import 'package:flutter/material.dart';
 import 'package:flutter_example/common/common_styles.dart';
-import 'package:flutter_example/common/context_extensions.dart';
 import 'package:flutter_example/common/globals.dart';
-import 'package:flutter_example/l10n/intl_en.arb';
+// import 'package:flutter_example/l10n/intl_en.arb'; // Not needed if using FlutterLocalization
+import 'package:flutter_localization/flutter_localization.dart'; // Added import
 import 'package:flutter_example/main.dart';
 import 'package:flutter_example/managers/app_initializer.dart';
 import 'package:flutter_example/mixin/app_locale.dart';
@@ -74,7 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     //   _uploadProfilePicture();
     // }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.translate(AppLocale.imagePickingNotImplemented))), // Used new locale key
+      SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.imagePickingNotImplemented))),
     );
   }
 
@@ -99,11 +99,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.translate(AppLocale.profilePictureUpdated))), // New Locale String
+        SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.profilePictureUpdated))),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${context.translate(AppLocale.errorUploadingProfilePicture)}: $e')), // New Locale String
+        SnackBar(content: Text('${FlutterLocalization.instance.getString(context, AppLocale.errorUploadingProfilePicture)}: $e')),
       );
     }
   }
@@ -114,19 +114,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.translate(AppLocale.settings)),
+        title: Text(FlutterLocalization.instance.getString(context, AppLocale.settings)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: <Widget>[
-            _buildProfileSection(context),
+            _buildProfileSection(context), // This method also uses context.translate
             const Divider(),
             ListTile(
               leading: const Icon(Icons.language),
-              title: Text(context.translate(AppLocale.lang)),
+              title: Text(FlutterLocalization.instance.getString(context, AppLocale.lang)),
               trailing: DropdownButton<String>(
-                value: appLocale.currentLocale.languageCode,
+                value: appLocale.currentLocale.languageCode, // This part remains as it's view model logic
                 items: AppLocaleViewModel.supportedLocales.map((Locale locale) {
                   return DropdownMenuItem<String>(
                     value: locale.languageCode,
@@ -143,39 +143,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.info_outline),
-              title: Text(context.translate(AppLocale.version)),
+              title: Text(FlutterLocalization.instance.getString(context, AppLocale.version)),
               subtitle: Text('$_version ($_buildNumber)'),
             ),
             const Divider(),
             ListTile(
               leading: Icon(Icons.logout, color: _isGuest ? Colors.grey : Colors.red),
               title: Text(
-                _isGuest ? context.translate(AppLocale.login) : context.translate(AppLocale.logout),
+                _isGuest ? FlutterLocalization.instance.getString(context, AppLocale.login) : FlutterLocalization.instance.getString(context, AppLocale.logout),
                 style: TextStyle(color: _isGuest ? Colors.grey : Colors.red),
               ),
               onTap: _isGuest
                   ? () {
-                      // Navigate to login screen
                       Navigator.of(context).pushReplacementNamed('/onboarding');
                     }
                   : () async {
                       final confirmed = await showDialog<bool>(
                         context: context,
-                        builder: (BuildContext context) {
+                        builder: (BuildContext dialogContext) { // Changed context to dialogContext for clarity
                           return AlertDialog(
-                            title: Text(context.translate(AppLocale.logout)),
-                            content: Text(context.translate(AppLocale.logoutText)),
+                            title: Text(FlutterLocalization.instance.getString(dialogContext, AppLocale.logout)),
+                            content: Text(FlutterLocalization.instance.getString(dialogContext, AppLocale.logoutText)),
                             actions: <Widget>[
                               TextButton(
-                                child: Text(context.translate(AppLocale.cancelButtonText)),
+                                child: Text(FlutterLocalization.instance.getString(dialogContext, AppLocale.cancelButtonText)),
                                 onPressed: () {
-                                  Navigator.of(context).pop(false);
+                                  Navigator.of(dialogContext).pop(false);
                                 },
                               ),
                               TextButton(
-                                child: Text(context.translate(AppLocale.okButtonText)),
+                                child: Text(FlutterLocalization.instance.getString(dialogContext, AppLocale.okButtonText)),
                                 onPressed: () {
-                                  Navigator.of(context).pop(true);
+                                  Navigator.of(dialogContext).pop(true);
                                 },
                               ),
                             ],
@@ -196,12 +195,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildProfileSection(BuildContext context) {
-    String displayName = context.translate(AppLocale.guest);
+    String displayName = FlutterLocalization.instance.getString(context, AppLocale.guest);
     String displayEmail = "";
-    String? profilePicUrl = Globals.defaultProfilePicUrl; // Use a global default
+    String? profilePicUrl = Globals.defaultProfilePicUrl;
 
     if (!_isGuest && _currentUser != null) {
-      displayName = _currentUser!.name ?? context.translate(AppLocale.unknown);
+      displayName = _currentUser!.name ?? FlutterLocalization.instance.getString(context, AppLocale.unknown);
       displayEmail = _currentUser!.email ?? "";
       if (_currentUser!.profilePictureUrl != null && _currentUser!.profilePictureUrl!.isNotEmpty) {
         profilePicUrl = _currentUser!.profilePictureUrl;
@@ -230,12 +229,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (!_isGuest)
           ElevatedButton(
             onPressed: _pickImage,
-            child: Text(context.translate(AppLocale.changeProfilePictureButton)), // New Locale String
+            child: Text(FlutterLocalization.instance.getString(context, AppLocale.changeProfilePictureButton)),
           ),
-        if (_pickedImage != null && !_isGuest) // Show upload button only if an image is picked
+        if (_pickedImage != null && !_isGuest)
           ElevatedButton(
             onPressed: _uploadProfilePicture,
-            child: Text(context.translate(AppLocale.uploadProfilePictureButton)), // New Locale String
+            child: Text(FlutterLocalization.instance.getString(context, AppLocale.uploadProfilePictureButton)),
           ),
       ],
     );

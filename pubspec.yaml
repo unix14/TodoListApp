@@ -50,12 +50,13 @@ dependencies:
   font_awesome_flutter: ^10.5.0
   package_info_plus: ^4.1.0
   encrypt: ^5.0.3
-  uuid: ^4.1.0
-  pwa_install: ^1.1.1
+  uuid: ^4.3.3 # Updated version
+  pwa_install: ^0.0.6
   http: ^1.1.0
   android_intent_plus: ^4.0.3
   flutter_native_splash: ^2.3.5
   flutter_launcher_icons: ^0.13.1
+  flutter_localization: ^0.2.0 # Added
 
 
 dev_dependencies:

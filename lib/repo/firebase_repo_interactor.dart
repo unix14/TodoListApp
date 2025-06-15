@@ -30,6 +30,23 @@ class FirebaseRepoInteractor {
     MyUser.User? user;
     if (userResult.isNotEmpty) {
       user = MyUser.User.fromJson(Map<String, dynamic>.from(userResult));
+      if (user.newIdsWereAssignedDuringDeserialization) {
+        print("User $userId had new TodoListItem IDs assigned during deserialization. Re-saving user data.");
+        try {
+          // Directly use _firebaseRepo.saveData to ensure correct path for the given userId
+          await _firebaseRepo.saveData(
+            userPath, // This is already '$kDBPathUsers/$userId'
+            MyUser.User.toJson(user),
+            isFullPath: true,
+          );
+          user.newIdsWereAssignedDuringDeserialization = false; // Reset flag after successful save
+          print("Successfully re-saved user data for $userId after ID assignment.");
+        } catch (e) {
+          print("Error re-saving user $userId after ID assignment: $e");
+          // Decide on error handling: still return user with in-memory IDs, or throw/return null?
+          // For now, log and continue, returning the user object with in-memory IDs.
+        }
+      }
     } else {
       return null; // User not found
     }

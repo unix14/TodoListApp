@@ -1,7 +1,8 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
-import 'package:flutter_example/models/shared_list_config.dart'; // Added import
+import 'package:flutter_example/models/shared_list_config.dart';
+import 'package:uuid/uuid.dart'; // Added import
 
 class User {
   String? email;
@@ -10,7 +11,10 @@ class User {
   String? profilePictureUrl;
 
   List<TodoListItem>? todoListItems;
-  List<SharedListConfig> sharedListsConfigs = []; // Initialize to empty list
+  List<SharedListConfig> sharedListsConfigs = [];
+
+  // Transient field, not part of JSON
+  bool newIdsWereAssignedDuringDeserialization = false;
 
   DateTime? dateOfRegistration/* = DateTime.now()*/;
 
@@ -33,25 +37,47 @@ class User {
   }
 
   static fromJson(Map<String, dynamic> json) {
-    return User(
+    final userInstance = User(
       email: json['email'] as String? ?? '',
       imageURL: json['imageURL'] as String? ?? '',
       name: json['name'] as String? ?? '',
       profilePictureUrl: json['profilePictureUrl'] as String? ?? '',
-      sharedListsConfigs: (json['sharedListsConfigs'] as List<dynamic>?) // Added to fromJson
+      // sharedListsConfigs are typically populated at runtime after fetching user,
+      // or if they were part of user's own document (which is not the current design for shared lists).
+      // Initialize as empty, actual population usually happens in FirebaseRepoInteractor.getUserData()
+      sharedListsConfigs: (json['sharedListsConfigs'] as List<dynamic>?)
           ?.map((e) => SharedListConfig.fromJson(Map<String, dynamic>.from(e)))
-          .toList(),
-    )
-      ..todoListItems = (json['todoListItems'] as List<dynamic>?)
-          ?.map((e) => TodoListItem.fromJson(Map<String, dynamic>.from(e)))
-          .toList() ?? []
+          .toList() ?? [],
+    );
 
-      ..dateOfRegistration =  (json['dateOfRegistration'] != null && json['dateOfRegistration'] != '')
+    userInstance.newIdsWereAssignedDuringDeserialization = false; // Initialize transient field
+
+    final todoItemsData = json['todoListItems'] as List<dynamic>?;
+    if (todoItemsData != null) {
+      userInstance.todoListItems = todoItemsData.map((e) {
+        final itemJson = Map<String, dynamic>.from(e);
+        // Assuming TodoListItem.fromJson can take an optional idFromKey,
+        // but for embedded items, there's no external key.
+        // ID should come from itemJson['id'] or be null.
+        TodoListItem item = TodoListItem.fromJson(itemJson);
+        if (item.id == null) {
+          item.id = Uuid().v4();
+          userInstance.newIdsWereAssignedDuringDeserialization = true;
+        }
+        return item;
+      }).toList();
+    } else {
+      userInstance.todoListItems = [];
+    }
+
+    userInstance.dateOfRegistration =  (json['dateOfRegistration'] != null && json['dateOfRegistration'] != '')
           ? DateTime.parse(json['dateOfRegistration'] as String)
-          : null
-      ..dateOfLoginIn = (json['dateOfLoginIn'] != null && json['dateOfLoginIn'] != '')
+          : null;
+    userInstance.dateOfLoginIn = (json['dateOfLoginIn'] != null && json['dateOfLoginIn'] != '')
           ? DateTime.parse(json['dateOfLoginIn'] as String)
           : null;
+
+    return userInstance;
   }
 
 
