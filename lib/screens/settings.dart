@@ -19,12 +19,11 @@ import 'dart:convert';
 // For this exercise, we'll assume a direct import and guard with kIsWeb.
 import 'dart:html' as html;
 import 'package:file_picker/file_picker.dart';
-// Assuming FbUser is the user model, potentially from here or globals.dart
-// import 'package:flutter_example/models/user.dart'; // Or wherever FbUser is defined if not already in scope
+import 'package:flutter_example/models/user.dart'; // Correct import for User model
 
 
 import '../common/consts.dart';
-import '../common/globals.dart'; // FbUser might be accessible via this
+import '../common/globals.dart'; // myCurrentUser is of type User? from here
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -144,22 +143,23 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
           simpleDivider,
           ListTile(
-            title: Text(AppLocale.exportData.getString(context)), // Assuming AppLocale.exportData exists
+            title: const Text("Export Data"),
             onTap: () async {
               print("Export Data tapped");
               final userId = currentUser?.uid;
               if (userId == null || userId.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(AppLocale.userNotLoggedIn.getString(context))), // Assuming AppLocale.userNotLoggedIn exists
+                  const SnackBar(content: Text("User not logged in. Please log in to export.")),
                 );
                 return;
               }
 
               try {
-                myCurrentUser = await FirebaseRepoInteractor.instance.getUserData(userId);
-                if (myCurrentUser != null) {
-                  // User.toJson should handle the import of dart:convert if it uses jsonEncode internally
-                  final jsonString = FbUser.toJson(myCurrentUser!); // Assuming myCurrentUser is FbUser and FbUser.toJson exists
+                // myCurrentUser is already User? from globals.dart, populated by FirebaseRepoInteractor
+                var localMyCurrentUser = await FirebaseRepoInteractor.instance.getUserData(userId);
+                if (localMyCurrentUser != null) {
+                  myCurrentUser = localMyCurrentUser; // Assign to global myCurrentUser
+                  final jsonString = User.toJson(myCurrentUser!);
 
                   if (kIsWeb) {
                     // Web: Create a download link and click it
@@ -181,20 +181,20 @@ class _SettingsScreenState extends State<SettingsScreen>
                   }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLocale.failedToFetchData.getString(context))), // Assuming AppLocale.failedToFetchData exists
+                    const SnackBar(content: Text("Failed to fetch user data.")),
                   );
                 }
               } catch (e) {
                 print('Error exporting data: $e');
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(AppLocale.errorExportingData.getString(context))), // Assuming AppLocale.errorExportingData exists
+                  const SnackBar(content: Text("An error occurred while exporting data.")),
                 );
               }
             },
           ),
           simpleDivider,
           ListTile(
-            title: Text(AppLocale.importData.getString(context)), // Assuming AppLocale.importData exists, else "Import Data"
+            title: const Text("Import Data"),
             onTap: () async {
               print("Import Data tapped");
               try {
@@ -209,9 +209,8 @@ class _SettingsScreenState extends State<SettingsScreen>
 
                   if (kIsWeb && fileBytes != null) {
                     String jsonString = utf8.decode(fileBytes);
-                    // Assuming FbUser.fromJson exists
                     final Map<String, dynamic> jsonData = jsonDecode(jsonString);
-                    FbUser importedUser = FbUser.fromJson(jsonData);
+                    User importedUser = User.fromJson(jsonData);
                     // importedUser is available, show confirmation dialog
                     DialogHelper.showAlertDialog(
                       context,
@@ -242,12 +241,15 @@ class _SettingsScreenState extends State<SettingsScreen>
                         }
 
                         // Emails match, proceed with import
-                        importedUser.id = currentUser!.uid; // Set UID for the imported data
+                        // The line `importedUser.id = currentUser!.uid;` has been removed as per instructions.
+                        // FirebaseRepoInteractor.instance.updateUserData is now responsible for associating
+                        // importedUser data with the current authenticated user.
 
                         try {
+                          // FirebaseRepoInteractor.updateUserData should expect a User object
                           bool success = await FirebaseRepoInteractor.instance.updateUserData(importedUser);
                           if (success) {
-                            myCurrentUser = importedUser; // Update local cache
+                            myCurrentUser = importedUser; // Update global myCurrentUser
                             setState(() {}); // Refresh UI
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text("Data imported successfully.")),
@@ -359,9 +361,11 @@ class _SettingsScreenState extends State<SettingsScreen>
       await EncryptedSharedPreferencesHelper.saveCategories([]);
       print("Local preferences cleared.");
 
-      var userToDelete = Authenticator.getCurrentUser(); // Use a local var
+      // Capture UID for RTDB deletion BEFORE auth user is deleted.
+      final String? userIdForRtdbDeletion = Authenticator.getCurrentUser()?.uid;
+      var userToDelete = Authenticator.getCurrentUser(); // Used for immediate checks & potentially pre-cleanup context
 
-      if (userToDelete == null) {
+      if (userToDelete == null) { // This also implies userIdForRtdbDeletion would be null
         print("No user logged in to delete.");
         Navigator.of(context).pop(); // Dismiss dialog
         ScaffoldMessenger.of(context).showSnackBar(
@@ -369,22 +373,24 @@ class _SettingsScreenState extends State<SettingsScreen>
         );
         return;
       }
-      final String userId = userToDelete.uid; // Store UID before user object is potentially invalidated
+      // Note: The original 'userId' was from userToDelete.uid. We'll use userIdForRtdbDeletion for the final RTDB step.
 
       // 2. Clear user's list items in Firebase (partial data cleanup)
       // This part might be redundant if we delete the whole user node later,
       // but can serve as a fallback or if user node deletion fails.
-      if (isLoggedIn && myCurrentUser != null && myCurrentUser!.id == userId) {
+      // Operates on myCurrentUser, assuming it's the correct user context if logged in.
+      if (isLoggedIn && myCurrentUser != null) {
         try {
+          print("Attempting to clear todoListItems for user: ${myCurrentUser!.email} before full deletion.");
           myCurrentUser!.todoListItems = [];
           bool listCleared = await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
           if (listCleared) {
-            print("User's todoListItems cleared in Firebase.");
+            print("User's todoListItems cleared in Firebase for ${myCurrentUser!.email}.");
           } else {
-            print("Failed to clear user's todoListItems in Firebase. Continuing deletion...");
+            print("Failed to clear user's todoListItems in Firebase for ${myCurrentUser!.email}. Continuing deletion...");
           }
         } catch (e) {
-          print("Error clearing todoListItems: $e. Continuing deletion...");
+          print("Error clearing todoListItems for ${myCurrentUser!.email}: $e. Continuing deletion...");
         }
       }
 
@@ -431,12 +437,30 @@ class _SettingsScreenState extends State<SettingsScreen>
       }
 
       // 4. Delete entire user node from Realtime Database
+      if (userIdForRtdbDeletion != null && userIdForRtdbDeletion.isNotEmpty) {
+        try {
+          String userPath = "users/$userIdForRtdbDeletion";
+          await FirebaseRealtimeDatabaseRepository.instance.deleteData(userPath);
+          print("User data node deleted from Firebase Realtime Database at path: $userPath");
+        } catch (e) {
+          print("Failed to delete user data node from RTDB for $userIdForRtdbDeletion: $e");
+          // Don't abort here, account is deleted, but data cleanup failed.
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Account deleted, but failed to clear all cloud data. Please contact support.")),
+          );
+          // Continue to sign out and navigate.
+        }
+      } else {
+        print("Skipping RTDB user node deletion because userIdForRtdbDeletion is null or empty.");
+        // This case should ideally not be reached if userToDelete was not null.
+        // Showing a message might be good if this state implies an issue.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Could not determine user ID for full cloud data deletion. Some data may remain.")),
+        );
+      }
+
+      // 5. Sign Out
       try {
-        String userPath = "users/$userId";
-        await FirebaseRealtimeDatabaseRepository.instance.deleteData(userPath);
-        print("User data node deleted from Firebase Realtime Database at path: $userPath");
-      } catch (e) {
-        print("Failed to delete user data node from RTDB: $e");
         // Don't abort here, account is deleted, but data cleanup failed.
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Account deleted, but failed to clear all cloud data. Please contact support.")),
