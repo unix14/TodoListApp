@@ -135,7 +135,7 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  void _initializeTabs() async {
+  Future<void> _initializeTabs() async {
     // Store the current tab index to restore it after re-initialization
     int previousIndex = _tabController?.index ?? 0;
 
@@ -751,7 +751,7 @@ class _HomePageState extends State<HomePage>
                                   ),
                                 ),
                                 subtitle: Text(
-                                  getFormattedDate(todo.dateTime.toString()),
+                                  getFormattedDate(todo.dateTime.toString(), context),
                                   style: TextStyle(
                                     decoration: todo.isChecked
                                         ? TextDecoration.lineThrough
@@ -971,7 +971,7 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
                 subtitle: Text(
-                  getFormattedDate(currentTodo.dateTime.toString()),
+                  getFormattedDate(currentTodo.dateTime.toString(), context),
                   style: TextStyle(
                     decoration: currentTodo.isChecked
                         ? TextDecoration.lineThrough
@@ -1364,11 +1364,6 @@ class _HomePageState extends State<HomePage>
       }
     });
   }
-}
-
-// Define a constant for the "Add New Category" option to avoid magic strings
-const String kAddNewCategoryOption = 'add_new_category_option_val'; // Made it more unique
-
   Future<String?> _promptRenameCategory(String oldCategoryName) async {
     final TextEditingController categoryController = TextEditingController(text: oldCategoryName);
     final formKey = GlobalKey<FormState>();
@@ -1475,3 +1470,7 @@ const String kAddNewCategoryOption = 'add_new_category_option_val'; // Made it m
       return null;
     }
   }
+}
+
+// Define a constant for the "Add New Category" option to avoid magic strings
+const String kAddNewCategoryOption = 'add_new_category_option_val'; // Made it more unique
