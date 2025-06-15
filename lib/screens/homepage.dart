@@ -137,6 +137,10 @@ class _HomePageState extends State<HomePage> with PWAInstallerMixin {
     _loadingData = loadList();
     if (false) initAds();
     initializeInstallPrompt();
+    // Automatically show the install prompt if available
+    if (isInstallable()) {
+      showInstallPrompt();
+    }
     super.initState();
   }
 
