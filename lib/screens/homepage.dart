@@ -21,6 +21,7 @@ import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:html' as html;
+import 'package:home_widget/home_widget.dart';
 
 import 'onboarding.dart';
 
@@ -352,6 +353,12 @@ class _HomePageState extends State<HomePage>
                                 }
                               }
                               EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+                                // Notify the widget to update
+                                HomeWidget.updateWidget(
+                                  name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
+                                  iOSName: 'TodoWidgetProvider',
+                                );
+                                print('[HomeWidget] Sent update request to widget provider after deleting category.');
                               _updateList();
                               // Re-initialize tabs and then switch to "All" tab.
                               _initializeTabs().then((_) {
@@ -694,6 +701,13 @@ class _HomePageState extends State<HomePage>
         print("success save to DB");
       }
     }
+
+    // Notify the widget to update
+    HomeWidget.updateWidget(
+      name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider', // Fully qualified name of your AppWidgetProvider
+      iOSName: 'TodoWidgetProvider', // iOSName if you implement for iOS
+    );
+    print('[HomeWidget] Sent update request to widget provider after updating list.');
   }
 
   Future<List<TodoListItem>> loadList() async {
@@ -1190,6 +1204,12 @@ class _HomePageState extends State<HomePage>
         setState(() {
           _customCategories.add(newCategoryName!);
           EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+          // Notify the widget to update
+          HomeWidget.updateWidget(
+            name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
+            iOSName: 'TodoWidgetProvider',
+          );
+          print('[HomeWidget] Sent update request to widget provider after adding category.');
 
           _categories = [AppLocale.all.getString(context), ..._customCategories];
 
@@ -1455,6 +1475,12 @@ class _HomePageState extends State<HomePage>
           }
 
           EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+          // Notify the widget to update
+          HomeWidget.updateWidget(
+            name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
+            iOSName: 'TodoWidgetProvider',
+          );
+          print('[HomeWidget] Sent update request to widget provider after renaming category.');
           _updateList(); // Persist item changes
           _initializeTabs(); // Refresh UI
 
