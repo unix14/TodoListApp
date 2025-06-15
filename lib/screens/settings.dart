@@ -74,7 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     //   _uploadProfilePicture();
     // }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Image picking logic to be implemented here.')),
+      SnackBar(content: Text(context.translate(AppLocale.imagePickingNotImplemented))), // Used new locale key
     );
   }
 

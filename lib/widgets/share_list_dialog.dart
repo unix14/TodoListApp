@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_example/mixin/app_locale.dart';
-import 'package:flutter_example/repo/firebase_repo_interactor.dart'; // Added
-import 'package:flutter_example/models/shared_list_config.dart'; // Added
-import 'package:firebase_auth/firebase_auth.dart'; // Added
-import 'package:flutter_example/common/globals.dart'; // Added (assuming Globals.appBaseUrl)
+import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:flutter_example/models/shared_list_config.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_example/common/globals.dart';
+import 'package:flutter_example/models/user.dart' as AppUser; // Added for User model
+import 'package:flutter_example/common/DialogHelper.dart'; // Added for confirmation dialog
 
 class ShareListDialog extends StatefulWidget {
   final String categoryId;
@@ -25,69 +27,87 @@ class _ShareListDialogState extends State<ShareListDialog> {
   String _currentShareLink = "";
   bool _isEditingLink = false;
   bool _isLoading = false;
-  // Define a base URL for your shareable links. This should come from a config.
-  // For now, using a placeholder. Ensure Globals.appBaseUrl is defined.
-  String _baseShareUrl = Globals.appBaseUrl ?? "https://yourapp.web.app/list/";
+  bool _isLoadingParticipants = false; // New state for loading participants
+  List<AppUser.User> _authorizedUserDetails = []; // New state for participant details
+  SharedListConfig? _existingConfig; // To store the fetched config for reuse
 
+  // Define a base URL for your shareable links.
+  // Globals.appBaseUrl should be like "https://todo-later.web.app"
+  // We will append "/list/" to it.
+  String _baseShareUrlSegment = "/list/"; // Specific path segment for shared lists
 
   @override
   void initState() {
     super.initState();
     _shortLinkController = TextEditingController();
-    _baseShareUrl = Globals.appBaseUrl ?? _baseShareUrl; // Ensure it's set, fallback if Globals.appBaseUrl is null
-    if (_baseShareUrl.endsWith('/')) { // Ensure it has a trailing slash if not already present
-        // No, it should not end with / if the shortLinkPath starts with /
-        // It should be like https://yourapp.web.app/share (no trailing /)
-        // and shortLinkPath is "my-list", so final is https://yourapp.web.app/share/my-list
-        // For now, let's assume Globals.appBaseUrl = "https://yourapp.web.app/share" (no trailing slash)
-    }
-
+    // _baseShareUrl is effectively Globals.appBaseUrl
     _fetchExistingShareConfig();
+  }
+
+  String _getFullShareUrl(String shortPath) {
+    final baseUrl = Globals.appBaseUrl ?? "https://todo-later.web.app"; // Fallback if Globals.appBaseUrl is null
+    return "$baseUrl$_baseShareUrlSegment$shortPath";
   }
 
   Future<void> _fetchExistingShareConfig() async {
     setState(() {
       _isLoading = true;
-      // Initialize with a default message, possibly context-dependent if called from elsewhere than initState
-      _currentShareLink = AppLocale.notSharedYet.getString(context);
+      _currentShareLink = AppLocale.loading.getString(context); // Show loading initially
     });
 
     final currentUserUid = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserUid == null) {
       setState(() {
         _isLoading = false;
-        _currentShareLink = "Error: Not logged in."; // Or handle appropriately
+        _currentShareLink = AppLocale.loginToSharePrompt.getString(context); // Use locale
       });
       return;
     }
 
     try {
-      SharedListConfig? config = await FirebaseRepoInteractor.instance.getSharedListConfigById(widget.categoryId);
-      if (mounted && config != null && config.adminUserId == currentUserUid) {
-        _shortLinkController.text = config.shortLinkPath;
+      _existingConfig = await FirebaseRepoInteractor.instance.getSharedListConfigById(widget.categoryId);
+      if (mounted && _existingConfig != null) {
+        if (_existingConfig!.adminUserId == currentUserUid) {
+            _shortLinkController.text = _existingConfig!.shortLinkPath;
+        }
         setState(() {
-          _currentShareLink = "${_baseShareUrl.endsWith('/') ? _baseShareUrl : _baseShareUrl + '/'}${config.shortLinkPath}";
-          _isEditingLink = false; // Not editing by default when loaded
+          _currentShareLink = _getFullShareUrl(_existingConfig!.shortLinkPath);
+          _isEditingLink = false;
         });
+        _fetchParticipantsDetails(_existingConfig!);
       } else if (mounted) {
         setState(() {
-          // _currentShareLink is already "Not shared yet" from initial setState
+           _currentShareLink = AppLocale.notSharedYet.getString(context);
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _currentShareLink = AppLocale.shareError.getString(context);
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error fetching share config: $e")),
-        );
+        setState(() { _currentShareLink = AppLocale.shareError.getString(context); });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.fetchConfigError.getString(context).replaceAll('{errorDetails}', e.toString())))); // Use locale
+      }
+    } finally {
+      if (mounted) { setState(() { _isLoading = false; }); }
+    }
+  }
+
+  Future<void> _fetchParticipantsDetails(SharedListConfig config) async {
+    if (config.authorizedUserIds.isEmpty) {
+      setState(() => _authorizedUserDetails = []);
+      return;
+    }
+    setState(() => _isLoadingParticipants = true);
+    try {
+      final users = await FirebaseRepoInteractor.instance.getUsersDetails(config.authorizedUserIds.keys.toList());
+      if (mounted) {
+        setState(() => _authorizedUserDetails = users);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.fetchParticipantsError.getString(context).replaceAll('{errorDetails}', e.toString())))); // Use locale
       }
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoadingParticipants = false);
       }
     }
   }
@@ -112,7 +132,7 @@ class _ShareListDialogState extends State<ShareListDialog> {
     final currentUserUid = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserUid == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: You must be logged in to share.")),
+        SnackBar(content: Text(AppLocale.loginToSharePrompt.getString(context))), // Use locale
       );
       return;
     }
@@ -140,14 +160,27 @@ class _ShareListDialogState extends State<ShareListDialog> {
       );
 
       if (mounted) {
+        _existingConfig = await FirebaseRepoInteractor.instance.getSharedListConfigById(widget.categoryId);
         setState(() {
-          _shortLinkController.text = resultingShortLinkPath;
-          _currentShareLink = "${_baseShareUrl.endsWith('/') ? _baseShareUrl : _baseShareUrl + '/'}$resultingShortLinkPath";
+          if (_existingConfig != null) {
+            _shortLinkController.text = _existingConfig!.shortLinkPath; // Controller should reflect the *actual* path
+            _currentShareLink = _getFullShareUrl(_existingConfig!.shortLinkPath);
+            // No need to check adminUserId here for _shortLinkController.text,
+            // createOrUpdateSharedList returns the definitive resultingShortLinkPath.
+            // If desiredPath was empty, resultingShortLinkPath is the generated one.
+            // If desiredPath was provided, resultingShortLinkPath is the validated (possibly suffixed) one.
+            _shortLinkController.text = resultingShortLinkPath;
+          } else {
+             _shortLinkController.text = resultingShortLinkPath;
+             _currentShareLink = _getFullShareUrl(resultingShortLinkPath);
+          }
           _isEditingLink = false;
           _isLoading = false;
         });
+        if (_existingConfig != null) _fetchParticipantsDetails(_existingConfig!);
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocale.profilePictureUpdated.getString(context))), // TODO: Change to a more appropriate "Share settings updated" locale
+          SnackBar(content: Text(AppLocale.shareSettingsUpdated.getString(context))),
         );
       }
     } catch (e) {
@@ -232,7 +265,38 @@ class _ShareListDialogState extends State<ShareListDialog> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              Text("Authorized users will appear here. (Placeholder)"),
+              _isLoadingParticipants
+                ? Center(child: CircularProgressIndicator())
+                : (_authorizedUserDetails.isEmpty
+                    ? Text(AppLocale.noAuthorizedUsers.getString(context)) // TODO: New Locale
+                    : Column( // Using Column instead of ListView for simplicity within SingleChildScrollView
+                        children: _authorizedUserDetails.map((user) {
+                          bool isCurrentUserAdmin = _existingConfig?.adminUserId == FirebaseAuth.instance.currentUser?.uid;
+                          bool isThisUserTheAdmin = user.email == _existingConfig?.adminUserId; // Incorrect: compare UIDs
+                          isThisUserTheAdmin = user.id == _existingConfig?.adminUserId;
+
+
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: (user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty)
+                                  ? NetworkImage(user.profilePictureUrl!)
+                                  : null,
+                              child: (user.profilePictureUrl == null || user.profilePictureUrl!.isEmpty)
+                                  ? const Icon(Icons.person)
+                                  : null,
+                            ),
+                            title: Text(user.name ?? AppLocale.unknownUser.getString(context)), // TODO: New Locale
+                            subtitle: isThisUserTheAdmin ? Text(AppLocale.adminText.getString(context)) : null, // TODO: New Locale
+                            trailing: (isCurrentUserAdmin && !isThisUserTheAdmin && FirebaseAuth.instance.currentUser?.uid != user.id) // Admin cannot remove self
+                                ? IconButton(
+                                    icon: Icon(Icons.remove_circle_outline, color: Colors.red),
+                                    tooltip: AppLocale.removeUserButtonTooltip.getString(context),
+                                    onPressed: () => _removeUserFromSharedList(user.id!),
+                                  )
+                                : null,
+                          );
+                        }).toList(),
+                      )),
             ]
           ],
         ),
@@ -240,23 +304,67 @@ class _ShareListDialogState extends State<ShareListDialog> {
       actions: <Widget>[
         TextButton(
           child: Text(AppLocale.cancelButtonText.getString(context)),
-          onPressed: _isLoading ? null : () {
+          onPressed: _isLoading || _isLoadingParticipants ? null : () {
             Navigator.of(context).pop();
           },
         ),
         ElevatedButton(
-          onPressed: _isLoading ? null : _onSaveOrUpdateShare,
+          onPressed: _isLoading || _isLoadingParticipants ? null : _onSaveOrUpdateShare,
           child: _isLoading
               ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white,))
               : Text(
-                  // Logic for button text: if a link exists AND user is NOT editing the path field, it's "Update".
-                  // Otherwise (no link yet, or user is typing in path field), it's "Save & Share".
-                  (_currentShareLink != AppLocale.notSharedYet.getString(context) && !_isEditingLink && _currentShareLink.startsWith("http"))
-                      ? AppLocale.updateShareButton.getString(context)
-                      : AppLocale.saveShareButton.getString(context)
+                 (_existingConfig != null && _existingConfig!.shortLinkPath.isNotEmpty && !_isEditingLink)
+                    ? AppLocale.updateShareButton.getString(context)
+                    : AppLocale.saveShareButton.getString(context)
                 ),
         ),
       ],
     );
   }
+
+  Future<void> _removeUserFromSharedList(String userIdToRemove) async {
+    if (_existingConfig == null || _existingConfig!.adminUserId != FirebaseAuth.instance.currentUser?.uid) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.adminRequiredToRemoveUser.getString(context)))); // Use locale
+      return;
+    }
+
+    final AppUser.User? userToRemoveDetails = _authorizedUserDetails.firstWhere((u) => u.id == userIdToRemove, orElse: () => AppUser.User(email: AppLocale.unknownUser.getString(context), imageURL: "", name: AppLocale.unknownUser.getString(context))); // Use locale
+    final String userNameToRemove = userToRemoveDetails?.name ?? AppLocale.unknownUser.getString(context);
+
+
+    bool? confirmed = await DialogHelper.showAlertDialog(
+        context,
+        AppLocale.removeUserConfirmationTitle.getString(context),
+        AppLocale.removeUserConfirmationMessage.getString(context).replaceAll('{userName}', userNameToRemove),
+        () => Navigator.of(context, rootNavigator: true).pop(true), // OK
+        () => Navigator.of(context, rootNavigator: true).pop(false), // Cancel
+    );
+
+
+    if (confirmed == true) {
+      setState(() => _isLoadingParticipants = true); // Show loading indicator for user list
+
+      _existingConfig!.authorizedUserIds.remove(userIdToRemove);
+
+      bool success = await FirebaseRepoInteractor.instance.updateSharedListConfig(_existingConfig!);
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocale.userRemovedSuccess.getString(context).replaceAll('{userName}', userNameToRemove))),
+          );
+          // Refresh participant list
+          _fetchParticipantsDetails(_existingConfig!);
+        } else {
+          // Re-add if save failed, though this is tricky if other changes happened.
+          // For simplicity, just show error. A more robust solution might re-fetch config.
+           _existingConfig!.authorizedUserIds[userIdToRemove] = true; // Optimistically re-add if UI state is managed this way
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocale.userRemovedError.getString(context).replaceAll('{userName}', userNameToRemove))),
+          );
+        }
+        setState(() => _isLoadingParticipants = false);
+      }
+    }
+  }
+
 }

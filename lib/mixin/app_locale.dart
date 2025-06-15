@@ -95,6 +95,54 @@ mixin AppLocale {
   static const String timeYesterday = 'timeYesterday';
   static const String timeDaysAgo = 'timeDaysAgo';     // For "{days} days ago"
 
+  // Profile Picture Management
+  static const String changeProfilePictureButton = 'changeProfilePictureButton';
+  static const String uploadProfilePictureButton = 'uploadProfilePictureButton'; // May be same as 'change'
+  static const String profilePictureUpdated = 'profilePictureUpdated';
+  static const String errorUploadingProfilePicture = 'errorUploadingProfilePicture';
+  // static const String defaultProfilePicUrl = 'defaultProfilePicUrl'; // Asset path or URL, might be better in Globals or as actual asset. Placeholder if used as locale key.
+
+  // Sharing Dialog (ShareListDialog)
+  static const String shareDialogTitle = 'shareDialogTitle'; // Takes {categoryName}
+  static const String shareableLink = 'shareableLink';
+  static const String notSharedYet = 'notSharedYet';
+  static const String customLinkPathHint = 'customLinkPathHint';
+  static const String copyLinkButton = 'copyLinkButton';
+  static const String linkCopiedToClipboard = 'linkCopiedToClipboard';
+  static const String authorizedUsersSectionTitle = 'authorizedUsersSectionTitle';
+  static const String saveShareButton = 'saveShareButton';
+  static const String updateShareButton = 'updateShareButton';
+  static const String linkPathInvalid = 'linkPathInvalid';
+  // static const String linkPathTaken = 'linkPathTaken'; // Conceptual for server-side validation feedback
+  static const String shareError = 'shareError';
+  static const String loading = 'loading'; // General loading
+  static const String clearInput = 'clearInput';
+  static const String editSuffixTooltip = 'editSuffixTooltip';
+  static const String shareSettingsUpdated = 'shareSettingsUpdated';
+  static const String noAuthorizedUsers = 'noAuthorizedUsers';
+  static const String unknownUser = 'unknownUser'; // For when a user's name can't be fetched
+  static const String adminText = 'adminText'; // To label an admin user
+  static const String removeUserButtonTooltip = 'removeUserButtonTooltip';
+  static const String removeUserConfirmationTitle = 'removeUserConfirmationTitle';
+  static const String removeUserConfirmationMessage = 'removeUserConfirmationMessage'; // Takes {userName}
+  static const String userRemovedSuccess = 'userRemovedSuccess'; // Takes {userName}
+  static const String userRemovedError = 'userRemovedError'; // Takes {userName}
+
+  // Joining Shared List (HomePage)
+  static const String joinListSuccess = 'joinListSuccess'; // Takes {listName}
+  static const String joinListError = 'joinListError';
+  static const String loginToJoinPrompt = 'loginToJoinPrompt';
+  static const String simulateOpenLinkButton = 'simulateOpenLinkButton'; // Used for "Join Shared List" menu/dialog title
+  static const String enterLinkPathHint = 'enterLinkPathHint'; // For join dialog text field
+  static const String joinButtonText = 'joinButtonText'; // For join dialog button
+
+  // HomePage UI for Shared Tabs
+  static const String manageShareSettings = 'manageShareSettings'; // PopupMenu item for already shared list
+  static const String noTasksInSharedList = 'noTasksInSharedList';
+  static const String noCategoriesYet = 'noCategoriesYet'; // If all tabs (personal & shared) are empty
+  static const String addTodo = 'addTodo'; // FAB tooltip, if different from existing AppLocale.add
+
+
   static const Map<String, dynamic> EN = {
     AppLocale.title: 'Todo List',
     AppLocale.lang: 'Language',
@@ -181,6 +229,53 @@ mixin AppLocale {
     AppLocale.timeHoursAgo: '{hours} hours ago',
     AppLocale.timeYesterday: 'yesterday',
     AppLocale.timeDaysAgo: '{days} days ago',
+
+    // Profile Picture Management
+    AppLocale.changeProfilePictureButton: 'Change Profile Picture',
+    AppLocale.uploadProfilePictureButton: 'Upload Picture',
+    AppLocale.profilePictureUpdated: 'Profile picture updated!',
+    AppLocale.errorUploadingProfilePicture: 'Error uploading profile picture',
+    // AppLocale.defaultProfilePicUrl: 'assets/images/default_avatar.png', // Example if used as locale
+
+    // Sharing Dialog (ShareListDialog)
+    AppLocale.shareDialogTitle: 'Share \'{categoryName}\'',
+    AppLocale.shareableLink: 'Shareable link:',
+    AppLocale.notSharedYet: 'Not shared yet. Create a link to share.',
+    AppLocale.customLinkPathHint: 'Custom link path (e.g., school-stuff)',
+    AppLocale.copyLinkButton: 'Copy Link',
+    AppLocale.linkCopiedToClipboard: 'Link copied to clipboard!',
+    AppLocale.authorizedUsersSectionTitle: 'People with access',
+    AppLocale.saveShareButton: 'Save & Share',
+    AppLocale.updateShareButton: 'Update Share Settings',
+    AppLocale.linkPathInvalid: 'Link path can only contain letters, numbers, and hyphens.',
+    // AppLocale.linkPathTaken: 'This link path is already taken. Try another.',
+    AppLocale.shareError: 'Could not update share settings. Please try again.',
+    AppLocale.loading: 'Loading...',
+    AppLocale.clearInput: 'Clear',
+    AppLocale.editSuffixTooltip: 'Edit link path',
+    AppLocale.shareSettingsUpdated: 'Share settings updated!',
+    AppLocale.noAuthorizedUsers: 'No other users have access yet.',
+    AppLocale.unknownUser: 'Unknown User',
+    AppLocale.adminText: '(Admin)',
+    AppLocale.removeUserButtonTooltip: 'Remove user from list',
+    AppLocale.removeUserConfirmationTitle: 'Remove User?',
+    AppLocale.removeUserConfirmationMessage: 'Are you sure you want to remove {userName} from this shared list?',
+    AppLocale.userRemovedSuccess: '{userName} has been removed.',
+    AppLocale.userRemovedError: 'Could not remove {userName}. Please try again.',
+
+    // Joining Shared List (HomePage)
+    AppLocale.joinListSuccess: 'Successfully joined list: {listName}',
+    AppLocale.joinListError: 'Shared list not found or an error occurred.',
+    AppLocale.loginToJoinPrompt: 'Please log in or sign up to join a shared list.',
+    AppLocale.simulateOpenLinkButton: 'Join Shared List',
+    AppLocale.enterLinkPathHint: 'Enter shared link path',
+    AppLocale.joinButtonText: 'Join',
+
+    // HomePage UI for Shared Tabs
+    AppLocale.manageShareSettings: 'Manage Sharing',
+    AppLocale.noTasksInSharedList: 'No tasks in this shared list yet.',
+    AppLocale.noCategoriesYet: 'No categories or shared lists yet. Add one!',
+    AppLocale.addTodo: 'Add Todo',
   };
 
   static const Map<String, dynamic> HE = {
@@ -269,5 +364,52 @@ mixin AppLocale {
     AppLocale.timeHoursAgo: 'לפני {hours} שעות',   // Placeholder
     AppLocale.timeYesterday: 'אתמול',      // Placeholder
     AppLocale.timeDaysAgo: 'לפני {days} ימים',     // Placeholder
+
+    // Profile Picture Management
+    AppLocale.changeProfilePictureButton: '[HE] Change Profile Picture',
+    AppLocale.uploadProfilePictureButton: '[HE] Upload Picture',
+    AppLocale.profilePictureUpdated: '[HE] Profile picture updated!',
+    AppLocale.errorUploadingProfilePicture: '[HE] Error uploading profile picture',
+    // AppLocale.defaultProfilePicUrl: '[HE] assets/images/default_avatar.png',
+
+    // Sharing Dialog (ShareListDialog)
+    AppLocale.shareDialogTitle: '[HE] Share \'{categoryName}\'',
+    AppLocale.shareableLink: '[HE] Shareable link:',
+    AppLocale.notSharedYet: '[HE] Not shared yet. Create a link to share.',
+    AppLocale.customLinkPathHint: '[HE] Custom link path (e.g., school-stuff)',
+    AppLocale.copyLinkButton: '[HE] Copy Link',
+    AppLocale.linkCopiedToClipboard: '[HE] Link copied to clipboard!',
+    AppLocale.authorizedUsersSectionTitle: '[HE] People with access',
+    AppLocale.saveShareButton: '[HE] Save & Share',
+    AppLocale.updateShareButton: '[HE] Update Share Settings',
+    AppLocale.linkPathInvalid: '[HE] Link path can only contain letters, numbers, and hyphens.',
+    // AppLocale.linkPathTaken: '[HE] This link path is already taken. Try another.',
+    AppLocale.shareError: '[HE] Could not update share settings. Please try again.',
+    AppLocale.loading: '[HE] Loading...',
+    AppLocale.clearInput: '[HE] Clear',
+    AppLocale.editSuffixTooltip: '[HE] Edit link path',
+    AppLocale.shareSettingsUpdated: '[HE] Share settings updated!',
+    AppLocale.noAuthorizedUsers: '[HE] No other users have access yet.',
+    AppLocale.unknownUser: '[HE] Unknown User',
+    AppLocale.adminText: '[HE] (Admin)',
+    AppLocale.removeUserButtonTooltip: '[HE] Remove user from list',
+    AppLocale.removeUserConfirmationTitle: '[HE] Remove User?',
+    AppLocale.removeUserConfirmationMessage: '[HE] Are you sure you want to remove {userName} from this shared list?',
+    AppLocale.userRemovedSuccess: '[HE] {userName} has been removed.',
+    AppLocale.userRemovedError: '[HE] Could not remove {userName}. Please try again.',
+
+    // Joining Shared List (HomePage)
+    AppLocale.joinListSuccess: '[HE] Successfully joined list: {listName}',
+    AppLocale.joinListError: '[HE] Shared list not found or an error occurred.',
+    AppLocale.loginToJoinPrompt: '[HE] Please log in or sign up to join a shared list.',
+    AppLocale.simulateOpenLinkButton: '[HE] Join Shared List',
+    AppLocale.enterLinkPathHint: '[HE] Enter shared link path',
+    AppLocale.joinButtonText: '[HE] Join',
+
+    // HomePage UI for Shared Tabs
+    AppLocale.manageShareSettings: '[HE] Manage Sharing',
+    AppLocale.noTasksInSharedList: '[HE] No tasks in this shared list yet.',
+    AppLocale.noCategoriesYet: '[HE] No categories or shared lists yet. Add one!',
+    AppLocale.addTodo: '[HE] Add Todo',
   };
 }

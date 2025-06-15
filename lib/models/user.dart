@@ -10,14 +10,14 @@ class User {
   String? profilePictureUrl;
 
   List<TodoListItem>? todoListItems;
-  List<SharedListConfig>? sharedListsConfigs; // Added field
+  List<SharedListConfig> sharedListsConfigs = []; // Initialize to empty list
 
   DateTime? dateOfRegistration/* = DateTime.now()*/;
 
   //todo add date of login in
   DateTime? dateOfLoginIn;
 
-  User({required this.email, required this.imageURL, required this.name, this.profilePictureUrl, this.sharedListsConfigs}); // Added to constructor
+  User({required this.email, required this.imageURL, required this.name, this.profilePictureUrl, List<SharedListConfig>? sharedListsConfigs}) : this.sharedListsConfigs = sharedListsConfigs ?? []; // Updated constructor
 
   static Map<String, dynamic> toJson(User user) {
     return {

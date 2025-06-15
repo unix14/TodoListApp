@@ -373,4 +373,36 @@ class FirebaseRepoInteractor {
       return null; // Path not found
     }
   }
+
+  Future<List<MyUser.User>> getUsersDetails(List<String> userIds) async {
+    List<MyUser.User> userDetailsList = [];
+    for (String userId in userIds) {
+      final userPath = '$kDBPathUsers/$userId';
+      var userResult = await _firebaseRepo.getData("", userPath, isFullPath: true);
+      if (userResult.isNotEmpty) {
+        // Ensure to pass only the user data map to fromJson, not the whole snapshot if getData returns more.
+        // Assuming userResult is already the Map<String, dynamic> for the user.
+        userDetailsList.add(MyUser.User.fromJson(Map<String, dynamic>.from(userResult)));
+      } else {
+        // Handle case where a user's details might not be found - perhaps add a placeholder or log.
+        print("User details not found for UID: $userId");
+      }
+    }
+    return userDetailsList;
+  }
+
+  Future<bool> updateSharedListConfig(SharedListConfig config) async {
+    try {
+      await _firebaseRepo.saveData(
+        "${kDBPathSharedListConfigs}/${config.id}",
+        config.toJson(),
+        isFullPath: true,
+      );
+      print("Successfully updated SharedListConfig id: ${config.id}");
+      return true;
+    } catch (e) {
+      print("Error updating SharedListConfig id ${config.id}: $e");
+      return false;
+    }
+  }
 }
