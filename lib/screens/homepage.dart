@@ -284,7 +284,7 @@ class _HomePageState extends State<HomePage>
               ),
         actions: [
                 PopupMenuButton<String>(
-                  onSelected: (value) {
+                  onSelected: (value) async { // Make async
                     if (value == kInstallMenuButtonName) {
                       showInstallPrompt();
                       context.showSnackBar(AppLocale.appIsInstalled.getString(context));
@@ -296,10 +296,15 @@ class _HomePageState extends State<HomePage>
                           MaterialPageRoute(
                               builder: (context) => const OnboardingScreen()));
                     } else if (value == kSettingsMenuButtonName) {
-                      Navigator.push(
+                      final result = await Navigator.push( // await the result
                           context,
                           MaterialPageRoute(
                               builder: (context) => const SettingsScreen()));
+                      if (result == true && mounted) { // Check if mounted before setState
+                        setState(() {
+                          _loadingData = loadList(); // Re-trigger FutureBuilder
+                        });
+                      }
                     } else if (value == kRandomTaskMenuButtonName) {
                       _showRandomTask();
                     } else if (value == kRenameCategoryMenuButtonName) {

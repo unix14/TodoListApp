@@ -196,10 +196,14 @@ class _SettingsScreenState extends State<SettingsScreen>
           print("success save to DB");
         }
       }
-      Navigator.of(context).pop(); // dismiss dialog
+      Navigator.of(context).pop(); // dismiss DialogHelper's dialog
+      // Pop SettingsScreen itself with a result indicating data changed
+      Navigator.of(context).pop(true);
     }, () {
       // Cancel
-      Navigator.of(context).pop(); // dismiss dialog
+      Navigator.of(context).pop(); // dismiss DialogHelper's dialog
+      // Pop SettingsScreen itself with a result indicating no change or cancellation
+      Navigator.of(context).pop(false);
     });
   }
 }
