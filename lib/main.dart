@@ -9,14 +9,12 @@ import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart'
 import 'package:flutter_example/models/todo_list_item.dart'; // For TodoListItem
 import 'dart:convert'; // For jsonEncode/Decode
 import 'package:flutter_example/common/encryption_helper.dart'; // For EncryptionHelper
+import 'screens/homepage.dart';
+import 'screens/onboarding.dart';
 // import 'package:flutter_example/common/globals.dart'; // For kAllListSavedPrefs, kCategoriesPref
 // It seems kCategoriesPref is not a global const, but categories are saved with "categories" key.
 // Let's define it or use the literal string.
 const String kCategoriesPrefKey = "categories"; // As used in EncryptedSharedPreferencesHelper.loadCategories
-
-
-import 'screens/homepage.dart';
-import 'screens/onboarding.dart';
 
 // Must be top-level or static function
 @pragma('vm:entry-point')
