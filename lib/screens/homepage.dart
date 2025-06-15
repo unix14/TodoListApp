@@ -14,6 +14,7 @@ import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+// import 'package:sum_todo/generated/l10n.dart'; // Removed S class import
 import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
@@ -134,7 +135,7 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  Future<void> _initializeTabs() async {
+  void _initializeTabs() async {
     // Store the current tab index to restore it after re-initialization
     int previousIndex = _tabController?.index ?? 0;
 
@@ -318,7 +319,7 @@ class _HomePageState extends State<HomePage>
                     } else if (value == kRenameCategoryMenuButtonName) {
                       if (_isCurrentCategoryCustom()) {
                         final currentCategoryName = _categories[_tabController!.index];
-                        _promptRenameCategory(context, currentCategoryName);
+                        _promptRenameCategory(currentCategoryName);
                       }
                     } else if (value == kDeleteCategoryMenuButtonName) {
                       if (_isCurrentCategoryCustom()) {
@@ -897,73 +898,71 @@ class _HomePageState extends State<HomePage>
 
     return InkWell(
       onLongPress: () {
-        // If onLongPress always toggles edit mode for this item:
-        if (isEditMode(currentTodo)) {
-          // If already editing this item, long press could save and exit, or just exit.
-          // Let's make it save and exit.
-          _saveTodo(currentTodo, _textEditingController.text);
-          // _setEditingTodo(null); // _saveTodo will handle this
-        } else {
-          // If not editing this item, or editing another, start editing this one.
-          // If another item was being edited, its changes might be lost if not saved.
-          // Consider saving pending changes from _editingTodo if it's not null and different from currentTodo.
-          if (_editingTodo != null && _editingTodo != currentTodo) {
-            _saveTodo(_editingTodo!, _textEditingController.text); // Save previous
+        if (_editingTodo == currentTodo) { // If already editing this item
+          _saveTodo(currentTodo, _textEditingController.text); // Save current changes
+        } else { // Not editing this one, or not editing at all
+          if (_editingTodo != null) { // If editing another item
+            _saveTodo(_editingTodo!, _textEditingController.text); // Save changes to the other item
+            // _setEditingTodo(null); // No longer needed here as _saveTodo handles it
           }
-          _setEditingTodo(currentTodo);
+          _showTodoContextMenu(currentTodo); // Then show context menu for current one
         }
       },
       onTap: () {
         if (isEditMode(currentTodo)) {
-          // Tapped on an item that is already in edit mode.
-          // As per plan, this should save and exit edit mode.
-           _saveTodo(currentTodo, _textEditingController.text);
-          // _setEditingTodo(null); // _saveTodo will handle this
-        } else {
-          // Tapped on an item not in edit mode for THIS item.
-          if (_editingTodo != null) {
-            // Another item is being edited. Save it first.
-            _saveTodo(_editingTodo!, _textEditingController.text);
-          }
-          // Then, start editing the current one.
-          // _setEditingTodo(currentTodo); // This would immediately go into edit mode.
-                                        // The subtask says "toggleCheckBox" if not in edit mode.
-                                        // This conflicts with "If already in edit mode for a different item, switch edit mode to the tapped item."
-                                        // Let's prioritize: if any item is being edited, tap manages edit state. If NO item is being edited, tap toggles checkbox.
-
-          if (_editingTodo != null) { // If something WAS being edited (and now saved)
-             _setEditingTodo(currentTodo); // Then start editing the new one
-          } else { // Nothing was being edited
-            toggleCheckBox(currentTodo, !currentTodo.isChecked); // Original behavior for non-edit mode tap
-          }
+          // Tapping an item already in inline edit mode: do nothing here.
+          // Focus should be handled by the TextField itself or its autofocus.
+          // Saving is done via the leading Save icon or TextField's onSubmitted.
+        } else if (_editingTodo != null) { // If editing a DIFFERENT item
+          _saveTodo(_editingTodo!, _textEditingController.text); // Save the other one
+          // _setEditingTodo(null); // _saveTodo calls this
+          // THEN, allow the tap to toggle the checkbox of the current (tapped) item
+          toggleCheckBox(currentTodo, !currentTodo.isChecked);
+        } else { // Not editing any item
+          toggleCheckBox(currentTodo, !currentTodo.isChecked);
         }
       },
       child: SizedBox(
-        child: ListTile(
-          leading: isEditMode(currentTodo)
-              ? IconButton(
+        child: isEditMode(currentTodo)
+            // INLINE EDIT MODE UI
+            ? ListTile(
+                leading: IconButton(
                   icon: const Icon(Icons.save),
                   onPressed: () {
                     _saveTodo(currentTodo, _textEditingController.text);
-                    // _setEditingTodo(null); // _saveTodo will handle this
                   },
-                )
-              : Checkbox(
+                ),
+                title: TextField(
+                  controller: _textEditingController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: AppLocale.editTaskHintText.getString(context),
+                  ),
+                  onSubmitted: (newText) {
+                    _saveTodo(currentTodo, newText);
+                  },
+                ),
+                trailing: null, // No trailing widget in edit mode
+                subtitle: null, // No subtitle in edit mode
+              )
+            // NON-EDIT MODE UI (from Part 1)
+            : ListTile(
+                leading: Checkbox(
                   value: currentTodo.isChecked,
                   onChanged: (bool? value) {
+                     if (_editingTodo != null && _editingTodo != currentTodo) {
+                        _saveTodo(_editingTodo!, _textEditingController.text);
+                        // _setEditingTodo(null); // _saveTodo calls this
+                    } else if (_editingTodo == currentTodo) {
+                        // This state should ideally not be reachable if checkbox is only shown in non-edit mode.
+                        _saveTodo(currentTodo, _textEditingController.text);
+                        return;
+                    }
                     toggleCheckBox(currentTodo, value);
                   },
                 ),
-          title: isEditMode(currentTodo)
-              ? TextField(
-                  controller: _textEditingController,
-                  autofocus: true, // Automatically focus when edit mode starts
-                  onSubmitted: (newText) { // Optional: save on keyboard submit action
-                    _saveTodo(currentTodo, newText);
-                    // _setEditingTodo(null); // _saveTodo will handle this
-                  },
-                )
-              : Text(
+                title: Text(
                   currentTodo.text,
                   style: TextStyle(
                     decoration: currentTodo.isChecked
@@ -971,9 +970,7 @@ class _HomePageState extends State<HomePage>
                         : TextDecoration.none,
                   ),
                 ),
-          subtitle: isEditMode(currentTodo)
-              ? null // No subtitle in edit mode
-              : Text(
+                subtitle: Text(
                   getFormattedDate(currentTodo.dateTime.toString()),
                   style: TextStyle(
                     decoration: currentTodo.isChecked
@@ -981,13 +978,8 @@ class _HomePageState extends State<HomePage>
                         : TextDecoration.none,
                   ),
                 ),
-          trailing: IconButton( // Kept delete button, could be conditional
-              icon: const Icon(Icons.delete, color: Colors.grey), // Made color a bit more subtle
-              onPressed: () {
-                 _confirmDeleteItem(currentTodo); // Use existing delete confirmation
-              },
-            )
-        ),
+                trailing: null,
+              ),
       ),
     );
   }
@@ -1070,9 +1062,24 @@ class _HomePageState extends State<HomePage>
   }
 
   void _showRandomTask() {
-    final availableTasks = items
-        .where((item) => !item.isArchived && !item.isChecked)
-        .toList();
+    String currentCategoryName = AppLocale.all.getString(context); // Default to "All"
+    if (_tabController != null && _tabController!.index < _categories.length) {
+      currentCategoryName = _categories[_tabController!.index];
+    }
+
+    List<TodoListItem> availableTasks;
+    if (currentCategoryName == AppLocale.all.getString(context)) {
+      availableTasks = items
+          .where((item) => !item.isArchived && !item.isChecked)
+          .toList();
+    } else {
+      availableTasks = items
+          .where((item) =>
+              item.category == currentCategoryName &&
+              !item.isArchived &&
+              !item.isChecked)
+          .toList();
+    }
 
     if (availableTasks.isEmpty) {
       DialogHelper.showAlertDialog(
@@ -1205,6 +1212,9 @@ class _HomePageState extends State<HomePage>
   }
 
   void _showTodoContextMenu(TodoListItem todoItem) {
+    // Ensure any active edit is saved before showing context menu for potentially different item
+    // This is now handled by onLongPress before calling _showTodoContextMenu if _editingTodo is not null.
+
     showModalBottomSheet(
       context: context,
       builder: (BuildContext bottomSheetContext) {
@@ -1216,11 +1226,9 @@ class _HomePageState extends State<HomePage>
                 title: Text(AppLocale.editMenuItem.getString(context)),
                 onTap: () {
                   Navigator.of(bottomSheetContext).pop();
-                  if (_editingTodo != null && _editingTodo != todoItem) {
-                    // If another item is being edited, save it first.
-                    _saveTodo(_editingTodo!, _textEditingController.text);
-                  }
-                  // Then, set the current item to be in edit mode.
+                  // Logic to save previous item is handled by onLongPress or onTap before calling this.
+                  // Or, if called directly, _setEditingTodo should handle it.
+                  // For now, assuming _setEditingTodo will be enhanced or caller handles saving.
                   _setEditingTodo(todoItem);
                 },
               ),
@@ -1356,8 +1364,12 @@ class _HomePageState extends State<HomePage>
       }
     });
   }
+}
 
-  Future<String?> _promptRenameCategory(BuildContext context, String oldCategoryName) async {
+// Define a constant for the "Add New Category" option to avoid magic strings
+const String kAddNewCategoryOption = 'add_new_category_option_val'; // Made it more unique
+
+  Future<String?> _promptRenameCategory(String oldCategoryName) async {
     final TextEditingController categoryController = TextEditingController(text: oldCategoryName);
     final formKey = GlobalKey<FormState>();
     String? newCategoryName;
@@ -1463,7 +1475,3 @@ class _HomePageState extends State<HomePage>
       return null;
     }
   }
-}
-
-// Define a constant for the "Add New Category" option to avoid magic strings
-const String kAddNewCategoryOption = 'add_new_category_option_val'; // Made it more unique

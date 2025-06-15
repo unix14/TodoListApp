@@ -83,6 +83,17 @@ mixin AppLocale {
   // New fields for empty todo dialog
   static const String emptyTodoDialogTitle = 'emptyTodoDialogTitle';
   static const String emptyTodoDialogMessage = 'emptyTodoDialogMessage';
+  static const String editTaskHintText = 'editTaskHintText';
+
+  // Time-related keys
+  static const String timeFewSecondsAgo = 'timeFewSecondsAgo';
+  static const String timeFewMinutesAgo = 'timeFewMinutesAgo';
+  static const String timeMinuteAgo = 'timeMinuteAgo'; // For "{minutes} minute ago"
+  static const String timeMinutesAgo = 'timeMinutesAgo'; // For "{minutes} minutes ago"
+  static const String timeHourAgo = 'timeHourAgo';   // For "{hours} hour ago"
+  static const String timeHoursAgo = 'timeHoursAgo';   // For "{hours} hours ago"
+  static const String timeYesterday = 'timeYesterday';
+  static const String timeDaysAgo = 'timeDaysAgo';     // For "{days} days ago"
 
   static const Map<String, dynamic> EN = {
     AppLocale.title: 'Todo List',
@@ -161,6 +172,15 @@ mixin AppLocale {
     AppLocale.tasksCountZero: "No tasks",
     AppLocale.emptyTodoDialogTitle: "Empty Todo",
     AppLocale.emptyTodoDialogMessage: "Please write a Todo",
+    AppLocale.editTaskHintText: 'Edit task...',
+    AppLocale.timeFewSecondsAgo: 'a few seconds ago',
+    AppLocale.timeFewMinutesAgo: 'a few minutes ago',
+    AppLocale.timeMinuteAgo: '{minutes} minute ago',
+    AppLocale.timeMinutesAgo: '{minutes} minutes ago',
+    AppLocale.timeHourAgo: '{hours} hour ago',
+    AppLocale.timeHoursAgo: '{hours} hours ago',
+    AppLocale.timeYesterday: 'yesterday',
+    AppLocale.timeDaysAgo: '{days} days ago',
   };
 
   static const Map<String, dynamic> HE = {
@@ -240,5 +260,14 @@ mixin AppLocale {
     AppLocale.tasksCountZero: "אין משימות",
     AppLocale.emptyTodoDialogTitle: "משימה ריקה",
     AppLocale.emptyTodoDialogMessage: "אנא כתוב משימה",
+    AppLocale.editTaskHintText: 'ערוך משימה...',
+    AppLocale.timeFewSecondsAgo: 'לפני מספר שניות', // Placeholder
+    AppLocale.timeFewMinutesAgo: 'לפני מספר דקות', // Placeholder
+    AppLocale.timeMinuteAgo: 'לפני דקה', // Placeholder for singular minute, assuming {minutes} will be 1
+    AppLocale.timeMinutesAgo: 'לפני {minutes} דקות', // Placeholder
+    AppLocale.timeHourAgo: 'לפני שעה',   // Placeholder for singular hour, assuming {hours} will be 1
+    AppLocale.timeHoursAgo: 'לפני {hours} שעות',   // Placeholder
+    AppLocale.timeYesterday: 'אתמול',      // Placeholder
+    AppLocale.timeDaysAgo: 'לפני {days} ימים',     // Placeholder
   };
 }
