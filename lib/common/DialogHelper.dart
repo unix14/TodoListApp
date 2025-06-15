@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_example/mixin/app_locale.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 class DialogHelper {
   static showAlertDialog(BuildContext context, String title, String text,
@@ -8,12 +10,12 @@ class DialogHelper {
 
     // set up the button
     Widget okButton = TextButton(
-      child: const Text("OK"),
+      child: Text(AppLocale.okButtonText.getString(context)),
       onPressed: onOkButton,
     );
 
     Widget cancelButton = TextButton(
-      child: const Text("Cancel"),
+      child: Text(AppLocale.cancelButtonText.getString(context)),
       onPressed: onCancelButton,
     );
 
