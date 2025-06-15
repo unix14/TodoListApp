@@ -32,6 +32,13 @@ const kArchiveMenuButtonName = "archive";
 const kInstallMenuButtonName = "installwpa";
 const kLoginButtonMenu = 'login';
 
+// Firebase Realtime Database Paths
+const String kDBPathUsers = "users";
+const String kDBPathSharedListConfigs = "shared_list_configs";
+const String kDBPathSharedLinkPaths = "shared_link_paths";
+const String kDBPathSharedTodos = "shared_todos";
+const String kDBPathSharedTodosItems = "items";
+const String kDBPathSharedTodosMetadata = "metadata";
 
 
 /*static*/ final verticalDivider = Container(
