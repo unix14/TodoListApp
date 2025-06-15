@@ -143,13 +143,13 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
           simpleDivider,
           ListTile(
-            title: const Text("Export Data"),
+            title: Text(AppLocale.settingsExportDataTitle.getString(context)),
             onTap: () async {
               print("Export Data tapped");
               final userId = currentUser?.uid;
               if (userId == null || userId.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("User not logged in. Please log in to export.")),
+                  SnackBar(content: Text(AppLocale.settingsExportErrorNotLoggedIn.getString(context))),
                 );
                 return;
               }
@@ -181,20 +181,20 @@ class _SettingsScreenState extends State<SettingsScreen>
                   }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Failed to fetch user data.")),
+                    SnackBar(content: Text(AppLocale.settingsExportErrorFetchFailed.getString(context))),
                   );
                 }
               } catch (e) {
                 print('Error exporting data: $e');
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("An error occurred while exporting data.")),
+                  SnackBar(content: Text(AppLocale.settingsExportErrorGeneral.getString(context))),
                 );
               }
             },
           ),
           simpleDivider,
           ListTile(
-            title: const Text("Import Data"),
+            title: Text(AppLocale.settingsImportDataTitle.getString(context)),
             onTap: () async {
               print("Import Data tapped");
               try {
@@ -214,8 +214,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                     // importedUser is available, show confirmation dialog
                     DialogHelper.showAlertDialog(
                       context,
-                      "Confirm Import",
-                      "Are you sure you want to import this data? This will overwrite your current data in the cloud. This action cannot be undone.",
+                      AppLocale.settingsImportConfirmDialogTitle.getString(context),
+                      AppLocale.settingsImportConfirmDialogMessage.getString(context),
                       () async { // On Confirm
                         Navigator.of(context).pop(); // Dismiss dialog first
                         print("Import confirmed by user.");
@@ -228,14 +228,15 @@ class _SettingsScreenState extends State<SettingsScreen>
                         }
                         if (importedUser.email == null) {
                            ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Error: Imported data is missing user email.")),
+                            const SnackBar(content: Text("Error: Imported data is missing user email.")), // This could be localized too if needed
                           );
                           return;
                         }
 
                         if (currentUser!.email != importedUser.email) {
+                          final String importedUserEmail = importedUser.email!;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Imported data is for a different user (${importedUser.email}). Aborting import.")),
+                            SnackBar(content: Text(AppLocale.settingsImportErrorMismatchUser.getString(context).replaceFirst('{email}', importedUserEmail))),
                           );
                           return;
                         }
@@ -252,17 +253,17 @@ class _SettingsScreenState extends State<SettingsScreen>
                             myCurrentUser = importedUser; // Update global myCurrentUser
                             setState(() {}); // Refresh UI
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Data imported successfully.")),
+                              SnackBar(content: Text(AppLocale.settingsImportSuccess.getString(context))),
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Failed to save imported data to the cloud.")),
+                              SnackBar(content: Text(AppLocale.settingsImportErrorSaveFailed.getString(context))),
                             );
                           }
                         } catch (e) {
                           print("Error updating user data: $e");
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("An error occurred while saving data: ${e.toString()}")),
+                            SnackBar(content: Text("An error occurred while saving data: ${e.toString()}")), // Keep generic or add specific AppLocale
                           );
                         }
                       },
@@ -270,7 +271,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         Navigator.of(context).pop(); // Dismiss dialog
                         print("Import cancelled by user.");
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Import cancelled.")),
+                          SnackBar(content: Text(AppLocale.settingsImportCancelled.getString(context))),
                         );
                       },
                     );
@@ -278,22 +279,22 @@ class _SettingsScreenState extends State<SettingsScreen>
                   } else if (!kIsWeb && filePath != null) {
                     print("File path: $filePath");
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("File selected. Import via cloud storage or direct mobile file reading not yet fully implemented for data update.")),
+                      SnackBar(content: Text(AppLocale.settingsImportErrorMobileNotFullyImplemented.getString(context))),
                     );
                   } else if (fileBytes == null && filePath == null) {
                      ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Could not access file data.")),
+                      const SnackBar(content: Text("Could not access file data.")), // Could be localized
                     );
                   }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("No file selected.")),
+                    SnackBar(content: Text(AppLocale.settingsImportErrorNoFile.getString(context))),
                   );
                 }
               } catch (e) {
                 print('Error importing data: $e');
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Error importing file: ${e.toString()}")),
+                  SnackBar(content: Text("Error importing file: ${e.toString()}")), // Keep generic or add specific AppLocale
                 );
               }
             },
@@ -347,10 +348,8 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   void deleteAll() async {
-    // Use a more specific title if AppLocale.areUsure is too generic
-    // For example, "Delete Account Permanently?"
     String dialogTitle = AppLocale.areUsure.getString(context);
-    String dialogMessage = "This will permanently delete all your data, including your account from our authentication system. This action cannot be undone. Are you absolutely sure?";
+    String dialogMessage = AppLocale.settingsDeleteAccountDialogMessage.getString(context);
 
     DialogHelper.showAlertDialog(context, dialogTitle, dialogMessage,
         () async { // CONFIRM ACTION
@@ -419,7 +418,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         print("Authenticator.deleteCurrentUserAccount failed: $e");
         Navigator.of(context).pop(); // Dismiss dialog
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to delete account from authentication. You might need to log out and log back in to try again.")),
+          SnackBar(content: Text(AppLocale.settingsDeleteErrorAuthFailed.getString(context))),
         );
         return; // ABORT further deletion
       }
@@ -431,7 +430,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       if (!authDeleted) { // This condition might not be hit if errors are only printed by the method
          Navigator.of(context).pop(); // Dismiss dialog
          ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Account deletion from authentication failed. Aborting.")),
+          SnackBar(content: Text(AppLocale.settingsDeleteErrorAuthFailed.getString(context))), // Re-using same error for this unlikely path
         );
         return;
       }
@@ -444,28 +443,16 @@ class _SettingsScreenState extends State<SettingsScreen>
           print("User data node deleted from Firebase Realtime Database at path: $userPath");
         } catch (e) {
           print("Failed to delete user data node from RTDB for $userIdForRtdbDeletion: $e");
-          // Don't abort here, account is deleted, but data cleanup failed.
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Account deleted, but failed to clear all cloud data. Please contact support.")),
+            SnackBar(content: Text(AppLocale.settingsDeleteErrorCloudDataFailed.getString(context))),
           );
           // Continue to sign out and navigate.
         }
       } else {
         print("Skipping RTDB user node deletion because userIdForRtdbDeletion is null or empty.");
-        // This case should ideally not be reached if userToDelete was not null.
-        // Showing a message might be good if this state implies an issue.
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Could not determine user ID for full cloud data deletion. Some data may remain.")),
+          SnackBar(content: Text(AppLocale.settingsDeleteErrorCloudDataFailed.getString(context))), // Inform that some data might remain
         );
-      }
-
-      // 5. Sign Out
-      try {
-        // Don't abort here, account is deleted, but data cleanup failed.
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Account deleted, but failed to clear all cloud data. Please contact support.")),
-        );
-        // Continue to sign out and navigate.
       }
 
       // 5. Sign Out
