@@ -292,6 +292,9 @@ class _HomePageState extends State<HomePage>
             : TabBar(
                 controller: _tabController,
                 isScrollable: true,
+                tabAlignment: Localizations.localeOf(context).languageCode == 'he'
+                    ? TabAlignment.end
+                    : TabAlignment.start,
                 tabs: [
                   ..._categories.map((String name) => Tab(text: name)).toList(),
                   Tab(icon: Tooltip(message: AppLocale.addCategoryTooltip.getString(context), child: const Icon(Icons.add))),
