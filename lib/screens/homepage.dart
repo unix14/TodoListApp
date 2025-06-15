@@ -298,7 +298,7 @@ class _HomePageState extends State<HomePage>
               ),
         actions: [
                 PopupMenuButton<String>(
-                  onSelected: (value) {
+                  onSelected: (value) async { // Make async
                     if (value == kInstallMenuButtonName) {
                       showInstallPrompt();
                       context.showSnackBar(AppLocale.appIsInstalled.getString(context));
@@ -310,10 +310,24 @@ class _HomePageState extends State<HomePage>
                           MaterialPageRoute(
                               builder: (context) => const OnboardingScreen()));
                     } else if (value == kSettingsMenuButtonName) {
-                      Navigator.push(
+                      final result = await Navigator.push( // await the result
                           context,
                           MaterialPageRoute(
                               builder: (context) => const SettingsScreen()));
+                      if (result == true && mounted) { // Check if mounted before setState
+                        // First, trigger item loading
+                        setState(() {
+                          _loadingData = loadList(); // Re-trigger FutureBuilder
+                        });
+
+                        // Then, re-initialize tabs which will also call setState internally
+                        await _initializeTabs();
+
+                        // Optionally, ensure the first tab ("All") is selected if controller exists
+                        if (mounted && _tabController != null && _tabController!.length > 0) {
+                           _tabController!.animateTo(0); // Go to "All" tab
+                        }
+                      }
                     } else if (value == kRandomTaskMenuButtonName) {
                       _showRandomTask();
                     } else if (value == kRenameCategoryMenuButtonName) {

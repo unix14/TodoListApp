@@ -182,7 +182,9 @@ class _SettingsScreenState extends State<SettingsScreen>
         AppLocale.deleteAllSubtext.getString(context),
         () async {
       await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, "");
-      print("Delete all list from settings");
+      // Clear custom categories
+      await EncryptedSharedPreferencesHelper.saveCategories([]);
+      print("Delete all list and categories from settings");
 
       // update realtime DB if logged in
       if (isLoggedIn && currentUser?.uid.isNotEmpty == true) {
@@ -195,11 +197,15 @@ class _SettingsScreenState extends State<SettingsScreen>
         if (didSuccess == true) {
           print("success save to DB");
         }
-        Navigator.of(context).pop(); // dismiss dialog
       }
+      Navigator.of(context).pop(); // dismiss DialogHelper's dialog
+      // Pop SettingsScreen itself with a result indicating data changed
+      Navigator.of(context).pop(true);
     }, () {
       // Cancel
-      Navigator.of(context).pop(); // dismiss dialog
+      Navigator.of(context).pop(); // dismiss DialogHelper's dialog
+      // Pop SettingsScreen itself with a result indicating no change or cancellation
+      Navigator.of(context).pop(false);
     });
   }
 }
