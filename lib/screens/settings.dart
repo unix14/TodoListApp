@@ -195,8 +195,8 @@ class _SettingsScreenState extends State<SettingsScreen>
         if (didSuccess == true) {
           print("success save to DB");
         }
-        Navigator.of(context).pop(); // dismiss dialog
       }
+      Navigator.of(context).pop(); // dismiss dialog
     }, () {
       // Cancel
       Navigator.of(context).pop(); // dismiss dialog
