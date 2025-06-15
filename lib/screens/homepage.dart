@@ -14,6 +14,9 @@ import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // For current user UID
+import 'package:flutter_example/models/shared_list_config.dart'; // For type hint
+import 'package:flutter_example/widgets/share_list_dialog.dart'; // For ShareListDialog
 // import 'package:sum_todo/generated/l10n.dart'; // Removed S class import
 import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
@@ -28,6 +31,8 @@ import 'onboarding.dart';
 const String kRandomTaskMenuButtonName = 'randomTask';
 const String kRenameCategoryMenuButtonName = 'rename_category';
 const String kDeleteCategoryMenuButtonName = 'delete_category';
+const String kShareCategoryMenuButtonName = 'share_category';
+const String kJoinSharedListMenuButtonName = 'join_shared_list';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -58,15 +63,8 @@ class _HomePageState extends State<HomePage>
     return _editingTodo == todoItem; // Simplified edit mode check
   }
 
-  // int itemOnEditIndex = -1; // Removed
-
-  // Add a variable to control the opacity of the FloatingActionButton
   double fabOpacity = fabOpacityOff;
-
   final FocusNode _todoLineFocusNode = FocusNode();
-
-  //todo refactor and extract code to widgets
-
   bool isLoading = true;
 
   late RoundedTextInputField todoInputField = RoundedTextInputField(
@@ -85,30 +83,21 @@ class _HomePageState extends State<HomePage>
     },
   );
 
-  /// Ads
   BannerAd? myBanner;
   AdWidget? adWidget;
   late AdListener listener;
 
-  //init ads here
   void initAds() {
     listener = AdListener(
-      // Called when an ad is successfully received.
       onAdLoaded: (Ad ad) {
         myBanner = ad as BannerAd;
-
-        // print('Ad loaded.');
       },
-      // Called when an ad request failed.
       onAdFailedToLoad: (Ad ad, LoadAdError error) {
         ad.dispose();
         print('Ad failed to load: $error');
       },
-      // Called when an ad opens an overlay that covers the screen.
       onAdOpened: (Ad ad) => print('Ad opened.'),
-      // Called when an ad removes an overlay that covers the screen.
       onAdClosed: (Ad ad) => print('Ad closed.'),
-      // Called when an ad is in the process of leaving the application.
       onApplicationExit: (Ad ad) => print('Left application.'),
     );
 
@@ -127,78 +116,46 @@ class _HomePageState extends State<HomePage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Initialize categories and TabController here because context is available
-    // and AppLocale needs it.
     _initializeTabs();
-    // Load ad after build is complete
     Future.delayed(Duration.zero, () {
       myBanner?.load();
     });
   }
 
   Future<void> _initializeTabs() async {
-    // Store the current tab index to restore it after re-initialization
     int previousIndex = _tabController?.index ?? 0;
-
-    // Dispose old controller if exists BEFORE async operations
     _tabController?.removeListener(_handleTabSelection);
     _tabController?.dispose();
-    _tabController = null; // Set to null immediately
-
-    // Perform async operation
+    _tabController = null;
     _customCategories = await EncryptedSharedPreferencesHelper.loadCategories();
-
-    // This part should be synchronous and use the updated context from didChangeDependencies
     List<String> newCategories = [
-      AppLocale.all.getString(context), // This uses the potentially new context
+      AppLocale.all.getString(context),
       ..._customCategories
     ];
-
-    // Ensure previousIndex is valid for the new categories length
-    // The TabController length will be newCategories.length + 1 (for the '+' tab)
-    // So, valid indices for actual categories are 0 to newCategories.length - 1
-    // and the '+' tab will be at index newCategories.length.
     if (previousIndex >= newCategories.length + 1) {
-      previousIndex = 0; // Default to first tab if out of bounds
+      previousIndex = 0;
     }
-
-    // If previous index was the '+' tab (which is at newCategories.length after new list is formed)
-    // or if it points to an index that would be the '+' tab in the new setup.
-    // For example, if newCategories is empty, previousIndex could be 0, which is the '+' tab.
-    // If newCategories has 1 item, prevInd 1 is '+'. If 2 items, prevInd 2 is '+'.
     if (previousIndex == newCategories.length) {
-       // If the previous tab was the '+' icon, default to the first actual category.
-       // If there are no actual categories, it will correctly be 0 (which will be the '+' tab).
        previousIndex = 0;
     }
-    // A simpler check: if previousIndex would now point to the '+' tab or beyond, reset to 0.
-    // The maximum valid index for an *actual category tab* is `newCategories.length - 1`.
-    // If `newCategories` is empty, this results in -1, so `previousIndex` should be 0.
-    // The `TabController` will have `newCategories.length + 1` tabs.
-    // `initialIndex` must be between 0 and `newCategories.length`.
-    if (previousIndex > newCategories.length) { // If it's beyond the '+' tab index
+    if (previousIndex > newCategories.length) {
         previousIndex = 0;
     }
-    // If newCategories is empty, previousIndex must be 0 (the '+' tab).
     if (newCategories.isEmpty) {
         previousIndex = 0;
     }
-
-
     TabController newTabController = TabController(
-      length: newCategories.length + 1, // +1 for the '+' tab
+      length: newCategories.length + 1,
       vsync: this,
       initialIndex: previousIndex,
     );
     newTabController.addListener(_handleTabSelection);
-
-    if (mounted) { // Check if the widget is still in the tree
+    if (mounted) {
       setState(() {
         _categories = newCategories;
         _tabController = newTabController;
       });
     } else {
-      // If not mounted, dispose the newly created controller to avoid leaks
       newTabController.dispose();
     }
   }
@@ -206,19 +163,9 @@ class _HomePageState extends State<HomePage>
   void _handleTabSelection() {
     if (_tabController == null) return;
     if (_isPromptingForCategory) return;
-
-    // Check if the controller is still valid (not disposed)
-    // and if the index is for the "+" button
     if (_tabController!.index == _categories.length) {
       final previousIndex = _tabController!.previousIndex;
-
-      // It's crucial to ensure that the tab index is changed *before* showing the dialog,
-      // so the UI doesn't get stuck on the "+" tab visually.
-      // However, changing it immediately might cause a flicker if the dialog is cancelled.
-      // The postFrameCallback helps schedule the dialog prompt after the current build cycle.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Check if the tab controller is still at the "+" tab before prompting
-        // This can prevent issues if multiple taps occur quickly or state changes rapidly
         if (_tabController!.index == _categories.length) {
           _isPromptingForCategory = true;
           _promptForNewCategory(selectedIndexToRestore: previousIndex);
@@ -227,31 +174,28 @@ class _HomePageState extends State<HomePage>
     } else {
        if (_tabController!.indexIsChanging) {
          setState(() {
-           // Handle regular tab changes, e.g., save the index
          });
        }
     }
   }
-
 
   @override
   void dispose() {
     _tabController?.removeListener(_handleTabSelection);
     _tabController?.dispose();
     myBanner?.dispose();
-    _todoLineFocusNode.dispose(); // Dispose of the FocusNode
-    _textEditingController.dispose(); // Dispose the text controller
+    _todoLineFocusNode.dispose();
+    _textEditingController.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    _textEditingController = TextEditingController(); // Initialize the controller
+    _textEditingController = TextEditingController();
     _loadingData = loadList();
     if (false) initAds();
     initializeInstallPrompt();
-    // _initializeTabs will be called from didChangeDependencies
   }
 
   void _setEditingTodo(TodoListItem? todo) {
@@ -259,8 +203,6 @@ class _HomePageState extends State<HomePage>
       _editingTodo = todo;
       if (todo != null) {
         _textEditingController.text = todo.text;
-        // Optionally, request focus for the TextField if it's now visible.
-        // This might require passing a FocusNode to the TextField in getListTile.
       } else {
         _textEditingController.clear();
       }
@@ -271,13 +213,9 @@ class _HomePageState extends State<HomePage>
     if (_tabController == null || _categories.isEmpty) {
       return false;
     }
-    // Ensure index is valid for _categories before accessing.
-    // _tabController.index can be out of bounds if tabs are being re-initialized,
-    // or if it points to the "+" button which is not a category in _categories list.
     if (_tabController!.index < 0 || _tabController!.index >= _categories.length) {
       return false;
     }
-    // Check if the selected category is NOT the "All" category.
     return _categories[_tabController!.index] != AppLocale.all.getString(context);
   }
 
@@ -299,7 +237,7 @@ class _HomePageState extends State<HomePage>
               ),
         actions: [
                 PopupMenuButton<String>(
-                  onSelected: (value) async { // Make async
+                  onSelected: (value) async {
                     if (value == kInstallMenuButtonName) {
                       showInstallPrompt();
                       context.showSnackBar(AppLocale.appIsInstalled.getString(context));
@@ -311,26 +249,28 @@ class _HomePageState extends State<HomePage>
                           MaterialPageRoute(
                               builder: (context) => const OnboardingScreen()));
                     } else if (value == kSettingsMenuButtonName) {
-                      final result = await Navigator.push( // await the result
+                      final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => const SettingsScreen()));
-                      if (result == true && mounted) { // Check if mounted before setState
-                        // First, trigger item loading
+                      if (result == true && mounted) {
                         setState(() {
-                          _loadingData = loadList(); // Re-trigger FutureBuilder
+                          _loadingData = loadList();
                         });
-
-                        // Then, re-initialize tabs which will also call setState internally
                         await _initializeTabs();
-
-                        // Optionally, ensure the first tab ("All") is selected if controller exists
                         if (mounted && _tabController != null && _tabController!.length > 0) {
-                           _tabController!.animateTo(0); // Go to "All" tab
+                           _tabController!.animateTo(0);
                         }
                       }
                     } else if (value == kRandomTaskMenuButtonName) {
                       _showRandomTask();
+                    } else if (value == kShareCategoryMenuButtonName) {
+                      if (_isCurrentCategoryCustom()) {
+                        final currentCategoryName = _categories[_tabController!.index];
+                        _showShareDialog(currentCategoryName, currentCategoryName);
+                      }
+                    } else if (value == kJoinSharedListMenuButtonName) {
+                        _promptToJoinSharedList();
                     } else if (value == kRenameCategoryMenuButtonName) {
                       if (_isCurrentCategoryCustom()) {
                         final currentCategoryName = _categories[_tabController!.index];
@@ -343,24 +283,22 @@ class _HomePageState extends State<HomePage>
                           context,
                           AppLocale.deleteCategoryConfirmationTitle.getString(context),
                           AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', currentCategoryName),
-                          () { // onOkButton
-                            Navigator.of(context).pop(); // Dismiss confirmation dialog
+                          () {
+                            Navigator.of(context).pop();
                             setState(() {
                               _customCategories.removeWhere((cat) => cat.toLowerCase() == currentCategoryName.toLowerCase());
                               for (var item in items) {
                                 if (item.category == currentCategoryName) {
-                                  item.category = null; // Move to "All"
+                                  item.category = null;
                                 }
                               }
                               EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
-                                // Notify the widget to update
                                 HomeWidget.updateWidget(
                                   name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
                                   iOSName: 'TodoWidgetProvider',
                                 );
                                 print('[HomeWidget] Sent update request to widget provider after deleting category.');
                               _updateList();
-                              // Re-initialize tabs and then switch to "All" tab.
                               _initializeTabs().then((_) {
                                 if (mounted && _tabController != null) {
                                    _tabController!.index = 0;
@@ -371,8 +309,8 @@ class _HomePageState extends State<HomePage>
                               content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', currentCategoryName)),
                             ));
                           },
-                          () { // onCancelButton
-                            Navigator.of(context).pop(); // Dismiss confirmation dialog
+                          () {
+                            Navigator.of(context).pop();
                           },
                         );
                       }
@@ -380,7 +318,6 @@ class _HomePageState extends State<HomePage>
                   },
                   itemBuilder: (BuildContext context) {
                     List<PopupMenuItem<String>> popupMenuItems = [];
-                    //Check if should show Login Button
                     if (isLoggedIn == false) {
                       popupMenuItems.add(PopupMenuItem<String>(
                         value: kLoginButtonMenu,
@@ -396,7 +333,6 @@ class _HomePageState extends State<HomePage>
                         ),
                       ));
                     }
-                    //Check if should show Install App prompt button
                     if (isInstallable()) {
                       popupMenuItems.add(PopupMenuItem<String>(
                         value: kInstallMenuButtonName,
@@ -412,7 +348,6 @@ class _HomePageState extends State<HomePage>
                         ),
                       ));
                     }
-                    //Check if should show Archive Button
                     if (items.any((item) => item.isArchived)) {
                       popupMenuItems.add(PopupMenuItem<String>(
                         value: kArchiveMenuButtonName,
@@ -428,33 +363,38 @@ class _HomePageState extends State<HomePage>
                         ),
                       ));
                     }
-
-                    // Add "Rename Current Category" button if a custom category is selected
                     if (_isCurrentCategoryCustom()) {
                       popupMenuItems.add(PopupMenuItem<String>(
                         value: kRenameCategoryMenuButtonName,
                         child: Row(
                           children: [
-                            const Icon(Icons.edit, color: Colors.blue), // Or another appropriate icon
+                            const Icon(Icons.edit, color: Colors.blue),
                             const SizedBox(width: 8.0),
                             Text(AppLocale.renameCategoryMenuButton.getString(context)),
                           ],
                         ),
                       ));
-                      // Add "Delete Current Category" button if a custom category is selected
+                      popupMenuItems.add(PopupMenuItem<String>(
+                        value: kShareCategoryMenuButtonName,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.share, color: Colors.blue),
+                            const SizedBox(width: 8.0),
+                            Text(AppLocale.shareCategoryButtonTooltip.getString(context)),
+                          ],
+                        ),
+                      ));
                       popupMenuItems.add(PopupMenuItem<String>(
                         value: kDeleteCategoryMenuButtonName,
                         child: Row(
                           children: [
-                            const Icon(Icons.delete_outline, color: Colors.red), // Or another appropriate icon
+                            const Icon(Icons.delete_outline, color: Colors.red),
                             const SizedBox(width: 8.0),
                             Text(AppLocale.deleteCategoryMenuButton.getString(context), style: const TextStyle(color: Colors.red)),
                           ],
                         ),
                       ));
                     }
-
-                    // Add Random Task button
                     popupMenuItems.add(PopupMenuItem<String>(
                       value: kRandomTaskMenuButtonName,
                       child: Row(
@@ -468,8 +408,6 @@ class _HomePageState extends State<HomePage>
                         ],
                       ),
                     ));
-
-                    // Settings button is typically last or near last
                     popupMenuItems.add(PopupMenuItem<String>(
                       value: kSettingsMenuButtonName,
                       child: Row(
@@ -483,6 +421,18 @@ class _HomePageState extends State<HomePage>
                         ],
                       ),
                     ));
+                    if (FirebaseAuth.instance.currentUser != null) {
+                        popupMenuItems.add(PopupMenuItem<String>(
+                        value: kJoinSharedListMenuButtonName,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.group_add, color: Colors.blue),
+                            const SizedBox(width: 8.0),
+                            Text(AppLocale.simulateOpenLinkButton.getString(context)),
+                          ],
+                        ),
+                      ));
+                    }
                     return popupMenuItems;
                   },
                 ),
@@ -495,10 +445,9 @@ class _HomePageState extends State<HomePage>
                 ? const Center(child: CircularProgressIndicator())
                 : TabBarView(
                     controller: _tabController,
-                    // Children count should only be for actual categories, not the "+" tab
                     children: _categories.map((String categoryName) {
                       return FutureBuilder<List<TodoListItem>>(
-                        future: _loadingData, // This future now correctly reloads all items
+                        future: _loadingData,
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -511,8 +460,7 @@ class _HomePageState extends State<HomePage>
                             );
                           } else {
                             final allLoadedItems = snapshot.data ?? [];
-                            items = allLoadedItems; // Keep the main 'items' list updated
-
+                            items = allLoadedItems;
                             List<TodoListItem> displayedItems;
                             if (categoryName == AppLocale.all.getString(context)) {
                               displayedItems = allLoadedItems.reversed
@@ -525,8 +473,6 @@ class _HomePageState extends State<HomePage>
                                       item.category == categoryName)
                                   .toList();
                             }
-
-                            // If "All" is empty, show a random motivational sentence.
                             if (categoryName == AppLocale.all.getString(context) && displayedItems.isEmpty) {
                               final List<String> motivationalKeys = [
                                 AppLocale.motivationalSentence1,
@@ -551,23 +497,13 @@ class _HomePageState extends State<HomePage>
                                 ),
                               );
                             }
-
-                            // If not empty, potentially show count and then the list
                             if (displayedItems.isNotEmpty) {
                               String taskCountString;
                               if (displayedItems.length == 1) {
                                 taskCountString = AppLocale.tasksCountSingular.getString(context);
                               } else {
-                                // For 0 or >1, use tasksCount (which might be "{count} tasks" or "No tasks" via tasksCountZero if we made it that smart)
-                                // The current AppLocale setup has tasksCountZero, tasksCountSingular, tasksCount.
-                                // tasksCountZero is for "No tasks" - but this block is displayedItems.isNotEmpty
-                                // tasksCountSingular is for "1 task"
-                                // tasksCount is for "{count} tasks"
                                 taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', displayedItems.length.toString());
                               }
-                              // The tasksCountZero is defined, but this condition (displayedItems.isNotEmpty) means it won't be used here.
-                              // If displayedItems.isEmpty, we are in the motivational sentence block or just an empty ListView for other categories.
-
                               return Column(
                                 children: [
                                   Padding(
@@ -594,9 +530,7 @@ class _HomePageState extends State<HomePage>
                                 ],
                               );
                             } else {
-                              // This path is for custom categories that are empty.
-                              // "All" empty case is handled by the motivational sentence block.
-                              return ListView.builder( // Returns an empty list view
+                              return ListView.builder(
                                 itemCount: 0,
                                 itemBuilder: (context, position) => Container(),
                               );
@@ -640,7 +574,7 @@ class _HomePageState extends State<HomePage>
                 child: const Icon(Icons.add),
               ),
             )
-          : Container(), // This trailing comma makes auto-formatting nicer for build methods.
+          : Container(),
     );
   }
 
@@ -653,17 +587,9 @@ class _HomePageState extends State<HomePage>
           currentCategory = selectedCategoryName;
         }
       }
-
       setState(() {
         items.add(TodoListItem(inputText.trim(), category: currentCategory));
-        _updateList(); // This should persist the full 'items' list
-
-        // Reload data to reflect in FutureBuilder, or manage state more granularly
-        // For simplicity, we can rely on setState and FutureBuilder re-running.
-        // If _loadingData is not re-fetched, new items might not show until next full load.
-        // A better approach might be to update the snapshot data directly or re-fetch.
-        // For now, we assume _updateList and subsequent setState will refresh UI.
-
+        _updateList();
         inputText = "";
         todoInputField.clear();
         fabOpacity = fabOpacityOff;
@@ -674,38 +600,30 @@ class _HomePageState extends State<HomePage>
           AppLocale.emptyTodoDialogTitle.getString(context),
           AppLocale.emptyTodoDialogMessage.getString(context),
           () {
-        // Ok
-        Navigator.of(context).pop(); // dismiss dialog
+        Navigator.of(context).pop();
       }, null);
     }
   }
 
   void _updateList() async {
-    // Convert the current list to JSON
     var listAsStr = jsonEncode(items);
     await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, listAsStr);
     print("update list :" + listAsStr);
-
-    // todo update realtime DB if logged in
-
     if (isLoggedIn && currentUser?.uid.isNotEmpty == true) {
       if (myCurrentUser == null) {
         myCurrentUser =
             await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
       }
       myCurrentUser!.todoListItems = items;
-
       var didSuccess =
           await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
       if (didSuccess == true) {
         print("success save to DB");
       }
     }
-
-    // Notify the widget to update
     HomeWidget.updateWidget(
-      name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider', // Fully qualified name of your AppWidgetProvider
-      iOSName: 'TodoWidgetProvider', // iOSName if you implement for iOS
+      name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
+      iOSName: 'TodoWidgetProvider',
     );
     print('[HomeWidget] Sent update request to widget provider after updating list.');
   }
@@ -725,17 +643,13 @@ class _HomePageState extends State<HomePage>
   }
 
   void showArchivedTodos() async {
-    // Use archivedTodos to display archived todos.
-    // Display the archived todos using an AlertDialog
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // Display the archived todos using your preferred UI, e.g., a dialog, a new page, etc.
             final List<TodoListItem> archivedTodos =
                 items.where((item) => item.isArchived).toList();
-
             return AlertDialog(
               title: Text(AppLocale.archivedTodos.getString(context)),
               content: SizedBox(
@@ -753,7 +667,6 @@ class _HomePageState extends State<HomePage>
                                 todo.isChecked = !todo.isChecked;
                                 todo.dateTime = DateTime.now();
                                 refreshList();
-                                // _updateList();
                               });
                             },
                             child: SizedBox(
@@ -761,11 +674,9 @@ class _HomePageState extends State<HomePage>
                                 leading: Checkbox(
                                   value: todo.isChecked,
                                   onChanged: (bool? value) {
-                                    // await archiveTodos();
                                     setState(() {
                                       todo.isChecked = !todo.isChecked;
                                       todo.dateTime = DateTime.now();
-                                      // _updateList();
                                       refreshList();
                                     });
                                   },
@@ -792,19 +703,16 @@ class _HomePageState extends State<HomePage>
                                           context,
                                           AppLocale.doUwant2Delete.getString(context),
                                           AppLocale.thisCantBeUndone.getString(context), () {
-                                        // dismiss dialog
                                         setState(() {
                                           items.remove(todo);
-                                          // itemOnEditIndex = -1; // Removed
                                           if (_editingTodo == todo) {
-                                            _setEditingTodo(null); // Clear editing state if deleted item was being edited
+                                            _setEditingTodo(null);
                                           }
                                           _updateList();
                                         });
                                         Navigator.of(context).pop();
                                       }, () {
-                                        // Cancel
-                                        Navigator.of(context).pop(); // dismiss dialog
+                                        Navigator.of(context).pop();
                                       });
                                     },
                                     child: const Icon(
@@ -824,7 +732,7 @@ class _HomePageState extends State<HomePage>
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
+                    Navigator.of(context).pop();
                     setState(() {});
                   },
                   child: Text(AppLocale.close.getString(context)),
@@ -839,45 +747,31 @@ class _HomePageState extends State<HomePage>
 
   Future<void> archiveTodos() async {
     final List<TodoListItem> completedTodos = List.from(items);
-
     for (final completedTodo in completedTodos) {
       completedTodo.isArchived = completedTodo.isEligibleForArchiving();
     }
-    // items.removeWhere((item) => item.isArchived);
     _updateList();
   }
 
-  //todo refactor to somewhere else
   Future<List<TodoListItem>> _loadList() async {
-    /// todo refactor to seperate classes
-
-    /// fetch from shared Preferences
     var listStr = await EncryptedSharedPreferencesHelper.getString(kAllListSavedPrefs) ?? "";
     print("load list :" + listStr);
-
     if (listStr.isNotEmpty) {
       List<dynamic> decodedList = jsonDecode(listStr);
       List<TodoListItem> sharedPrefsTodoList = decodedList.isNotEmpty ?
       decodedList.map((item) => TodoListItem.fromJson(item)).toList() : [];
-
       if (isLoggedIn && currentUser != null) {
-        /// fetch from firebase
         if (myCurrentUser == null) {
-          // Load user data if not already loaded
           myCurrentUser = await FirebaseRepoInteractor.instance
               .getUserData(currentUser!.uid);
           print("Loading first time the data from the DB");
         }
-
         print("the result for ${currentUser!.uid} is ${myCurrentUser?.todoListItems?.length ?? -1}");
         if (myCurrentUser != null && myCurrentUser?.todoListItems != null) {
           print("Loading from the DB");
-
           if (sharedPrefsTodoList.isNotEmpty) {
             var didMerged = false;
-            // Merge the two lists
             for (var item in sharedPrefsTodoList) {
-              // check by parameters
               if (!myCurrentUser!.todoListItems!.contains(item) &&
                   !myCurrentUser!.todoListItems!.any((element) =>
                       element.text == item.text &&
@@ -886,9 +780,7 @@ class _HomePageState extends State<HomePage>
                 didMerged = true;
               }
             }
-
             if (didMerged) {
-              // update firebase
               var didSuccess = await FirebaseRepoInteractor.instance
                   .updateUserData(myCurrentUser!);
               if (didSuccess == true) {
@@ -896,20 +788,16 @@ class _HomePageState extends State<HomePage>
               } else {
                 print("failed save to DB");
               }
-              // update shared prefs
               await EncryptedSharedPreferencesHelper.setString(
                   kAllListSavedPrefs, jsonEncode(myCurrentUser!.todoListItems));
             }
           }
-
           return myCurrentUser!.todoListItems!;
         }
       }
       return sharedPrefsTodoList;
     } else {
-      /// fetch from firebase
       if (myCurrentUser == null && currentUser != null) {
-        // Load user data if not already loaded
         myCurrentUser =
             await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
       }
@@ -922,37 +810,28 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget getListTile(TodoListItem currentTodo) {
-    // var currentTodoEditInput = RoundedTextInputField( ... ); // This seems to be for the old edit mode. Will remove/replace.
-
     return InkWell(
       onLongPress: () {
-        if (_editingTodo == currentTodo) { // If already editing this item
-          _saveTodo(currentTodo, _textEditingController.text); // Save current changes
-        } else { // Not editing this one, or not editing at all
-          if (_editingTodo != null) { // If editing another item
-            _saveTodo(_editingTodo!, _textEditingController.text); // Save changes to the other item
-            // _setEditingTodo(null); // No longer needed here as _saveTodo handles it
+        if (_editingTodo == currentTodo) {
+          _saveTodo(currentTodo, _textEditingController.text);
+        } else {
+          if (_editingTodo != null) {
+            _saveTodo(_editingTodo!, _textEditingController.text);
           }
-          _showTodoContextMenu(currentTodo); // Then show context menu for current one
+          _showTodoContextMenu(currentTodo);
         }
       },
       onTap: () {
         if (isEditMode(currentTodo)) {
-          // Tapping an item already in inline edit mode: do nothing here.
-          // Focus should be handled by the TextField itself or its autofocus.
-          // Saving is done via the leading Save icon or TextField's onSubmitted.
-        } else if (_editingTodo != null) { // If editing a DIFFERENT item
-          _saveTodo(_editingTodo!, _textEditingController.text); // Save the other one
-          // _setEditingTodo(null); // _saveTodo calls this
-          // THEN, allow the tap to toggle the checkbox of the current (tapped) item
+        } else if (_editingTodo != null) {
+          _saveTodo(_editingTodo!, _textEditingController.text);
           toggleCheckBox(currentTodo, !currentTodo.isChecked);
-        } else { // Not editing any item
+        } else {
           toggleCheckBox(currentTodo, !currentTodo.isChecked);
         }
       },
       child: SizedBox(
         child: isEditMode(currentTodo)
-            // INLINE EDIT MODE UI
             ? ListTile(
                 leading: IconButton(
                   icon: const Icon(Icons.save),
@@ -971,19 +850,16 @@ class _HomePageState extends State<HomePage>
                     _saveTodo(currentTodo, newText);
                   },
                 ),
-                trailing: null, // No trailing widget in edit mode
-                subtitle: null, // No subtitle in edit mode
+                trailing: null,
+                subtitle: null,
               )
-            // NON-EDIT MODE UI (from Part 1)
             : ListTile(
                 leading: Checkbox(
                   value: currentTodo.isChecked,
                   onChanged: (bool? value) {
                      if (_editingTodo != null && _editingTodo != currentTodo) {
                         _saveTodo(_editingTodo!, _textEditingController.text);
-                        // _setEditingTodo(null); // _saveTodo calls this
                     } else if (_editingTodo == currentTodo) {
-                        // This state should ideally not be reachable if checkbox is only shown in non-edit mode.
                         _saveTodo(currentTodo, _textEditingController.text);
                         return;
                     }
@@ -1014,10 +890,7 @@ class _HomePageState extends State<HomePage>
 
   void _saveTodo(TodoListItem todo, String newText) {
     if (newText.trim().isEmpty) {
-      // Optional: Show a snackbar or dialog if text is empty, or just don't save.
-      // For now, let's prevent saving an empty todo and exit edit mode.
       _setEditingTodo(null);
-      // Maybe delete if original was not empty and new is empty? For now, just revert.
       return;
     }
     setState(() {
@@ -1027,52 +900,20 @@ class _HomePageState extends State<HomePage>
       }
       _updateList();
     });
-    _setEditingTodo(null); // Exit edit mode after saving
+    _setEditingTodo(null);
   }
 
-
   void toggleCheckBox(TodoListItem currentTodo, bool? value) {
-    // Ensure not to toggle if in edit mode for THIS item by tapping checkbox area (though checkbox is not shown)
     if (isEditMode(currentTodo)) return;
-
-    // If editing another item, save it before toggling checkbox for current item
     if (_editingTodo != null && _editingTodo != currentTodo) {
        _saveTodo(_editingTodo!, _textEditingController.text);
     }
-    _setEditingTodo(null); // Ensure exiting edit mode for any other item
-
+    _setEditingTodo(null);
     setState(() {
       currentTodo.isChecked = value ?? false;
       _updateList();
     });
   }
-
-  // void toggleEditMode(TodoListItem currentTodo) { // Replaced by _setEditingTodo
-  //   setState(() {
-  //     if (itemOnEditIndex == -1) {
-  //       var index = items.indexOf(currentTodo);
-  //       itemOnEditIndex = index;
-  //     } else {
-  //       itemOnEditIndex = -1;
-  //     }
-  //   });
-  // }
-
-  // void updateTile(TodoListItem currentTodo, String todoText) { // Replaced by _saveTodo
-  //   setState(() {
-  //     var index = items.indexOf(currentTodo);
-  //     var didChanged = false;
-  //     if (todoText.isNotEmpty) {
-  //       didChanged = currentTodo.text != todoText;
-  //       currentTodo.text = todoText; // todo fix issues w updating the text
-  //     }
-  //     if (didChanged) {
-  //       currentTodo.dateTime = DateTime.now();
-  //     }
-  //     items[index] = currentTodo;
-  //     _updateList();
-  //   });
-  // }
 
   void deleteAll() {
     DialogHelper.showAlertDialog(context, AppLocale.areUsure.getString(context),
@@ -1084,17 +925,15 @@ class _HomePageState extends State<HomePage>
         Navigator.of(context).pop();
       });
     }, () {
-      // Cancel
-      Navigator.of(context).pop(); // dismiss dialog
+      Navigator.of(context).pop();
     });
   }
 
   void _showRandomTask() {
-    String currentCategoryName = AppLocale.all.getString(context); // Default to "All"
+    String currentCategoryName = AppLocale.all.getString(context);
     if (_tabController != null && _tabController!.index < _categories.length) {
       currentCategoryName = _categories[_tabController!.index];
     }
-
     List<TodoListItem> availableTasks;
     if (currentCategoryName == AppLocale.all.getString(context)) {
       availableTasks = items
@@ -1108,14 +947,13 @@ class _HomePageState extends State<HomePage>
               !item.isChecked)
           .toList();
     }
-
     if (availableTasks.isEmpty) {
       DialogHelper.showAlertDialog(
         context,
         AppLocale.noTasksAvailableDialogTitle.getString(context),
         AppLocale.noTasksAvailableDialogMessage.getString(context),
         () {
-          Navigator.of(context).pop(); // dismiss dialog
+          Navigator.of(context).pop();
         },
         null,
       );
@@ -1127,7 +965,7 @@ class _HomePageState extends State<HomePage>
         AppLocale.randomTaskDialogTitle.getString(context),
         randomTask.text,
         () {
-          Navigator.of(context).pop(); // dismiss dialog
+          Navigator.of(context).pop();
         },
         null,
       );
@@ -1137,16 +975,8 @@ class _HomePageState extends State<HomePage>
   Future<String?> _promptForNewCategory({int? selectedIndexToRestore}) async {
     final TextEditingController categoryController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    String? newCategoryName; // To store the name of the category if added
-
-    // Set _isPromptingForCategory at the beginning
-    // It's important _isPromptingForCategory is true during the dialog display
-    // setState(() { // Not strictly necessary to call setState just for this flag if no UI depends on it immediately
-    //   _isPromptingForCategory = true;
-    // });
-
+    String? newCategoryName;
     try {
-      // The dialog's result will be the new category name or null
       newCategoryName = await showDialog<String>(
         context: context,
         barrierDismissible: false,
@@ -1179,7 +1009,7 @@ class _HomePageState extends State<HomePage>
               TextButton(
                 child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
                 onPressed: () {
-                  Navigator.of(dialogContext).pop(null); // Dialog returns null
+                  Navigator.of(dialogContext).pop(null);
                 },
               ),
               TextButton(
@@ -1187,9 +1017,7 @@ class _HomePageState extends State<HomePage>
                 onPressed: () async {
                   if (formKey.currentState!.validate()) {
                     final newCategory = categoryController.text.trim();
-                    // No setState here, state updates will be handled after dialog closes if category was added.
-                    // This simplifies the dialog's responsibility to just returning the name.
-                    Navigator.of(dialogContext).pop(newCategory); // Dialog returns the new category name
+                    Navigator.of(dialogContext).pop(newCategory);
                   }
                 },
               ),
@@ -1197,58 +1025,41 @@ class _HomePageState extends State<HomePage>
           );
         },
       );
-
-      // After the dialog closes, 'newCategoryName' holds the result.
       if (newCategoryName != null) {
-        // If a category name was returned (not null), then proceed to update state.
         setState(() {
           _customCategories.add(newCategoryName!);
           EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
-          // Notify the widget to update
           HomeWidget.updateWidget(
             name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
             iOSName: 'TodoWidgetProvider',
           );
           print('[HomeWidget] Sent update request to widget provider after adding category.');
-
           _categories = [AppLocale.all.getString(context), ..._customCategories];
-
           final newCategoryIndexInCategories = _categories.lastIndexOf(newCategoryName!);
-
           _tabController?.removeListener(_handleTabSelection);
           _tabController?.dispose();
           _tabController = TabController(
-            length: _categories.length + 1, // +1 for '+' tab
+            length: _categories.length + 1,
             vsync: this,
             initialIndex: newCategoryIndexInCategories,
           );
           _tabController!.addListener(_handleTabSelection);
-          // _isPromptingForCategory is reset in finally
         });
       }
     } finally {
-      // Ensure _isPromptingForCategory is reset regardless of outcome
       setState(() {
         _isPromptingForCategory = false;
       });
     }
-
-    // Handle tab restoration if no category was added and an index was provided
     if (newCategoryName == null && selectedIndexToRestore != null && _tabController != null) {
       if (_tabController!.index == _categories.length && mounted) {
-        // Check if current context is still valid before animating.
-        // This ensures we only try to animate if the widget is still in the tree.
         _tabController!.animateTo(selectedIndexToRestore);
       }
     }
-
-    return newCategoryName; // Return the new category name or null
+    return newCategoryName;
   }
 
   void _showTodoContextMenu(TodoListItem todoItem) {
-    // Ensure any active edit is saved before showing context menu for potentially different item
-    // This is now handled by onLongPress before calling _showTodoContextMenu if _editingTodo is not null.
-
     showModalBottomSheet(
       context: context,
       builder: (BuildContext bottomSheetContext) {
@@ -1260,9 +1071,6 @@ class _HomePageState extends State<HomePage>
                 title: Text(AppLocale.editMenuItem.getString(context)),
                 onTap: () {
                   Navigator.of(bottomSheetContext).pop();
-                  // Logic to save previous item is handled by onLongPress or onTap before calling this.
-                  // Or, if called directly, _setEditingTodo should handle it.
-                  // For now, assuming _setEditingTodo will be enhanced or caller handles saving.
                   _setEditingTodo(todoItem);
                 },
               ),
@@ -1292,31 +1100,22 @@ class _HomePageState extends State<HomePage>
   void _confirmDeleteItem(TodoListItem todoItem) {
      DialogHelper.showAlertDialog(
         context,
-        AppLocale.doUwant2Delete.getString(context), // Assuming this key exists
-        AppLocale.thisCantBeUndone.getString(context), // Assuming this key exists
+        AppLocale.doUwant2Delete.getString(context),
+        AppLocale.thisCantBeUndone.getString(context),
         () {
-      Navigator.of(context).pop(); // dismiss confirmation dialog
-      _setEditingTodo(null); // Exit edit mode if the item being deleted was in edit mode
+      Navigator.of(context).pop();
+      _setEditingTodo(null);
       setState(() {
         items.remove(todoItem);
-        // if (itemOnEditIndex >= items.length) { // Adjust if delete was last item // Removed
-        //   itemOnEditIndex = -1;
-        // } else if (items.isNotEmpty && itemOnEditIndex != -1 && items[itemOnEditIndex] == todoItem) {
-        //    // If the deleted item was the one being edited.
-        //    itemOnEditIndex = -1;
-        // }
         _updateList();
       });
     }, () {
-      // Cancel
-      Navigator.of(context).pop(); // dismiss dialog
+      Navigator.of(context).pop();
     });
   }
 
   void _promptMoveToCategory(TodoListItem todoItem) async {
     List<String> availableCategories = List.from(_customCategories);
-    // String? currentItemCategory = todoItem.category; // Not strictly needed for display logic here
-
     showDialog<String>(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -1325,7 +1124,7 @@ class _HomePageState extends State<HomePage>
           children: <Widget>[
             SimpleDialogOption(
               onPressed: () {
-                Navigator.pop(dialogContext, null); // Represents "Uncategorized"
+                Navigator.pop(dialogContext, null);
               },
               child: Text(AppLocale.uncategorizedCategory.getString(dialogContext)),
             ),
@@ -1339,10 +1138,8 @@ class _HomePageState extends State<HomePage>
             }).toList(),
             SimpleDialogOption(
               onPressed: () {
-                Navigator.pop(dialogContext, kAddNewCategoryOption); // Special value for "Add New"
+                Navigator.pop(dialogContext, kAddNewCategoryOption);
               },
-              // Assuming AppLocale.addNewCategoryMenuItem will be added to your localization files
-              // For now, using a placeholder string or you can add it to AppLocale.dart
               child: Text(AppLocale.addNewCategoryMenuItem.getString(dialogContext)),
             ),
           ],
@@ -1350,17 +1147,13 @@ class _HomePageState extends State<HomePage>
       },
     ).then((selectedCategoryNameOrAction) {
       if (selectedCategoryNameOrAction == kAddNewCategoryOption) {
-        // User selected "Add New Category"
         _promptForNewCategory().then((newlyCreatedCategoryName) {
           if (newlyCreatedCategoryName != null && newlyCreatedCategoryName.isNotEmpty) {
-            // New category was created
             setState(() {
               todoItem.category = newlyCreatedCategoryName;
-              _updateList(); // Save the change
+              _updateList();
             });
-            _initializeTabs(); // Refresh tab bar, this will re-initialize tabs and controller
-
-            // Show SnackBar confirmation
+            _initializeTabs();
             final snackBar = SnackBar(
               content: Text(
                 AppLocale.itemMovedSnackbar.getString(context).replaceAll('{categoryName}', newlyCreatedCategoryName),
@@ -1368,18 +1161,14 @@ class _HomePageState extends State<HomePage>
             );
             ScaffoldMessenger.of(context).showSnackBar(snackBar);
           }
-          // If newlyCreatedCategoryName is null, user cancelled creation, do nothing further.
         });
       } else {
-        // User selected an existing category or "Uncategorized"
-        final selectedCategoryName = selectedCategoryNameOrAction as String?; // Cast to String? as it can be null
-
+        final selectedCategoryName = selectedCategoryNameOrAction as String?;
         if (selectedCategoryName != todoItem.category || (selectedCategoryName == null && todoItem.category != null) || (selectedCategoryName != null && todoItem.category == null) ) {
           bool categoryWasActuallySelected = true;
           if(selectedCategoryName == null && todoItem.category == null) {
               categoryWasActuallySelected = false;
           }
-
           if (categoryWasActuallySelected) {
             setState(() {
               todoItem.category = selectedCategoryName;
@@ -1398,11 +1187,11 @@ class _HomePageState extends State<HomePage>
       }
     });
   }
+
   Future<String?> _promptRenameCategory(String oldCategoryName) async {
     final TextEditingController categoryController = TextEditingController(text: oldCategoryName);
     final formKey = GlobalKey<FormState>();
     String? newCategoryName;
-
     try {
       newCategoryName = await showDialog<String>(
         context: context,
@@ -1424,10 +1213,8 @@ class _HomePageState extends State<HomePage>
                         }
                         final newNameTrimmed = value.trim();
                         if (newNameTrimmed.toLowerCase() == AppLocale.all.getString(dialogContext).toLowerCase()) {
-                          return AppLocale.categoryNameExistsError.getString(dialogContext); // Or a more specific error
+                          return AppLocale.categoryNameExistsError.getString(dialogContext);
                         }
-                        // Check against _customCategories for uniqueness,
-                        // unless it's the original name (allowing case changes)
                         if (newNameTrimmed.toLowerCase() != oldCategoryName.toLowerCase() &&
                             _customCategories.any((cat) => cat.toLowerCase() == newNameTrimmed.toLowerCase())) {
                           return AppLocale.categoryNameExistsError.getString(dialogContext);
@@ -1443,7 +1230,7 @@ class _HomePageState extends State<HomePage>
               TextButton(
                 child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
                 onPressed: () {
-                  Navigator.of(dialogContext).pop(null); // Dialog returns null
+                  Navigator.of(dialogContext).pop(null);
                 },
               ),
               TextButton(
@@ -1458,33 +1245,25 @@ class _HomePageState extends State<HomePage>
           );
         },
       );
-
       if (newCategoryName != null && newCategoryName != oldCategoryName) {
-        // If a new valid name was returned and it's different from the old one
         setState(() {
           final oldNameIndex = _customCategories.indexWhere((cat) => cat.toLowerCase() == oldCategoryName.toLowerCase());
           if (oldNameIndex != -1) {
             _customCategories[oldNameIndex] = newCategoryName!;
           }
-
-          // Update items
           for (var item in items) {
             if (item.category == oldCategoryName) {
               item.category = newCategoryName;
             }
           }
-
           EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
-          // Notify the widget to update
           HomeWidget.updateWidget(
             name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
             iOSName: 'TodoWidgetProvider',
           );
           print('[HomeWidget] Sent update request to widget provider after renaming category.');
-          _updateList(); // Persist item changes
-          _initializeTabs(); // Refresh UI
-
-          // Show SnackBar
+          _updateList();
+          _initializeTabs();
           final snackBar = SnackBar(
             content: Text(
               AppLocale.categoryRenamedSnackbar.getString(context)
@@ -1495,19 +1274,102 @@ class _HomePageState extends State<HomePage>
           ScaffoldMessenger.of(context).showSnackBar(snackBar);
         });
       } else if (newCategoryName != null && newCategoryName == oldCategoryName) {
-        // Name is the same (possibly different case, but validation passes this)
-        // We still might want to update if the casing changed and categories are case-sensitive in storage
-        // For this implementation, if only casing changed, we effectively treat it as "no change" for persistence,
-        // but we return the potentially case-changed newCategoryName.
-        // If strict case persistence is needed, _customCategories and item.category should be updated.
-        // For now, we assume the main goal is achieved if the name (ignoring case for comparison) is "the same".
       }
-      return newCategoryName; // Return the new name or null if cancelled
-
+      return newCategoryName;
     } catch (e) {
-      // Handle any errors during the process
       print("Error in _promptRenameCategory: $e");
       return null;
+    }
+  }
+
+  void _showShareDialog(String categoryName, String categoryId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return ShareListDialog(categoryName: categoryName, categoryId: categoryId);
+      },
+    );
+  }
+
+  Future<void> _promptToJoinSharedList() async {
+    final TextEditingController linkPathController = TextEditingController();
+    final GlobalKey<FormFieldState<String>> formFieldKey = GlobalKey();
+
+    // Actual deep link handling would typically involve:
+    // 1. Configuring your app to recognize custom URL schemes or universal links.
+    // 2. Using a routing package to listen for incoming links.
+    // 3. When a link is received, parse the shortLinkPath from it.
+    // 4. Call the join logic similar to what's below.
+
+    final String? enteredPath = await showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(AppLocale.simulateOpenLinkButton.getString(dialogContext)), // New Locale: "Join a Shared List"
+          content: TextFormField(
+            key: formFieldKey,
+            controller: linkPathController,
+            decoration: InputDecoration(hintText: AppLocale.enterLinkPathHint.getString(dialogContext)), // New Locale: "Enter shared link path"
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return AppLocale.linkPathInvalid.getString(dialogContext); // New Locale: "Link path cannot be empty"
+              }
+              return null;
+            },
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(null);
+              },
+            ),
+            TextButton(
+              child: Text(AppLocale.joinButtonText.getString(dialogContext)), // New Locale: "Join"
+              onPressed: () {
+                if (formFieldKey.currentState!.validate()) {
+                  Navigator.of(dialogContext).pop(linkPathController.text.trim());
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (enteredPath != null && enteredPath.isNotEmpty) {
+      final currentUserUid = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUserUid == null) {
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocale.loginToJoinPrompt.getString(context))), // New Locale
+          );
+        }
+        return;
+      }
+
+      try {
+        // Optionally, show a loading indicator here
+        final SharedListConfig? joinedConfig = await FirebaseRepoInteractor.instance.joinSharedList(enteredPath, currentUserUid);
+
+        if (mounted && joinedConfig != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocale.joinListSuccess.getString(context).replaceAll('{listName}', joinedConfig.originalCategoryName))), // New Locale
+          );
+          // Refresh categories to include the newly joined list
+          await _initializeTabs();
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocale.joinListError.getString(context))), // New Locale
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("${AppLocale.joinListError.getString(context)}: $e")),
+          );
+        }
+      }
     }
   }
 }

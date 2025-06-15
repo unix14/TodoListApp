@@ -1,17 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_example/common/DialogHelper.dart';
-import 'package:flutter_example/common/context_extensions.dart';
-import 'package:flutter_example/common/dialog_extensions.dart';
-import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart';
-import 'package:flutter_example/mixin/app_locale.dart';
-import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
-import 'package:flutter_example/repo/firebase_repo_interactor.dart';
-import 'package:flutter_example/screens/homepage.dart';
-import 'package:flutter_example/screens/onboarding.dart';
-import 'package:flutter_localization/flutter_localization.dart';
+import 'dart:io'; // Placeholder, will be used with image_picker
 
-import '../common/consts.dart';
-import '../common/globals.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // Placeholder, for Firebase Storage
+import 'package:flutter/material.dart';
+import 'package:flutter_example/common/common_styles.dart';
+import 'package:flutter_example/common/context_extensions.dart';
+import 'package:flutter_example/common/globals.dart';
+import 'package:flutter_example/l10n/intl_en.arb';
+import 'package:flutter_example/main.dart';
+import 'package:flutter_example/managers/app_initializer.dart';
+import 'package:flutter_example/mixin/app_locale.dart';
+import 'package:flutter_example/models/user.dart' as AppUser;
+import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:image_picker/image_picker.dart'; // Placeholder, for image_picker
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -20,192 +23,232 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-/// fix font issues in no internet condition
-/// todo add internet detection code
-///
-/// Failed to load font Noto Sans SC at https://fonts.gstatic.com/s/notosanssc/v36/k3kCo84MPvpLmixcA63oeAL7Iqp5IZJF9bmaG9_FnYxNbPzS5HE.ttf
-//todo Flutter Web engine failed to complete HTTP request to fetch "https://fonts.gstatic.com/s/notosanssc/v36/k3kCo84MPvpLmixcA63oeAL7Iqp5IZJF9bmaG9_FnYxNbPzS5HE.ttf": TypeError: Failed to fetch
-// todo add pb for loading
-
-class _SettingsScreenState extends State<SettingsScreen>
-    with PWAInstallerMixin {
-  String version = "1.0.0";
+class _SettingsScreenState extends State<SettingsScreen> {
+  String _version = '';
+  String _buildNumber = '';
+  bool _isGuest = true;
+  AppUser.User? _currentUser;
+  File? _pickedImage; // To store the picked image file
 
   @override
   void initState() {
-    Future.delayed(const Duration(seconds: 1), () async {
-      var returnedVersion = await context.getAppVersion();
-      setState(() {
-        version = returnedVersion;
-      });
-    });
     super.initState();
+    _loadVersionInfo();
+    _loadCurrentUser();
   }
 
-  TextStyle redTextsStyle =
-      const TextStyle(color: Colors.red, fontWeight: FontWeight.bold);
-  TextStyle redSubTextsStyle =
-      const TextStyle(color: Colors.red, fontWeight: FontWeight.w400);
+  Future<void> _loadVersionInfo() async {
+    final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _version = packageInfo.version;
+      _buildNumber = packageInfo.buildNumber;
+    });
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser != null) {
+      final user = await getIt<FirebaseRepoInteractor>().getUser(firebaseUser.uid);
+      setState(() {
+        _isGuest = firebaseUser.isAnonymous;
+        _currentUser = user;
+      });
+    } else {
+      setState(() {
+        _isGuest = true;
+        _currentUser = null;
+      });
+    }
+  }
+
+  Future<void> _pickImage() async {
+    if (_isGuest) return; // Should not happen if UI is correctly disabled
+
+    // Placeholder for image_picker logic
+    // final picker = ImagePicker();
+    // final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    // if (pickedFile != null) {
+    //   setState(() {
+    //     _pickedImage = File(pickedFile.path);
+    //   });
+    //   _uploadProfilePicture();
+    // }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Image picking logic to be implemented here.')),
+    );
+  }
+
+  Future<void> _uploadProfilePicture() async {
+    if (_pickedImage == null || _currentUser == null || FirebaseAuth.instance.currentUser == null) return;
+
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final storageRef = FirebaseStorage.instance.ref().child('profile_pictures/$userId/profile_pic.jpg');
+
+    try {
+      // Placeholder for firebase_storage logic
+      // await storageRef.putFile(_pickedImage!);
+      // final downloadUrl = await storageRef.getDownloadURL();
+      final String placeholderDownloadUrl = "https://via.placeholder.com/150/0000FF/808080?Text=Uploaded+Image"; // Simulated URL
+
+      _currentUser!.profilePictureUrl = placeholderDownloadUrl; // downloadUrl;
+      await getIt<FirebaseRepoInteractor>().saveUser(_currentUser!);
+
+      setState(() {
+        // UI will rebuild and show the new image via _currentUser.profilePictureUrl
+        _pickedImage = null; // Clear picked image
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.translate(AppLocale.profilePictureUpdated))), // New Locale String
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${context.translate(AppLocale.errorUploadingProfilePicture)}: $e')), // New Locale String
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    var email = myCurrentUser?.email ?? AppLocale.guest.getString(context);
-    // var name = myCurrentUser?.name ?? AppLocale.unknown.getString(context); // todo bring back
+    final appLocale = Provider.of<AppLocaleViewModel>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocale.settings.getString(context)),
-        // todo add trailing icon with info button
-        actions: [
-          // Info button
-        ],
+        title: Text(context.translate(AppLocale.settings)),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          ListTile(
-            title: Text(AppLocale.account.getString(context)),
-            subtitle: Text(email), // todo
-            onTap: () {
-              context.copyToClipboard(email);
-            },
-          ),
-          // ListTile(
-          //   title: Text(AppLocale.name.getString(context)),
-          //   subtitle: Text(name),
-          //   onTap: () {
-          //     // todo when clicked show different name input dialog and change it in firebase
-          //   },
-          // ),
-          simpleDivider,
-          ListTile(
-            title: Text(AppLocale.lang.getString(context)),
-            subtitle: Text(FlutterLocalization.instance.getLanguageName()),
-            // todo
-            onTap: () {
-              // todo on click opens a two options menu box pop up Hebrew or enlgish,
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return SimpleDialog(
-                    title: Text(AppLocale.selectLanguage.getString(context)),
-                    children: <Widget>[
-                      SimpleDialogOption(
-                        onPressed: () {
-                          // Handle Hebrew selection
-                          _onLanguageChanged("he");
-                        },
-                        child: Text(FlutterLocalization.instance
-                            .getLanguageName(languageCode: "he")),
-                      ),
-                      SimpleDialogOption(
-                        onPressed: () {
-                          // Handle English selection
-                          _onLanguageChanged("en");
-                        },
-                        child: Text(FlutterLocalization.instance
-                            .getLanguageName(languageCode: "en")),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-          simpleDivider,
-          ListTile(
-            title: Text(AppLocale.version.getString(context)),
-            subtitle: Text(version), // todo
-            onTap: () {
-              context.copyToClipboard(version);
-            },
-          ),
-          ListTile(
-            title: Text(AppLocale.installApp.getString(context)),
-            onTap: () {
-              if (isInstallable()) {
-                showInstallPrompt();
-              }
-              context.showSnackBar(AppLocale.appIsInstalled.getString(context));
-            },
-          ),
-          const Divider(color: Color(0x56ff0000)),
-          ListTile(
-            title: Text(
-              AppLocale.deleteAll.getString(context),
-              style: redTextsStyle,
-            ),
-            // todo make it possible via archive screen
-            subtitle: Text(
-              AppLocale.deleteAllSubtitle.getString(context),
-              style: redSubTextsStyle,
-            ),
-            onTap: () {
-              deleteAll();
-            },
-          ),
-          // ListTile( // todo think about this
-          //   title: Text("Delete all user data", style: redTextsStyle),
-          //   onTap: () {
-          //     // todo
-          //   },
-          // ),
-          if (isLoggedIn == true)
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: <Widget>[
+            _buildProfileSection(context),
+            const Divider(),
             ListTile(
-              title: Text(AppLocale.logout.getString(context),
-                  style: redTextsStyle),
-              onTap: () {
-                context.onLogoutClicked(() {
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                      builder: (context) => const OnboardingScreen()));
-                });
-              },
+              leading: const Icon(Icons.language),
+              title: Text(context.translate(AppLocale.lang)),
+              trailing: DropdownButton<String>(
+                value: appLocale.currentLocale.languageCode,
+                items: AppLocaleViewModel.supportedLocales.map((Locale locale) {
+                  return DropdownMenuItem<String>(
+                    value: locale.languageCode,
+                    child: Text(locale.languageCode.toUpperCase()),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    appLocale.setLocale(Locale(newValue));
+                  }
+                },
+              ),
             ),
-          // todo add AdView?
-        ],
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: Text(context.translate(AppLocale.version)),
+              subtitle: Text('$_version ($_buildNumber)'),
+            ),
+            const Divider(),
+            ListTile(
+              leading: Icon(Icons.logout, color: _isGuest ? Colors.grey : Colors.red),
+              title: Text(
+                _isGuest ? context.translate(AppLocale.login) : context.translate(AppLocale.logout),
+                style: TextStyle(color: _isGuest ? Colors.grey : Colors.red),
+              ),
+              onTap: _isGuest
+                  ? () {
+                      // Navigate to login screen
+                      Navigator.of(context).pushReplacementNamed('/onboarding');
+                    }
+                  : () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text(context.translate(AppLocale.logout)),
+                            content: Text(context.translate(AppLocale.logoutText)),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text(context.translate(AppLocale.cancelButtonText)),
+                                onPressed: () {
+                                  Navigator.of(context).pop(false);
+                                },
+                              ),
+                              TextButton(
+                                child: Text(context.translate(AppLocale.okButtonText)),
+                                onPressed: () {
+                                  Navigator.of(context).pop(true);
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      if (confirmed == true) {
+                        await FirebaseAuth.instance.signOut();
+                        getIt<FirebaseRepoInteractor>().disposeUserSubscription();
+                        Navigator.of(context).pushReplacementNamed('/onboarding');
+                      }
+                    },
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Future<void> _onLanguageChanged(String newLang) async {
-    currentLocaleStr = newLang;
-    await EncryptedSharedPreferencesHelper.setString(
-        kCurrentLocaleSavedPrefs, currentLocaleStr);
-    FlutterLocalization.instance.translate(currentLocaleStr);
-    Navigator.pop(context);
-    Navigator.pop(context);
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));
-  }
+  Widget _buildProfileSection(BuildContext context) {
+    String displayName = context.translate(AppLocale.guest);
+    String displayEmail = "";
+    String? profilePicUrl = Globals.defaultProfilePicUrl; // Use a global default
 
-  void deleteAll() async {
-    DialogHelper.showAlertDialog(context, AppLocale.areUsure.getString(context),
-        AppLocale.deleteAllSubtext.getString(context),
-        () async {
-      await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, "");
-      // Clear custom categories
-      await EncryptedSharedPreferencesHelper.saveCategories([]);
-      print("Delete all list and categories from settings");
-
-      // update realtime DB if logged in
-      if (isLoggedIn && currentUser?.uid.isNotEmpty == true) {
-        myCurrentUser ??=
-            await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
-        myCurrentUser!.todoListItems = [];
-
-        var didSuccess = await FirebaseRepoInteractor.instance
-            .updateUserData(myCurrentUser!);
-        if (didSuccess == true) {
-          print("success save to DB");
-        }
+    if (!_isGuest && _currentUser != null) {
+      displayName = _currentUser!.name ?? context.translate(AppLocale.unknown);
+      displayEmail = _currentUser!.email ?? "";
+      if (_currentUser!.profilePictureUrl != null && _currentUser!.profilePictureUrl!.isNotEmpty) {
+        profilePicUrl = _currentUser!.profilePictureUrl;
       }
-      Navigator.of(context).pop(); // dismiss DialogHelper's dialog
-      // Pop SettingsScreen itself with a result indicating data changed
-      Navigator.of(context).pop(true);
-    }, () {
-      // Cancel
-      Navigator.of(context).pop(); // dismiss DialogHelper's dialog
-      // Pop SettingsScreen itself with a result indicating no change or cancellation
-      Navigator.of(context).pop(false);
-    });
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: _isGuest ? null : _pickImage,
+          child: CircleAvatar(
+            radius: 50,
+            backgroundImage: _pickedImage != null
+                ? FileImage(_pickedImage!)
+                : (profilePicUrl != null ? NetworkImage(profilePicUrl) : AssetImage('assets/icons/Icon-192.png')) as ImageProvider,
+            child: _isGuest || (_pickedImage == null && (profilePicUrl == null || profilePicUrl.isEmpty))
+                ? const Icon(Icons.person, size: 50)
+                : null,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(displayName, style: context.textTheme.headlineSmall),
+        if (displayEmail.isNotEmpty) Text(displayEmail, style: context.textTheme.bodySmall),
+        const SizedBox(height: 10),
+        if (!_isGuest)
+          ElevatedButton(
+            onPressed: _pickImage,
+            child: Text(context.translate(AppLocale.changeProfilePictureButton)), // New Locale String
+          ),
+        if (_pickedImage != null && !_isGuest) // Show upload button only if an image is picked
+          ElevatedButton(
+            onPressed: _uploadProfilePicture,
+            child: Text(context.translate(AppLocale.uploadProfilePictureButton)), // New Locale String
+          ),
+      ],
+    );
   }
 }
+
+// Add these new keys to AppLocale.dart and its EN/HE maps
+// static const String changeProfilePictureButton = 'changeProfilePictureButton';
+// static const String uploadProfilePictureButton = 'uploadProfilePictureButton';
+// static const String profilePictureUpdated = 'profilePictureUpdated';
+// static const String errorUploadingProfilePicture = 'errorUploadingProfilePicture';
+// static const String defaultProfilePicUrl = 'assets/icons/default_avatar.png'; // Consider adding a default avatar to assets
+
+// Remember to add defaultProfilePicUrl to Globals.dart if you plan to use it from there.
+// e.g. static const String defaultProfilePicUrl = 'https://www.transparentpng.com/thumb/user/gray-user-profile-icon-png-fP8Q1P.png';
+// or an asset path.
