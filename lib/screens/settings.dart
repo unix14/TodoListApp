@@ -153,12 +153,11 @@ class _SettingsScreenState extends State<SettingsScreen>
           simpleDivider,
           ListTile(
             title: Text(AppLocale.settingsImportDataTitle.getString(context)),
-            onTap: () {
-              _settingsHelper.importData(context, (User? importedUserData) {
+            onTap: () async { // Make onTap async
+              bool importSuccess = await _settingsHelper.importData(context, (User? importedUserData) {
                 setState(() {
                   if (importedUserData != null) {
                     // Authenticated import: Update screen's local myCurrentUser
-                    // This assumes myCurrentUser in this state class is meant to reflect the global myCurrentUserGlobal.
                     myCurrentUser = importedUserData;
                   } else {
                     // Anonymous import: Local shared prefs changed.
@@ -168,6 +167,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                   }
                 });
               }, () => setState(() {})); // General UI refresh callback
+
+              if (importSuccess && mounted) { // Check if mounted before using context for Navigator
+                Navigator.pop(context, true); // Pop with true to signal HomePage
+              }
             },
           ),
           const Divider(color: Color(0x56ff0000)),

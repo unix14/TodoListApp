@@ -488,8 +488,8 @@ class _HomePageState extends State<HomePage>
                 ? const Center(child: CircularProgressIndicator())
                 : TabBarView(
                     controller: _tabController,
-                    // Children count should only be for actual categories, not the "+" tab
-                    children: _categories.map((String categoryName) {
+                    children: [
+                      ..._categories.map((String categoryName) {
                       return FutureBuilder<List<TodoListItem>>(
                         future: _loadingData, // This future now correctly reloads all items
                         builder: (context, snapshot) {
@@ -598,6 +598,8 @@ class _HomePageState extends State<HomePage>
                         },
                       );
                     }).toList(),
+                      Container(), // Empty placeholder view for the '+' tab in TabBarView
+                    ],
                   ),
           ),
           Container(

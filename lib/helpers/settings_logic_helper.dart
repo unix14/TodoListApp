@@ -80,7 +80,7 @@ class SettingsLogicHelper {
     }
   }
 
-  Future<void> importData(BuildContext context, Function(User?) onUpdateLocalUserUI, VoidCallback refreshUI) async {
+  Future<bool> importData(BuildContext context, Function(User?) onUpdateLocalUserUI, VoidCallback refreshUI) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -88,106 +88,122 @@ class SettingsLogicHelper {
       );
 
       if (result != null && result.files.isNotEmpty) {
-        Uint8List? fileBytes = result.files.first.bytes;
-        String? filePath = result.files.first.path;
+        if (kIsWeb) {
+            Uint8List? fileBytes = result.files.first.bytes;
+            if (fileBytes != null) {
+                String jsonString = utf8.decode(fileBytes);
+                Map<String, dynamic> jsonData = jsonDecode(jsonString);
+                bool isAnonymousImport = jsonData['isAnonymous'] == true;
 
-        if (kIsWeb && fileBytes != null) {
-          String jsonString = utf8.decode(fileBytes);
-          Map<String, dynamic> jsonData = jsonDecode(jsonString);
-          bool isAnonymousImport = jsonData['isAnonymous'] == true;
+                if (isAnonymousImport) {
+                  bool? confirmAnon = await DialogHelper.showAlertDialog(
+                    context,
+                    AppLocale.settingsAnonImportTitle.getString(context),
+                    AppLocale.settingsAnonImportConfirmMessage.getString(context),
+                    () => Navigator.of(context).pop(true),
+                    () => Navigator.of(context).pop(false),
+                  );
 
-          if (isAnonymousImport) {
-            bool? confirmAnon = await DialogHelper.showAlertDialog(
-              context,
-              AppLocale.settingsAnonImportTitle.getString(context),
-              AppLocale.settingsAnonImportConfirmMessage.getString(context),
-              () => Navigator.of(context).pop(true),
-              () => Navigator.of(context).pop(false),
-            );
+                  if (confirmAnon == true) {
+                    List<dynamic> todoListItemsRaw = jsonData['todoListItems'] as List<dynamic>;
+                    List<String> categories = List<String>.from(jsonData['categories'] as List<dynamic>);
 
-            if (confirmAnon == true) {
-              List<dynamic> todoListItemsRaw = jsonData['todoListItems'] as List<dynamic>;
-              List<String> categories = List<String>.from(jsonData['categories'] as List<dynamic>);
+                    await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, jsonEncode(todoListItemsRaw));
+                    await EncryptedSharedPreferencesHelper.saveCategories(categories);
 
-              await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, jsonEncode(todoListItemsRaw));
-              await EncryptedSharedPreferencesHelper.saveCategories(categories);
+                    onUpdateLocalUserUI(null);
+                    refreshUI();
 
-              onUpdateLocalUserUI(null); // Signal to reload local data or reset UI for guest
-              refreshUI();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.settingsAnonImportSuccess.getString(context))));
+                    return true;
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.settingsAnonImportCancelled.getString(context))));
+                    return false;
+                  }
+                  // No return here as the paths above return
+                }
 
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.settingsAnonImportSuccess.getString(context))));
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.settingsAnonImportCancelled.getString(context))));
+                // Authenticated User Import Logic
+                if (currentUser == null || currentUser!.isAnonymous) {
+                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(AppLocale.settingsExportErrorNotLoggedIn.getString(context))));
+                  return false;
+                }
+
+                User importedUser = User.fromJson(jsonData);
+
+                bool? confirmAuth = await DialogHelper.showAlertDialog(
+                  context,
+                  AppLocale.settingsImportConfirmDialogTitle.getString(context),
+                  AppLocale.settingsImportConfirmDialogMessage.getString(context),
+                  () => Navigator.of(context).pop(true),
+                  () => Navigator.of(context).pop(false),
+                );
+
+                if (confirmAuth == true) {
+                  if (currentUser!.email != importedUser.email &&
+                      currentUser!.email != null &&
+                      importedUser.email != null &&
+                      importedUser.email!.isNotEmpty) {
+                     final String importedUserEmailString = importedUser.email!;
+                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(AppLocale.settingsImportErrorMismatchUser.getString(context).replaceFirst('{email}', importedUserEmailString))));
+                    return false;
+                  }
+
+                  bool success = await FirebaseRepoInteractor.instance.updateUserData(importedUser);
+
+                  if (success) {
+                    onUpdateLocalUserUI(importedUser);
+                    refreshUI();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(AppLocale.settingsImportSuccess.getString(context))));
+                    return true;
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(AppLocale.settingsImportErrorSaveFailed.getString(context))));
+                    return false;
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(AppLocale.settingsImportCancelled.getString(context))));
+                  return false;
+                }
+            } else { // fileBytes is null on web
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(AppLocale.settingsImportErrorNoFile.getString(context))));
+                return false;
             }
-            return;
-          }
-
-          // Authenticated User Import Logic
-          if (currentUser == null || currentUser!.isAnonymous) { // Use global currentUser
-             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(AppLocale.settingsExportErrorNotLoggedIn.getString(context))));
-            return;
-          }
-
-          User importedUser = User.fromJson(jsonData);
-
-          bool? confirmAuth = await DialogHelper.showAlertDialog(
-            context,
-            AppLocale.settingsImportConfirmDialogTitle.getString(context),
-            AppLocale.settingsImportConfirmDialogMessage.getString(context),
-            () => Navigator.of(context).pop(true),
-            () => Navigator.of(context).pop(false),
-          );
-
-          if (confirmAuth == true) {
-            // Use global currentUser for email check
-            if (currentUser!.email != importedUser.email &&
-                currentUser!.email != null &&
-                importedUser.email != null &&
-                importedUser.email!.isNotEmpty) {
-               final String importedUserEmailString = importedUser.email!;
-               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(AppLocale.settingsImportErrorMismatchUser.getString(context).replaceFirst('{email}', importedUserEmailString))));
-              return;
+        } else { // Non-Web
+            String? filePath = result.files.first.path;
+            if (filePath != null) {
+                print("File path for mobile import: $filePath");
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(AppLocale.settingsImportErrorMobileNotFullyImplemented.getString(context))));
+                return false; // Mobile import not fully implemented
+            } else { // filePath is null on mobile
+                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(AppLocale.settingsImportErrorNoFile.getString(context))));
+                 return false;
             }
-
-            bool success = await FirebaseRepoInteractor.instance.updateUserData(importedUser);
-
-            if (success) {
-              onUpdateLocalUserUI(importedUser);
-              refreshUI();
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(AppLocale.settingsImportSuccess.getString(context))));
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(AppLocale.settingsImportErrorSaveFailed.getString(context))));
-            }
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(AppLocale.settingsImportCancelled.getString(context))));
-          }
-        } else if (!kIsWeb && filePath != null) {
-          print("File path for mobile import: $filePath");
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(AppLocale.settingsImportErrorMobileNotFullyImplemented.getString(context))));
-        } else {
-           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(AppLocale.settingsImportErrorNoFile.getString(context))));
         }
-      } else {
+      } else {  // result is null or files.isEmpty
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(AppLocale.settingsImportErrorNoFile.getString(context))));
+        return false;
       }
     } catch (e) {
       print("Error importing data: $e");
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Error importing: ${e.toString()}")));
+      return false;
     }
   }
 
   Future<void> deleteAllDataAndAccount(BuildContext context, VoidCallback onNavigateToOnboarding) async {
     if (currentUser?.isAnonymous == true) {
       bool? confirmAnon = await DialogHelper.showAlertDialog(
+              context,
         context,
         AppLocale.settingsAnonDeleteDialogTitle.getString(context),
         AppLocale.settingsAnonDeleteDialogMessage.getString(context),
