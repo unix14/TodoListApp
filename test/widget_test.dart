@@ -243,5 +243,57 @@ void main() {
       final Directionality directionalityHe = tester.widget<Directionality>(find.descendant(of: find.byWidget(materialAppHe), matching: find.byType(Directionality)));
       expect(directionalityHe.textDirection, TextDirection.rtl, reason: "Directionality should be RTL for Hebrew");
     });
+
+    testWidgets('renders search IconButton in AppBar', (WidgetTester tester) async {
+      await tester.pumpWidget(app.MyApp(isAlreadyEnteredTodos: true));
+      await tester.pumpAndSettle();
+
+      // Find the AppBar
+      final appBarFinder = find.byType(AppBar);
+      expect(appBarFinder, findsOneWidget);
+
+      // Find the search IconButton within the AppBar
+      // We can find it by its icon or tooltip
+      final searchIconFinder = find.widgetWithIcon(IconButton, Icons.search);
+      final searchButtonInAppBarFinder = find.descendant(
+        of: appBarFinder,
+        matching: searchIconFinder,
+      );
+
+      expect(searchButtonInAppBarFinder, findsOneWidget, reason: "Search IconButton not found in AppBar");
+
+      // Optionally, verify the tooltip as well
+      final searchButtonWithTooltipFinder = find.widgetWithTooltip(IconButton, 'Search Todos');
+      final searchButtonInAppBarWithTooltipFinder = find.descendant(
+        of: appBarFinder,
+        matching: searchButtonWithTooltipFinder,
+      );
+      expect(searchButtonInAppBarWithTooltipFinder, findsOneWidget, reason: "Search IconButton with correct tooltip not found in AppBar");
+    });
+
+    testWidgets('tapping search IconButton calls _handleSearch and prints to console', (WidgetTester tester) async {
+      final List<String> logMessages = <String>[];
+      final DebugPrintCallback originalDebugPrint = debugPrint;
+      debugPrint = (String? message, {int? wrapWidth}) {
+        if (message != null) {
+          logMessages.add(message);
+        }
+        originalDebugPrint(message, wrapWidth: wrapWidth); // Call original to see output in test console
+      };
+
+      await tester.pumpWidget(app.MyApp(isAlreadyEnteredTodos: true));
+      await tester.pumpAndSettle();
+
+      final searchIconFinder = find.widgetWithIcon(IconButton, Icons.search);
+      expect(searchIconFinder, findsOneWidget);
+
+      await tester.tap(searchIconFinder);
+      await tester.pump(); // Allow time for the tap event and debugPrint to process
+
+      expect(logMessages, contains("Search button tapped!"), reason: "_handleSearch did not print the expected message.");
+
+      // Restore original debugPrint
+      debugPrint = originalDebugPrint;
+    });
   });
 }

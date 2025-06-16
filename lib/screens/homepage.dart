@@ -501,6 +501,11 @@ class _HomePageState extends State<HomePage>
                     return popupMenuItems;
                   },
                 ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: _handleSearch,
+                  tooltip: 'Search Todos', // Optional: Add a tooltip
+                ),
               ],
       ),
       body: Column(
@@ -1531,6 +1536,12 @@ class _HomePageState extends State<HomePage>
       print("Error in _promptRenameCategory: $e");
       return null;
     }
+  }
+
+  void _handleSearch() {
+    // For now, just print a message to the console using debugPrint for testability.
+    // In the future, this could open a search bar or a search screen.
+    debugPrint("Search button tapped!");
   }
 }
 
