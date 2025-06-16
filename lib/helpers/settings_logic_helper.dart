@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data'; // Required for Uint8List
 // ignore_for_file: avoid_web_libraries_in_flutter, duplicate_ignore
-import 'dart:html' as html if (dart.library.io) 'dart:io' as html_stub; // Conditional import for dart:html
+import 'dart:html' as html if (dart.library.io) 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -14,6 +14,9 @@ import 'package:flutter_example/models/user.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_realtime_database_repository.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:flutter_localization/flutter_localization.dart';
+
+import '../common/consts.dart';
 // Removed import for 'onboarding.dart' as onNavigateToOnboarding is a VoidCallback, context is enough for navigation if needed by caller.
 
 
@@ -22,9 +25,9 @@ class SettingsLogicHelper {
   Future<void> exportData(BuildContext context) async {
     if (currentUser?.isAnonymous == true) {
       try {
-        String todoListItemsJsonString = await EncryptedSharedPreferencesHelper.getString(kAllListSavedPrefs, "[]");
+        String todoListItemsJsonString = await EncryptedSharedPreferencesHelper.getString(kAllListSavedPrefs) ?? "[]";
         List<dynamic> todoListItems = jsonDecode(todoListItemsJsonString);
-        List<String> categories = await EncryptedSharedPreferencesHelper.getCategories();
+        List<String> categories = await EncryptedSharedPreferencesHelper.loadCategories();
 
         Map<String, dynamic> anonymousData = {
           "isAnonymous": true,
@@ -50,9 +53,9 @@ class SettingsLogicHelper {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(AppLocale.settingsExportErrorGeneral.getString(context))));
       }
-    } else if (currentUser != null && myCurrentUserGlobal != null) {
+    } else if (currentUser != null && myCurrentUser != null) {
       try {
-        final jsonString = jsonEncode(User.toJson(myCurrentUserGlobal!)); // myCurrentUserGlobal is not null here
+        final jsonString = jsonEncode(User.toJson(myCurrentUser!)); // myCurrentUser is not null here
         final String fileName = "user_data.json";
 
         if (kIsWeb) {
@@ -204,7 +207,6 @@ class SettingsLogicHelper {
     if (currentUser?.isAnonymous == true) {
       bool? confirmAnon = await DialogHelper.showAlertDialog(
               context,
-        context,
         AppLocale.settingsAnonDeleteDialogTitle.getString(context),
         AppLocale.settingsAnonDeleteDialogMessage.getString(context),
         () => Navigator.of(context).pop(true),
@@ -216,8 +218,8 @@ class SettingsLogicHelper {
           await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, "[]");
           await EncryptedSharedPreferencesHelper.saveCategories([]);
           print("Cleared local data for anonymous user.");
-          myCurrentUserGlobal = null;
-          isLoggedInGlobal = false;
+          myCurrentUser = null;
+          isLoggedIn = false;
 
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.settingsAnonImportSuccess.getString(context).replaceFirst("imported", "deleted"))));
           onNavigateToOnboarding();
@@ -233,7 +235,7 @@ class SettingsLogicHelper {
 
     // Authenticated User Deletion Logic
     final String? userIdForRtdbDeletion = currentUser?.uid; // Use global currentUser
-    final String? userEmailForLogging = myCurrentUserGlobal?.email ?? currentUser?.email; // Use globals
+    final String? userEmailForLogging = myCurrentUser?.email ?? currentUser?.email; // Use globals
 
     bool? confirmAuth = await DialogHelper.showAlertDialog(
       context,
@@ -260,10 +262,10 @@ class SettingsLogicHelper {
         return;
       }
 
-      // Pre-cleanup using global myCurrentUserGlobal
-      if (myCurrentUserGlobal != null) {
+      // Pre-cleanup using global myCurrentUser
+      if (myCurrentUser != null) {
         print("Attempting to clear local todoListItems for user: ${userEmailForLogging ?? 'unknown email'} before full deletion.");
-        User userCopyForModification = User.fromJson(User.toJson(myCurrentUserGlobal!));
+        User userCopyForModification = User.fromJson(User.toJson(myCurrentUser!));
         userCopyForModification.todoListItems = [];
         print("Local user copy's todoListItems cleared (not synced to Firebase).");
       }
@@ -297,8 +299,8 @@ class SettingsLogicHelper {
       await Authenticator.signOut();
       print("User signed out.");
 
-      myCurrentUserGlobal = null;
-      isLoggedInGlobal = false;
+      myCurrentUser = null;
+      isLoggedIn = false;
 
       onNavigateToOnboarding();
 

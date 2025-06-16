@@ -119,6 +119,7 @@ mixin AppLocale {
   static const String settingsAnonExportSuccess = 'settingsAnonExportSuccess';
   static const String settingsAnonImportTitle = 'settingsAnonImportTitle';
   static const String settingsAnonImportConfirmMessage = 'settingsAnonImportConfirmMessage';
+  static const String settingsAnonDeleteError = 'settingsAnonDeleteError';
   static const String settingsAnonImportSuccess = 'settingsAnonImportSuccess';
   static const String settingsAnonImportCancelled = 'settingsAnonImportCancelled';
   static const String settingsAnonDeleteDialogTitle = 'settingsAnonDeleteDialogTitle';
@@ -237,6 +238,7 @@ mixin AppLocale {
     AppLocale.settingsAnonImportTitle: "Import Local Data",
     AppLocale.settingsAnonImportConfirmMessage: "This will overwrite your current local data. This action cannot be undone. Proceed?",
     AppLocale.settingsAnonImportSuccess: "Local data imported successfully.",
+    AppLocale.settingsAnonDeleteError: "Local data import faild, please try again later.",
     AppLocale.settingsAnonImportCancelled: "Local data import cancelled.",
     AppLocale.settingsAnonDeleteDialogTitle: "Delete Local Data",
     AppLocale.settingsAnonDeleteDialogMessage: "This will permanently delete all your locally stored data. This cannot be undone. Are you sure?",
@@ -354,6 +356,7 @@ mixin AppLocale {
     AppLocale.settingsAnonImportTitle: "ייבוא נתונים מקומיים",
     AppLocale.settingsAnonImportConfirmMessage: "פעולה זו תחליף את הנתונים המקומיים הנוכחיים שלך. לא ניתן לבטל פעולה זו. להמשיך?",
     AppLocale.settingsAnonImportSuccess: "הנתונים המקומיים יובאו בהצלחה.",
+    AppLocale.settingsAnonDeleteError: "ייבוא הנתונים המקומיים נכשל, אנא נסה שנית מאוחר יותר.",
     AppLocale.settingsAnonImportCancelled: "ייבוא הנתונים המקומיים בוטל.",
     AppLocale.settingsAnonDeleteDialogTitle: "מחיקת נתונים מקומיים",
     AppLocale.settingsAnonDeleteDialogMessage: "פעולה זו תמחק לצמיתות את כל הנתונים המאוחסנים מקומית. לא ניתן לבטל פעולה זו. האם אתה בטוח?",
