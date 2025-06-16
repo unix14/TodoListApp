@@ -115,8 +115,8 @@ class SettingsLogicHelper {
                     await EncryptedSharedPreferencesHelper.saveCategories(categories);
 
                     currentUser = null; // Ensure global currentUser reflects anonymous state
-                    myCurrentUserGlobal = null; // Ensure global myCurrentUser reflects no specific user data / guest
-                    isLoggedInGlobal = false; // Ensure global login state is false
+                    myCurrentUser = null; // Ensure global myCurrentUser reflects no specific user data / guest
+                    isLoggedIn = false; // Ensure global login state is false
 
                     onUpdateLocalUserUI(null);
                     refreshUI();
@@ -160,7 +160,7 @@ class SettingsLogicHelper {
                   bool success = await FirebaseRepoInteractor.instance.updateUserData(importedUser);
 
                   if (success) {
-                    myCurrentUserGlobal = importedUser; // Update the global instance
+                    myCurrentUser = importedUser; // Update the global instance
                     onUpdateLocalUserUI(importedUser);
                     refreshUI();
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
