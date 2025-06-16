@@ -111,6 +111,10 @@ class SettingsLogicHelper {
                     await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, jsonEncode(todoListItemsRaw));
                     await EncryptedSharedPreferencesHelper.saveCategories(categories);
 
+                    currentUser = null; // Ensure global currentUser reflects anonymous state
+                    myCurrentUserGlobal = null; // Ensure global myCurrentUser reflects no specific user data / guest
+                    isLoggedInGlobal = false; // Ensure global login state is false
+
                     onUpdateLocalUserUI(null);
                     refreshUI();
 
@@ -120,7 +124,6 @@ class SettingsLogicHelper {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.settingsAnonImportCancelled.getString(context))));
                     return false;
                   }
-                  // No return here as the paths above return
                 }
 
                 // Authenticated User Import Logic
@@ -154,6 +157,7 @@ class SettingsLogicHelper {
                   bool success = await FirebaseRepoInteractor.instance.updateUserData(importedUser);
 
                   if (success) {
+                    myCurrentUserGlobal = importedUser; // Update the global instance
                     onUpdateLocalUserUI(importedUser);
                     refreshUI();
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(

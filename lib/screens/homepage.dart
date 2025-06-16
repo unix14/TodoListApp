@@ -519,80 +519,64 @@ class _HomePageState extends State<HomePage>
                                   .toList();
                             }
 
-                            // If "All" is empty, show a random motivational sentence.
-                            if (categoryName == AppLocale.all.getString(context) && displayedItems.isEmpty) {
-                              final List<String> motivationalKeys = [
-                                AppLocale.motivationalSentence1,
-                                AppLocale.motivationalSentence2,
-                                AppLocale.motivationalSentence3,
-                                AppLocale.motivationalSentence4,
-                                AppLocale.motivationalSentence5,
-                              ];
-                              final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Text(
-                                    randomKey.getString(context),
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      color: Colors.grey,
-                                      fontStyle: FontStyle.italic,
+                            if (displayedItems.isEmpty) {
+                                // Common logic for ANY empty category (including "All")
+                                final List<String> motivationalKeys = [
+                                    AppLocale.motivationalSentence1,
+                                    AppLocale.motivationalSentence2,
+                                    AppLocale.motivationalSentence3,
+                                    AppLocale.motivationalSentence4,
+                                    AppLocale.motivationalSentence5,
+                                ];
+                                final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
+                                return Center(
+                                    child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Text(
+                                            randomKey.getString(context),
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              color: Colors.grey,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                        ),
                                     ),
-                                  ),
-                                ),
-                              );
-                            }
-
-                            // If not empty, potentially show count and then the list
-                            if (displayedItems.isNotEmpty) {
-                              String taskCountString;
-                              if (displayedItems.length == 1) {
-                                taskCountString = AppLocale.tasksCountSingular.getString(context);
-                              } else {
-                                // For 0 or >1, use tasksCount (which might be "{count} tasks" or "No tasks" via tasksCountZero if we made it that smart)
-                                // The current AppLocale setup has tasksCountZero, tasksCountSingular, tasksCount.
-                                // tasksCountZero is for "No tasks" - but this block is displayedItems.isNotEmpty
-                                // tasksCountSingular is for "1 task"
-                                // tasksCount is for "{count} tasks"
-                                taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', displayedItems.length.toString());
-                              }
-                              // The tasksCountZero is defined, but this condition (displayedItems.isNotEmpty) means it won't be used here.
-                              // If displayedItems.isEmpty, we are in the motivational sentence block or just an empty ListView for other categories.
-
-                              return Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                                    child: Text(
-                                      taskCountString,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 13.0,
-                                        color: Colors.blueGrey,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      itemCount: displayedItems.length,
-                                      itemBuilder: (context, position) {
-                                        final TodoListItem currentTodo = displayedItems[position];
-                                        return getListTile(currentTodo);
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              );
+                                );
                             } else {
-                              // This path is for custom categories that are empty.
-                              // "All" empty case is handled by the motivational sentence block.
-                              return ListView.builder( // Returns an empty list view
-                                itemCount: 0,
-                                itemBuilder: (context, position) => Container(),
-                              );
+                                // This block is for when displayedItems is NOT empty.
+                                String taskCountString;
+                                if (displayedItems.length == 1) {
+                                    taskCountString = AppLocale.tasksCountSingular.getString(context);
+                                } else {
+                                    taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', displayedItems.length.toString());
+                                }
+
+                                return Column(
+                                    children: [
+                                        Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                                            child: Text(
+                                                taskCountString,
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                    fontSize: 13.0,
+                                                    color: Colors.blueGrey,
+                                                    fontWeight: FontWeight.w500,
+                                                ),
+                                            ),
+                                        ),
+                                        Expanded(
+                                            child: ListView.builder(
+                                                itemCount: displayedItems.length,
+                                                itemBuilder: (context, position) {
+                                                    final TodoListItem currentTodo = displayedItems[position];
+                                                    return getListTile(currentTodo);
+                                                },
+                                            ),
+                                        ),
+                                    ],
+                                );
                             }
                           }
                         },
