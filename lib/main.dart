@@ -53,11 +53,15 @@ Future<void> backgroundCallback(Uri? uri) async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure bindings are initialized
 
-  // Initialize encryption helper
-  await EncryptionHelper.initialize();
+  try {
+    // Initialize encryption helper
+    await EncryptionHelper.initialize();
 
-  // Initialize home_widget background callback
-  HomeWidget.registerBackgroundCallback(backgroundCallback);
+    // Initialize home_widget background callback
+    HomeWidget.registerInteractivityCallback(backgroundCallback);
+  } catch (e) {
+    
+  }
 
   // Original AppInitializer logic
   AppInitializer.initialize(andThen: (isAlreadyEnteredTodos) {

@@ -289,16 +289,28 @@ class _HomePageState extends State<HomePage>
         title: Text(AppLocale.title.getString(context)),
         bottom: _tabController == null
             ? null
-            : TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                // Rely on Directionality for RTL handling. TabAlignment.start will be visually
-                // on the right for RTL and on the left for LTR.
-                tabAlignment: TabAlignment.start,
-                tabs: [
-                  ..._categories.map((String name) => Tab(text: name)).toList(),
-                  Tab(icon: Tooltip(message: AppLocale.addCategoryTooltip.getString(context), child: const Icon(Icons.add))),
-                ],
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(40),
+                child: Align(
+                  alignment: currentLocaleStr == "he" ? Alignment.centerRight : Alignment.centerLeft,
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    tabs: [
+                      ..._categories
+                          .map((String name) => Tab(
+                            text: name.substring(0, min(name.length, MAX_CHARS_IN_TAB_BAR)) + (name.length > MAX_CHARS_IN_TAB_BAR ? "..." : ""),
+                          )
+                      )
+                          .toList(),
+                      Tab(
+                          icon: Tooltip(
+                              message: AppLocale.addCategoryTooltip.getString(context),
+                              child: const Icon(Icons.add))),
+                    ],
+                  ),
+                ),
               ),
         actions: [
                 PopupMenuButton<String>(
