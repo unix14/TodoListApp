@@ -147,20 +147,27 @@ class _SettingsScreenState extends State<SettingsScreen>
           ListTile(
             title: Text(AppLocale.settingsExportDataTitle.getString(context)),
             onTap: () {
-              // Note: currentUser and myCurrentUser are global variables from globals.dart
-              _settingsHelper.exportData(context, currentUser, myCurrentUser);
+              _settingsHelper.exportData(context);
             },
           ),
           simpleDivider,
           ListTile(
             title: Text(AppLocale.settingsImportDataTitle.getString(context)),
             onTap: () {
-              // Note: currentUser is a global variable from globals.dart
-              _settingsHelper.importData(context, currentUser, (updatedUser) {
+              _settingsHelper.importData(context, (User? importedUserData) {
                 setState(() {
-                  myCurrentUser = updatedUser; // myCurrentUser is a global variable
+                  if (importedUserData != null) {
+                    // Authenticated import: Update screen's local myCurrentUser
+                    // This assumes myCurrentUser in this state class is meant to reflect the global myCurrentUserGlobal.
+                    myCurrentUser = importedUserData;
+                  } else {
+                    // Anonymous import: Local shared prefs changed.
+                    // Global myCurrentUserGlobal would have been nulled out or set to guest by helper.
+                    // Reflect this in the local state for UI.
+                    myCurrentUser = null;
+                  }
                 });
-              }, () => setState(() {}));
+              }, () => setState(() {})); // General UI refresh callback
             },
           ),
           const Divider(color: Color(0x56ff0000)),
@@ -174,9 +181,8 @@ class _SettingsScreenState extends State<SettingsScreen>
               style: redSubTextsStyle,
             ),
             onTap: () {
-              // Note: currentUser and myCurrentUser are global variables from globals.dart
-              _settingsHelper.deleteAllDataAndAccount(context, currentUser, myCurrentUser, () {
-                if (!mounted) return; // Check if the widget is still in the tree
+              _settingsHelper.deleteAllDataAndAccount(context, () {
+                if (!mounted) return;
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const OnboardingScreen()),
                   (Route<dynamic> route) => false,

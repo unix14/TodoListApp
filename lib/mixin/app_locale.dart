@@ -114,6 +114,16 @@ mixin AppLocale {
   static const String settingsDeleteErrorAuthFailed = 'settingsDeleteErrorAuthFailed';
   static const String settingsDeleteErrorCloudDataFailed = 'settingsDeleteErrorCloudDataFailed';
 
+  // Settings Screen - Anonymous User Flows
+  static const String settingsAnonExportTitle = 'settingsAnonExportTitle';
+  static const String settingsAnonExportSuccess = 'settingsAnonExportSuccess';
+  static const String settingsAnonImportTitle = 'settingsAnonImportTitle';
+  static const String settingsAnonImportConfirmMessage = 'settingsAnonImportConfirmMessage';
+  static const String settingsAnonImportSuccess = 'settingsAnonImportSuccess';
+  static const String settingsAnonImportCancelled = 'settingsAnonImportCancelled';
+  static const String settingsAnonDeleteDialogTitle = 'settingsAnonDeleteDialogTitle';
+  static const String settingsAnonDeleteDialogMessage = 'settingsAnonDeleteDialogMessage';
+
 
   static const Map<String, dynamic> EN = {
     AppLocale.title: 'Todo List',
@@ -220,6 +230,16 @@ mixin AppLocale {
     AppLocale.settingsDeleteAccountDialogMessage: "This permanently deletes all your data AND your account. This action cannot be undone. Are you sure?",
     AppLocale.settingsDeleteErrorAuthFailed: "Failed to delete account. You may need to log out and log back in, then try again.",
     AppLocale.settingsDeleteErrorCloudDataFailed: "Account deleted, but failed to clear all cloud data. Please contact support.",
+
+    // Settings Screen - Anonymous User Flows
+    AppLocale.settingsAnonExportTitle: "Export Local Data",
+    AppLocale.settingsAnonExportSuccess: "Local data exported.",
+    AppLocale.settingsAnonImportTitle: "Import Local Data",
+    AppLocale.settingsAnonImportConfirmMessage: "This will overwrite your current local data. This action cannot be undone. Proceed?",
+    AppLocale.settingsAnonImportSuccess: "Local data imported successfully.",
+    AppLocale.settingsAnonImportCancelled: "Local data import cancelled.",
+    AppLocale.settingsAnonDeleteDialogTitle: "Delete Local Data",
+    AppLocale.settingsAnonDeleteDialogMessage: "This will permanently delete all your locally stored data. This cannot be undone. Are you sure?",
   };
 
   static const Map<String, dynamic> HE = {
@@ -327,5 +347,15 @@ mixin AppLocale {
     AppLocale.settingsDeleteAccountDialogMessage: "פעולה זו מוחקת לצמיתות את כל הנתונים שלך ואת חשבונך. לא ניתן לבטל פעולה זו. האם אתה בטוח?",
     AppLocale.settingsDeleteErrorAuthFailed: "נכשל במחיקת החשבון. ייתכן שתצטרך להתנתק ולהתחבר מחדש, ואז לנסות שוב.",
     AppLocale.settingsDeleteErrorCloudDataFailed: "החשבון נמחק, אך נכשל בניקוי כל נתוני הענן. אנא פנה לתמיכה.",
+
+    // Settings Screen - Anonymous User Flows
+    AppLocale.settingsAnonExportTitle: "ייצוא נתונים מקומיים",
+    AppLocale.settingsAnonExportSuccess: "הנתונים המקומיים יוצאו.",
+    AppLocale.settingsAnonImportTitle: "ייבוא נתונים מקומיים",
+    AppLocale.settingsAnonImportConfirmMessage: "פעולה זו תחליף את הנתונים המקומיים הנוכחיים שלך. לא ניתן לבטל פעולה זו. להמשיך?",
+    AppLocale.settingsAnonImportSuccess: "הנתונים המקומיים יובאו בהצלחה.",
+    AppLocale.settingsAnonImportCancelled: "ייבוא הנתונים המקומיים בוטל.",
+    AppLocale.settingsAnonDeleteDialogTitle: "מחיקת נתונים מקומיים",
+    AppLocale.settingsAnonDeleteDialogMessage: "פעולה זו תמחק לצמיתות את כל הנתונים המאוחסנים מקומית. לא ניתן לבטל פעולה זו. האם אתה בטוח?",
   };
 }
