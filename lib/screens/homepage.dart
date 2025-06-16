@@ -20,7 +20,7 @@ import 'package:flutter_example/screens/settings.dart';
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'dart:html' as html;
+// import 'dart:html' as html; // Removed as PWAInstallerMixin now handles its own web specifics
 import 'package:home_widget/home_widget.dart';
 
 import 'onboarding.dart';
@@ -289,13 +289,28 @@ class _HomePageState extends State<HomePage>
         title: Text(AppLocale.title.getString(context)),
         bottom: _tabController == null
             ? null
-            : TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabs: [
-                  ..._categories.map((String name) => Tab(text: name)).toList(),
-                  Tab(icon: Tooltip(message: AppLocale.addCategoryTooltip.getString(context), child: const Icon(Icons.add))),
-                ],
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(40),
+                child: Align(
+                  alignment: currentLocaleStr == "he" ? Alignment.centerRight : Alignment.centerLeft,
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    tabs: [
+                      ..._categories
+                          .map((String name) => Tab(
+                            text: name.substring(0, min(name.length, MAX_CHARS_IN_TAB_BAR)) + (name.length > MAX_CHARS_IN_TAB_BAR ? "..." : ""),
+                          )
+                      )
+                          .toList(),
+                      Tab(
+                          icon: Tooltip(
+                              message: AppLocale.addCategoryTooltip.getString(context),
+                              child: const Icon(Icons.add))),
+                    ],
+                  ),
+                ),
               ),
         actions: [
                 PopupMenuButton<String>(
@@ -495,10 +510,17 @@ class _HomePageState extends State<HomePage>
                 ? const Center(child: CircularProgressIndicator())
                 : TabBarView(
                     controller: _tabController,
-                    // Children count should only be for actual categories, not the "+" tab
-                    children: _categories.map((String categoryName) {
-                      return FutureBuilder<List<TodoListItem>>(
-                        future: _loadingData, // This future now correctly reloads all items
+                    children: List<Widget>.generate(
+                      _tabController?.length ?? 0, // Ensure controller is not null
+                      (index) {
+                        if (_tabController == null || index >= _categories.length) {
+                          // This is for the "+" tab, or if controller is null initially
+                          return Container(); // Empty view for the action tab
+                        }
+                        // Actual category view
+                        final categoryName = _categories[index];
+                        return FutureBuilder<List<TodoListItem>>(
+                          future: _loadingData,
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
