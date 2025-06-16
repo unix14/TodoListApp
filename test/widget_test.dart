@@ -294,6 +294,217 @@ void main() {
 
       // Restore original debugPrint
       debugPrint = originalDebugPrint;
+      // Clear any specific SharedPreferences values set if necessary
+      SharedPreferences.setMockInitialValues({
+         'flutter.languageCode': 'en',
+         'flutter.$kAllListSavedPrefs': '[]',
+         'flutter.${EncryptedSharedPreferencesHelper.kCategoriesListPrefs}': '[]',
+      });
     });
+
+    // Helper function to set up SharedPreferences with mock data
+    Future<void> _setupMockData(List<Map<String, dynamic>> todoItems, List<String> categories) async {
+      final String encryptedTodoList = await EncryptedSharedPreferencesHelper.encryptData(jsonEncode(todoItems));
+      final String encryptedCategories = await EncryptedSharedPreferencesHelper.encryptData(jsonEncode(categories));
+
+      SharedPreferences.setMockInitialValues({
+        'flutter.languageCode': 'en',
+        'flutter.$kAllListSavedPrefs': encryptedTodoList,
+        'flutter.${EncryptedSharedPreferencesHelper.kCategoriesListPrefs}': encryptedCategories,
+        // Mock other necessary prefs if any
+      });
+      // Need to re-initialize as SharedPreferences are reset
+      await EncryptedSharedPreferencesHelper.initialize();
+      localization.translate('en'); // Ensure localization is reset to English
+    }
+
+    final List<Map<String, dynamic>> defaultMockTodoItems = [
+      {"text": "Apple task", "dateTime": DateTime.now().toIso8601String(), "isChecked": false, "category": "Fruit", "isArchived": false},
+      {"text": "Banana task", "dateTime": DateTime.now().toIso8601String(), "isChecked": false, "category": "Fruit", "isArchived": false},
+      {"text": "Carrot task", "dateTime": DateTime.now().toIso8601String(), "isChecked": false, "category": "Vegetable", "isArchived": false},
+      {"text": "Apricot task", "dateTime": DateTime.now().toIso8601String(), "isChecked": false, "category": "Fruit", "isArchived": false},
+      {"text": "Broccoli task", "dateTime": DateTime.now().toIso8601String(), "isChecked": false, "category": "Vegetable", "isArchived": false},
+      {"text": "Uncategorized apple search test", "dateTime": DateTime.now().toIso8601String(), "isChecked": false, "category": null, "isArchived": false},
+    ];
+    final List<String> defaultMockCategories = ["Fruit", "Vegetable"];
+
+
+    testWidgets('renders search UI toggle correctly (icon, textfield, close button)', (WidgetTester tester) async {
+      await tester.pumpWidget(app.MyApp(isAlreadyEnteredTodos: true));
+      await tester.pumpAndSettle();
+
+      // Initially, search icon is present, TextField is not
+      expect(find.byIcon(Icons.search), findsOneWidget);
+      expect(find.byType(TextField), findsNWidgets(1)); // The main todo input, not the search one
+      expect(find.byIcon(Icons.close), findsNothing);
+      expect(find.byType(TabBar), findsOneWidget); // TabBar should be visible
+
+      // Tap search icon to enter search mode
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle(); // Allow for focus node callback
+
+      // Now, TextField (search bar) and close icon are present, search icon is not
+      // There will be two TextFields: one for main input, one for search.
+      // The search TextField is in the AppBar.
+      final appBarSearchField = find.descendant(of: find.byType(AppBar), matching: find.byType(TextField));
+      expect(appBarSearchField, findsOneWidget);
+      expect(find.byIcon(Icons.close), findsOneWidget);
+      expect(find.byIcon(Icons.search), findsNothing); // Original search icon in actions is gone
+      expect(find.byType(TabBar), findsNothing); // TabBar should be hidden
+
+      // Tap close icon to exit search mode
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      // Back to initial state
+      expect(find.byIcon(Icons.search), findsOneWidget);
+      expect(appBarSearchField, findsNothing);
+      expect(find.byIcon(Icons.close), findsNothing);
+      expect(find.byType(TabBar), findsOneWidget); // TabBar should be visible again
+    });
+
+    testWidgets('tapping search icon toggles search mode and focuses TextField', (WidgetTester tester) async {
+      await tester.pumpWidget(app.MyApp(isAlreadyEnteredTodos: true));
+      await tester.pumpAndSettle();
+
+      final searchIcon = find.byIcon(Icons.search);
+      await tester.tap(searchIcon);
+      await tester.pumpAndSettle(); // pumpAndSettle for state change and focus request
+
+      final searchTextFieldInAppBar = find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byType(TextField),
+      );
+      expect(searchTextFieldInAppBar, findsOneWidget);
+
+      // Check if the TextField in AppBar has focus
+      TextField searchTextFieldWidget = tester.widget(searchTextFieldInAppBar);
+      expect(searchTextFieldWidget.focusNode?.hasFocus, isTrue, reason: "Search TextField should have focus");
+    });
+
+    testWidgets('search in "All" category displays matching items', (WidgetTester tester) async {
+      await _setupMockData(defaultMockTodoItems, defaultMockCategories);
+      await tester.pumpWidget(app.MyApp(isAlreadyEnteredTodos: true));
+      await tester.pumpAndSettle(const Duration(seconds: 2)); // Ensure tabs and list are loaded
+
+      // Enter search mode
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+
+      // Type search query
+      final searchTextFieldInAppBar = find.descendant(of: find.byType(AppBar), matching: find.byType(TextField));
+      await tester.enterText(searchTextFieldInAppBar, 'apple');
+      await tester.pumpAndSettle();
+
+      expect(find.text("Apple task"), findsOneWidget);
+      expect(find.text("Uncategorized apple search test"), findsOneWidget);
+      expect(find.text("Banana task"), findsNothing);
+    });
+
+    testWidgets('search in specific category displays categorized results with headers', (WidgetTester tester) async {
+      await _setupMockData(defaultMockTodoItems, defaultMockCategories);
+      await tester.pumpWidget(app.MyApp(isAlreadyEnteredTodos: true));
+      await tester.pumpAndSettle(const Duration(seconds: 2));
+
+      // Navigate to "Fruit" category tab
+      await tester.tap(find.text('Fruit')); // Assuming "Fruit" is a category name
+      await tester.pumpAndSettle();
+
+      // Enter search mode
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+
+      // Type search query "task" (should match items in Fruit and Vegetable)
+      final searchTextFieldInAppBar = find.descendant(of: find.byType(AppBar), matching: find.byType(TextField));
+      await tester.enterText(searchTextFieldInAppBar, 'task');
+      await tester.pumpAndSettle();
+
+      // Verify items from current category "Fruit" appear first
+      expect(find.text("Apple task"), findsOneWidget);
+      expect(find.text("Banana task"), findsOneWidget);
+      expect(find.text("Apricot task"), findsOneWidget);
+
+      // Verify header for "Vegetable" category and its items
+      // Using hardcoded English string due to potential localization issues
+      expect(find.text("Results in Vegetable"), findsOneWidget);
+      expect(find.text("Carrot task"), findsOneWidget);
+      expect(find.text("Broccoli task"), findsOneWidget);
+
+      // Verify header for "Uncategorized" and its items (if any match)
+      // "Uncategorized apple search test" contains "apple", not "task"
+      // If we search for "apple" instead:
+      await tester.enterText(searchTextFieldInAppBar, 'apple');
+      await tester.pumpAndSettle();
+      expect(find.text("Apple task"), findsOneWidget); // From current "Fruit"
+      expect(find.text("Results in Uncategorized"), findsOneWidget);
+      expect(find.text("Uncategorized apple search test"), findsOneWidget);
+
+    });
+
+    testWidgets('search displays "No results found" message correctly', (WidgetTester tester) async {
+      await _setupMockData(defaultMockTodoItems, defaultMockCategories);
+      await tester.pumpWidget(app.MyApp(isAlreadyEnteredTodos: true));
+      await tester.pumpAndSettle(const Duration(seconds: 2));
+
+      // Enter search mode
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+
+      // Type a query that matches no items
+      final searchTextFieldInAppBar = find.descendant(of: find.byType(AppBar), matching: find.byType(TextField));
+      await tester.enterText(searchTextFieldInAppBar, 'nonexistentquery');
+      await tester.pumpAndSettle();
+
+      // Verify "No results found" message (using hardcoded English due to gen-l10n issue)
+      expect(find.text("No results found for 'nonexistentquery'"), findsOneWidget);
+    });
+
+    testWidgets('TabBar visibility toggles with search mode', (WidgetTester tester) async {
+      await tester.pumpWidget(app.MyApp(isAlreadyEnteredTodos: true));
+      await tester.pumpAndSettle();
+
+      // Initially, TabBar is visible
+      expect(find.byType(TabBar), findsOneWidget);
+
+      // Enter search mode
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+
+      // TabBar should be hidden
+      expect(find.byType(TabBar), findsNothing);
+
+      // Exit search mode
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      // TabBar should be visible again
+      expect(find.byType(TabBar), findsOneWidget);
+    });
+
+    // Best effort localization tests
+    testWidgets('Search UI elements have expected tooltips and hints (English fallback)', (WidgetTester tester) async {
+      await _setupMockData([], []); // No data needed, just UI
+      await tester.pumpWidget(app.MyApp(isAlreadyEnteredTodos: true));
+      await tester.pumpAndSettle();
+
+      // Check search icon button tooltip (before entering search mode)
+      // Expecting the hardcoded fallback string from homepage.dart
+      expect(find.widgetWithTooltip(IconButton, "Search Todos"), findsOneWidget);
+
+      // Enter search mode
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+
+      // Check search text field hint text
+      final appBarSearchField = find.descendant(of: find.byType(AppBar), matching: find.byType(TextField));
+      expect(appBarSearchField, findsOneWidget);
+      TextField searchTextFieldWidget = tester.widget(appBarSearchField);
+      // Expecting the hardcoded fallback string
+      expect(searchTextFieldWidget.decoration?.hintText, "Search Todos...");
+
+      // Check close button tooltip
+      expect(find.widgetWithTooltip(IconButton, "Close Search"), findsOneWidget);
+    });
+
   });
 }

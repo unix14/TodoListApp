@@ -51,6 +51,15 @@ class _HomePageState extends State<HomePage>
   List<String> _customCategories = [];
   bool _isPromptingForCategory = false;
 
+  // Search state
+  bool _isSearching = false;
+  String _searchQuery = "";
+  late FocusNode _searchFocusNode;
+  late TextEditingController _searchController;
+  List<TodoListItem> _searchResults = []; // Initialize search results list
+  static const String HEADER_PREFIX = "HEADER::";
+
+
   TodoListItem? _editingTodo; // New state variable for currently edited item
   late TextEditingController _textEditingController; // Controller for inline editing
 
@@ -241,6 +250,8 @@ class _HomePageState extends State<HomePage>
     myBanner?.dispose();
     _todoLineFocusNode.dispose(); // Dispose of the FocusNode
     _textEditingController.dispose(); // Dispose the text controller
+    _searchFocusNode.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -248,6 +259,8 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     _textEditingController = TextEditingController(); // Initialize the controller
+    _searchController = TextEditingController();
+    _searchFocusNode = FocusNode();
     _loadingData = loadList();
     if (false) initAds();
     initializeInstallPrompt();
@@ -286,10 +299,30 @@ class _HomePageState extends State<HomePage>
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(AppLocale.title.getString(context)),
-        bottom: _tabController == null
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: "Search Todos...", // Fallback for AppLocale.searchTodosHint
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.white70),
+                ),
+                style: TextStyle(color: Colors.white, fontSize: 18),
+                onChanged: (query) {
+                  setState(() {
+                    _searchQuery = query;
+                  });
+                  _performSearch(query);
+                },
+              )
+            : Text(AppLocale.title.getString(context)),
+        bottom: _isSearching // Hide TabBar when searching
             ? null
-            : PreferredSize(
+            : _tabController == null
+                ? null
+                : PreferredSize(
                 preferredSize: const Size.fromHeight(40),
                 child: Align(
                   alignment: currentLocaleStr == "he" ? Alignment.centerRight : Alignment.centerLeft,
@@ -312,9 +345,31 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
               ),
-        actions: [
+        actions: _isSearching
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  tooltip: "Close Search", // Fallback for AppLocale.closeSearchTooltip
+                  onPressed: () {
+                    setState(() {
+                      _isSearching = false;
+                      _searchQuery = "";
+                      _searchController.clear();
+                      _searchResults = []; // Clear search results
+                    });
+                    // Potentially call _performSearch("") if you want to reset the list
+                  },
+                ),
+              ]
+            : [
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: _handleSearch,
+                  tooltip: "Search Todos", // Fallback for AppLocale.searchTodosTooltip
+                ),
                 PopupMenuButton<String>(
-                  onSelected: (value) async { // Make async
+                  onSelected: (value) async {
+                    // Make async
                     if (value == kInstallMenuButtonName) {
                       showInstallPrompt();
                       context.showSnackBar(AppLocale.appIsInstalled.getString(context));
@@ -504,7 +559,7 @@ class _HomePageState extends State<HomePage>
                 IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: _handleSearch,
-                  tooltip: 'Search Todos', // Optional: Add a tooltip
+                  tooltip: AppLocale.searchTodosTooltip.getString(context), // Modified
                 ),
               ],
       ),
@@ -523,114 +578,155 @@ class _HomePageState extends State<HomePage>
                           return Container(); // Empty view for the action tab
                         }
                         // Actual category view
-                        final categoryName = _categories[index];
-                        return FutureBuilder<List<TodoListItem>>(
-                          future: _loadingData,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          } else if (snapshot.hasError) {
+                        final categoryName = _categories[index]; // Current tab's category name
+
+                        if (_isSearching) {
+                          // SEARCH VIEW LOGIC
+                          if (_searchQuery.isNotEmpty && _searchResults.isEmpty) {
                             return Center(
-                              child: Text('Error: ${snapshot.error}'),
-                            );
-                          } else {
-                            final allLoadedItems = snapshot.data ?? [];
-                            items = allLoadedItems; // Keep the main 'items' list updated
-
-                            List<TodoListItem> displayedItems;
-                            if (categoryName == AppLocale.all.getString(context)) {
-                              displayedItems = allLoadedItems.reversed
-                                  .where((item) => !item.isArchived)
-                                  .toList();
-                            } else {
-                              displayedItems = allLoadedItems.reversed
-                                  .where((item) =>
-                                      !item.isArchived &&
-                                      item.category == categoryName)
-                                  .toList();
-                            }
-
-                            // If "All" is empty, show a random motivational sentence.
-                            if (categoryName == AppLocale.all.getString(context) && displayedItems.isEmpty) {
-                              final List<String> motivationalKeys = [
-                                AppLocale.motivationalSentence1,
-                                AppLocale.motivationalSentence2,
-                                AppLocale.motivationalSentence3,
-                                AppLocale.motivationalSentence4,
-                                AppLocale.motivationalSentence5,
-                              ];
-                              final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Text(
-                                    randomKey.getString(context),
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      color: Colors.grey,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Text(
+                                  _searchQuery.isEmpty ? "Type to search..." : "No results found for '$_searchQuery'", // Fallback for AppLocale.noResultsFound
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 18, color: Colors.grey),
                                 ),
-                              );
-                            }
-
-                            // If not empty, potentially show count and then the list
-                            if (displayedItems.isNotEmpty) {
-                              String taskCountString;
-                              if (displayedItems.length == 1) {
-                                taskCountString = AppLocale.tasksCountSingular.getString(context);
-                              } else {
-                                // For 0 or >1, use tasksCount (which might be "{count} tasks" or "No tasks" via tasksCountZero if we made it that smart)
-                                // The current AppLocale setup has tasksCountZero, tasksCountSingular, tasksCount.
-                                // tasksCountZero is for "No tasks" - but this block is displayedItems.isNotEmpty
-                                // tasksCountSingular is for "1 task"
-                                // tasksCount is for "{count} tasks"
-                                taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', displayedItems.length.toString());
+                              ),
+                            );
+                          }
+                          return ListView.builder(
+                            itemCount: _searchResults.length,
+                            itemBuilder: (context, searchIndex) {
+                              final item = _searchResults[searchIndex];
+                              if (item.text.startsWith(HEADER_PREFIX)) {
+                                String headerText = item.text.substring(HEADER_PREFIX.length);
+                                // Attempt to parse for localization (won't work if gen-l10n failed)
+                                if (headerText.startsWith("resultsInCategory::")) {
+                                  try {
+                                     headerText = AppLocale.resultsInCategory.getString(context).replaceAll('{categoryName}', headerText.substring("resultsInCategory::".length));
+                                  } catch (e) {
+                                    headerText = "Results in ${headerText.substring("resultsInCategory::".length)}"; // Fallback
+                                  }
+                                } else if (headerText == "uncategorizedResults") {
+                                  try {
+                                    headerText = AppLocale.uncategorizedResults.getString(context);
+                                  } catch (e) {
+                                    headerText = "Results in Uncategorized"; // Fallback
+                                  }
+                                }
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                  child: Text(
+                                    headerText,
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+                                  ),
+                                );
                               }
-                              // The tasksCountZero is defined, but this condition (displayedItems.isNotEmpty) means it won't be used here.
-                              // If displayedItems.isEmpty, we are in the motivational sentence block or just an empty ListView for other categories.
+                              return getListTile(item);
+                            },
+                          );
+                        } else {
+                          // NORMAL CATEGORY VIEW LOGIC (existing code)
+                          return FutureBuilder<List<TodoListItem>>(
+                            future: _loadingData,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            } else if (snapshot.hasError) {
+                              return Center(
+                                child: Text('Error: ${snapshot.error}'),
+                              );
+                            } else {
+                              final allLoadedItems = snapshot.data ?? [];
+                              items = allLoadedItems; // Keep the main 'items' list updated
 
-                              return Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                              List<TodoListItem> displayedItems;
+                              if (categoryName == AppLocale.all.getString(context)) {
+                                displayedItems = allLoadedItems.reversed
+                                    .where((item) => !item.isArchived)
+                                    .toList();
+                              } else {
+                                displayedItems = allLoadedItems.reversed
+                                    .where((item) =>
+                                        !item.isArchived &&
+                                        item.category == categoryName)
+                                    .toList();
+                              }
+
+                              // If "All" is empty, show a random motivational sentence.
+                              if (categoryName == AppLocale.all.getString(context) && displayedItems.isEmpty && !_isSearching) { // also check not searching
+                                final List<String> motivationalKeys = [
+                                  AppLocale.motivationalSentence1,
+                                  AppLocale.motivationalSentence2,
+                                  AppLocale.motivationalSentence3,
+                                  AppLocale.motivationalSentence4,
+                                  AppLocale.motivationalSentence5,
+                                ];
+                                final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
+                                return Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
                                     child: Text(
-                                      taskCountString,
+                                      randomKey.getString(context),
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
-                                        fontSize: 13.0,
-                                        color: Colors.blueGrey,
-                                        fontWeight: FontWeight.w500,
+                                        fontSize: 18,
+                                        color: Colors.grey,
+                                        fontStyle: FontStyle.italic,
                                       ),
                                     ),
                                   ),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      itemCount: displayedItems.length,
-                                      itemBuilder: (context, position) {
-                                        final TodoListItem currentTodo = displayedItems[position];
-                                        return getListTile(currentTodo);
-                                      },
+                                );
+                              }
+
+                              // If not empty, potentially show count and then the list
+                              if (displayedItems.isNotEmpty) {
+                                String taskCountString;
+                                if (displayedItems.length == 1) {
+                                  taskCountString = AppLocale.tasksCountSingular.getString(context);
+                                } else {
+                                  taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', displayedItems.length.toString());
+                                }
+
+                                return Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                                      child: Text(
+                                        taskCountString,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 13.0,
+                                          color: Colors.blueGrey,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              );
-                            } else {
-                              // This path is for custom categories that are empty.
-                              // "All" empty case is handled by the motivational sentence block.
-                              return ListView.builder( // Returns an empty list view
-                                itemCount: 0,
-                                itemBuilder: (context, position) => Container(),
-                              );
+                                    Expanded(
+                                      child: ListView.builder(
+                                        itemCount: displayedItems.length,
+                                        itemBuilder: (context, position) {
+                                          final TodoListItem currentTodo = displayedItems[position];
+                                          return getListTile(currentTodo);
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              } else {
+                                // This path is for custom categories that are empty (and not searching).
+                                return ListView.builder(
+                                  itemCount: 0,
+                                  itemBuilder: (context, position) => Container(),
+                                );
+                              }
                             }
-                          }
-                        },
-                      );
+                           },
+                         );
+                        }
                     }).toList(),
                   ),
           ),
@@ -1539,9 +1635,95 @@ class _HomePageState extends State<HomePage>
   }
 
   void _handleSearch() {
-    // For now, just print a message to the console using debugPrint for testability.
-    // In the future, this could open a search bar or a search screen.
-    debugPrint("Search button tapped!");
+    setState(() {
+      _isSearching = !_isSearching;
+      if (_isSearching) {
+        // Request focus after the frame is built
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _searchFocusNode.requestFocus();
+        });
+      } else {
+        _searchQuery = "";
+        _searchController.clear();
+        _searchResults = []; // Clear search results when exiting search mode
+      }
+    });
+    _performSearch(_searchQuery); // Call perform search even when exiting to potentially clear/reset list
+    debugPrint("Search button tapped! _isSearching is now $_isSearching");
+  }
+
+  void _performSearch(String query) {
+    final String lowerCaseQuery = query.toLowerCase().trim();
+    List<TodoListItem> newResults = [];
+
+    if (!_isSearching || lowerCaseQuery.isEmpty) {
+      // If not searching or query is empty, results should be empty or reflect current category (handled by main builder)
+      // However, specifically for _performSearch, if query is empty, clear _searchResults
+       setState(() {
+        _searchResults = [];
+      });
+      return;
+    }
+
+    final String currentCategoryName = _tabController != null && _tabController!.index < _categories.length
+        ? _categories[_tabController!.index]
+        : AppLocale.all.getString(context);
+    final bool isAllTab = currentCategoryName == AppLocale.all.getString(context);
+
+    if (isAllTab) {
+      newResults = items
+          .where((item) =>
+              !item.isArchived &&
+              item.text.toLowerCase().contains(lowerCaseQuery))
+          .toList();
+    } else {
+      // Search in current category first
+      final List<TodoListItem> currentCategoryMatches = items
+          .where((item) =>
+              !item.isArchived &&
+              item.category == currentCategoryName &&
+              item.text.toLowerCase().contains(lowerCaseQuery))
+          .toList();
+      newResults.addAll(currentCategoryMatches);
+
+      // Search in other categories
+      for (String otherCategory in _categories) {
+        if (otherCategory == currentCategoryName || otherCategory == AppLocale.all.getString(context)) {
+          continue; // Skip current and "All" tab
+        }
+        final List<TodoListItem> otherCategoryMatches = items
+            .where((item) =>
+                !item.isArchived &&
+                item.category == otherCategory && // Make sure item.category can be null for "Uncategorized"
+                item.text.toLowerCase().contains(lowerCaseQuery))
+            .toList();
+
+        if (otherCategoryMatches.isNotEmpty) {
+          // Add header for this category
+          // Using a TodoListItem with a special text format for headers, including key for localization
+          newResults.add(TodoListItem(text:"${HEADER_PREFIX}resultsInCategory::$otherCategory", dateTime: DateTime.now(), isChecked: false));
+          newResults.addAll(otherCategoryMatches);
+        }
+      }
+       // Also search for items that are uncategorized if current tab isn't "All"
+      if (currentCategoryName != AppLocale.all.getString(context)) {
+        final List<TodoListItem> uncategorizedMatches = items
+            .where((item) =>
+                !item.isArchived &&
+                item.category == null && // Uncategorized items
+                item.text.toLowerCase().contains(lowerCaseQuery))
+            .toList();
+        if (uncategorizedMatches.isNotEmpty) {
+          newResults.add(TodoListItem(text:"${HEADER_PREFIX}uncategorizedResults", dateTime: DateTime.now(), isChecked: false));
+          newResults.addAll(uncategorizedMatches);
+        }
+      }
+    }
+
+    setState(() {
+      _searchResults = newResults;
+    });
+    debugPrint("Performing search for: $query. Found ${_searchResults.length} results.");
   }
 }
 
