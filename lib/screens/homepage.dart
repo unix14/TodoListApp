@@ -361,207 +361,7 @@ class _HomePageState extends State<HomePage>
                   },
                 ),
               ]
-            : [
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: _handleSearch,
-                  tooltip: AppLocale.searchTodosTooltip.getString(context),
-                ),
-                PopupMenuButton<String>(
-                  onSelected: (value) async {
-                    // Make async
-                    if (value == kInstallMenuButtonName) {
-                      showInstallPrompt();
-                      context.showSnackBar(AppLocale.appIsInstalled.getString(context));
-                    } else if (value == kArchiveMenuButtonName) {
-                      showArchivedTodos();
-                    } else if (value == kLoginButtonMenu) {
-                      Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const OnboardingScreen()));
-                    } else if (value == kSettingsMenuButtonName) {
-                      final result = await Navigator.push( // await the result
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const SettingsScreen()));
-                      if (result == true && mounted) { // Check if mounted before setState
-                        // First, trigger item loading
-                        setState(() {
-                          _loadingData = loadList(); // Re-trigger FutureBuilder
-                        });
-
-                        // Then, re-initialize tabs which will also call setState internally
-                        await _initializeTabs();
-
-                        // Optionally, ensure the first tab ("All") is selected if controller exists
-                        if (mounted && _tabController != null && _tabController!.length > 0) {
-                           _tabController!.animateTo(0); // Go to "All" tab
-                        }
-                      }
-                    } else if (value == kRandomTaskMenuButtonName) {
-                      _showRandomTask();
-                    } else if (value == kRenameCategoryMenuButtonName) {
-                      if (_isCurrentCategoryCustom()) {
-                        final currentCategoryName = _categories[_tabController!.index];
-                        _promptRenameCategory(currentCategoryName);
-                      }
-                    } else if (value == kDeleteCategoryMenuButtonName) {
-                      if (_isCurrentCategoryCustom()) {
-                        final currentCategoryName = _categories[_tabController!.index];
-                        DialogHelper.showAlertDialog(
-                          context,
-                          AppLocale.deleteCategoryConfirmationTitle.getString(context),
-                          AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', currentCategoryName),
-                          () { // onOkButton
-                            Navigator.of(context).pop(); // Dismiss confirmation dialog
-                            setState(() {
-                              _customCategories.removeWhere((cat) => cat.toLowerCase() == currentCategoryName.toLowerCase());
-                              for (var item in items) {
-                                if (item.category == currentCategoryName) {
-                                  item.category = null; // Move to "All"
-                                }
-                              }
-                              EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
-                                // Notify the widget to update
-                                HomeWidget.updateWidget(
-                                  name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
-                                  iOSName: 'TodoWidgetProvider',
-                                );
-                                print('[HomeWidget] Sent update request to widget provider after deleting category.');
-                              _updateList();
-                              // Re-initialize tabs and then switch to "All" tab.
-                              _initializeTabs().then((_) {
-                                if (mounted && _tabController != null) {
-                                   _tabController!.index = 0;
-                                }
-                              });
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', currentCategoryName)),
-                            ));
-                          },
-                          () { // onCancelButton
-                            Navigator.of(context).pop(); // Dismiss confirmation dialog
-                          },
-                        );
-                      }
-                    }
-                  },
-                  itemBuilder: (BuildContext context) {
-                    List<PopupMenuItem<String>> popupMenuItems = [];
-                    //Check if should show Login Button
-                    if (isLoggedIn == false) {
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kLoginButtonMenu,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.supervised_user_circle,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 8.0),
-                            Text(AppLocale.login.getString(context)),
-                          ],
-                        ),
-                      ));
-                    }
-                    //Check if should show Install App prompt button
-                    if (isInstallable()) {
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kInstallMenuButtonName,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.install_mobile,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 8.0),
-                            Text(AppLocale.installApp.getString(context)),
-                          ],
-                        ),
-                      ));
-                    }
-                    //Check if should show Archive Button
-                    if (items.any((item) => item.isArchived)) {
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kArchiveMenuButtonName,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.archive,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 8.0),
-                            Text(AppLocale.archive.getString(context)),
-                          ],
-                        ),
-                      ));
-                    }
-
-                    // Add "Rename Current Category" button if a custom category is selected
-                    if (_isCurrentCategoryCustom()) {
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kRenameCategoryMenuButtonName,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.edit, color: Colors.blue), // Or another appropriate icon
-                            const SizedBox(width: 8.0),
-                            Text(AppLocale.renameCategoryMenuButton.getString(context)),
-                          ],
-                        ),
-                      ));
-                      // Add "Delete Current Category" button if a custom category is selected
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kDeleteCategoryMenuButtonName,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.delete_outline, color: Colors.red), // Or another appropriate icon
-                            const SizedBox(width: 8.0),
-                            Text(AppLocale.deleteCategoryMenuButton.getString(context), style: const TextStyle(color: Colors.red)),
-                          ],
-                        ),
-                      ));
-                    }
-
-                    // Add Random Task button
-                    popupMenuItems.add(PopupMenuItem<String>(
-                      value: kRandomTaskMenuButtonName,
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.shuffle,
-                            color: Colors.blue,
-                          ),
-                          const SizedBox(width: 8.0),
-                          Text(AppLocale.randomTaskMenuButton.getString(context)),
-                        ],
-                      ),
-                    ));
-
-                    // Settings button is typically last or near last
-                    popupMenuItems.add(PopupMenuItem<String>(
-                      value: kSettingsMenuButtonName,
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.settings_outlined,
-                            color: Colors.blue,
-                          ),
-                          const SizedBox(width: 8.0),
-                          Text(AppLocale.settings.getString(context)),
-                        ],
-                      ),
-                    ));
-                    return popupMenuItems;
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: _handleSearch,
-                  tooltip: AppLocale.searchTodosTooltip.getString(context), // Modified
-                ),
-              ],
+            : _buildDefaultAppBarActions(context),
       ),
       body: Column(
         children: [
@@ -578,155 +378,167 @@ class _HomePageState extends State<HomePage>
                           return Container(); // Empty view for the action tab
                         }
                         // Actual category view
-                        final categoryName = _categories[index]; // Current tab's category name
+                        final currentCategoryNameForTab = _categories[index]; // Renamed for clarity
 
-                        if (_isSearching) {
-                          // SEARCH VIEW LOGIC
-                          if (_searchQuery.isNotEmpty && _searchResults.isEmpty) {
-                            return Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Text(
-                                  _searchQuery.isEmpty
-                                      ? AppLocale.searchTodosHint.getString(context) // Or a specific "Type to search..." string if added
-                                      : AppLocale.noResultsFound.getString(context).replaceAll('{query}', _searchQuery),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 18, color: Colors.grey),
-                                ),
-                              ),
-                            );
-                          }
-                          return ListView.builder(
-                            itemCount: _searchResults.length,
-                            itemBuilder: (context, searchIndex) {
-                              final item = _searchResults[searchIndex];
-                              if (item.text.startsWith(HEADER_PREFIX)) {
-                                String rawHeaderText = item.text.substring(HEADER_PREFIX.length);
-                                String displayHeaderText;
-
-                                if (rawHeaderText.startsWith(AppLocale.resultsInCategory + "::")) {
-                                  String categoryName = rawHeaderText.substring((AppLocale.resultsInCategory + "::").length);
-                                  displayHeaderText = AppLocale.resultsInCategory.getString(context).replaceAll('{categoryName}', categoryName);
-                                } else if (rawHeaderText == AppLocale.uncategorizedResults) {
-                                  displayHeaderText = AppLocale.uncategorizedResults.getString(context);
-                                } else {
-                                  // Fallback for safety, though should not be reached if _performSearch is correct
-                                  displayHeaderText = rawHeaderText.replaceAll("::", " ");
-                                }
-
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                  child: Text(
-                                    displayHeaderText,
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey),
-                                  ),
-                                );
-                              }
-                              return getListTile(item);
-                            },
-                          );
-                        } else {
-                          // NORMAL CATEGORY VIEW LOGIC (existing code)
-                          return FutureBuilder<List<TodoListItem>>(
-                            future: _loadingData,
+                        return FutureBuilder<List<TodoListItem>>(
+                          future: _loadingData,
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
                             } else if (snapshot.hasError) {
-                              return Center(
-                                child: Text('Error: ${snapshot.error}'),
-                              );
+                              return Center(child: Text('Error: ${snapshot.error}'));
                             } else {
                               final allLoadedItems = snapshot.data ?? [];
                               items = allLoadedItems; // Keep the main 'items' list updated
 
-                              List<TodoListItem> displayedItems;
-                              if (categoryName == AppLocale.all.getString(context)) {
-                                displayedItems = allLoadedItems.reversed
+                              // Determine items to display based on search state and query
+                              List<TodoListItem> itemsToDisplayOrSearchIn;
+                              if (currentCategoryNameForTab == AppLocale.all.getString(context)) {
+                                itemsToDisplayOrSearchIn = allLoadedItems.reversed
                                     .where((item) => !item.isArchived)
                                     .toList();
                               } else {
-                                displayedItems = allLoadedItems.reversed
+                                itemsToDisplayOrSearchIn = allLoadedItems.reversed
                                     .where((item) =>
                                         !item.isArchived &&
-                                        item.category == categoryName)
+                                        item.category == currentCategoryNameForTab)
                                     .toList();
                               }
 
-                              // If "All" is empty, show a random motivational sentence.
-                              if (categoryName == AppLocale.all.getString(context) && displayedItems.isEmpty && !_isSearching) { // also check not searching
-                                final List<String> motivationalKeys = [
-                                  AppLocale.motivationalSentence1,
-                                  AppLocale.motivationalSentence2,
-                                  AppLocale.motivationalSentence3,
-                                  AppLocale.motivationalSentence4,
-                                  AppLocale.motivationalSentence5,
-                                ];
-                                final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
-                                return Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Text(
-                                      randomKey.getString(context),
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        color: Colors.grey,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
+                              Widget listContent;
 
-                              // If not empty, potentially show count and then the list
-                              if (displayedItems.isNotEmpty) {
-                                String taskCountString;
-                                if (displayedItems.length == 1) {
-                                  taskCountString = AppLocale.tasksCountSingular.getString(context);
-                                } else {
-                                  taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', displayedItems.length.toString());
-                                }
-
-                                return Column(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                                      child: Text(
-                                        taskCountString,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontSize: 13.0,
-                                          color: Colors.blueGrey,
-                                          fontWeight: FontWeight.w500,
+                              if (_isSearching) {
+                                if (_searchQuery.isEmpty) {
+                                  // Searching but query is empty: show original list for the category
+                                  if (currentCategoryNameForTab == AppLocale.all.getString(context) && itemsToDisplayOrSearchIn.isEmpty) {
+                                    final List<String> motivationalKeys = [
+                                      AppLocale.motivationalSentence1,
+                                      AppLocale.motivationalSentence2,
+                                      AppLocale.motivationalSentence3,
+                                      AppLocale.motivationalSentence4,
+                                      AppLocale.motivationalSentence5,
+                                    ];
+                                    final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
+                                    listContent = Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Text(
+                                          randomKey.getString(context),
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(fontSize: 18, color: Colors.grey, fontStyle: FontStyle.italic),
                                         ),
                                       ),
-                                    ),
-                                    Expanded(
-                                      child: ListView.builder(
-                                        itemCount: displayedItems.length,
-                                        itemBuilder: (context, position) {
-                                          final TodoListItem currentTodo = displayedItems[position];
-                                          return getListTile(currentTodo);
-                                        },
+                                    );
+                                  } else if (itemsToDisplayOrSearchIn.isNotEmpty) {
+                                    String taskCountString;
+                                    if (itemsToDisplayOrSearchIn.length == 1) {
+                                      taskCountString = AppLocale.tasksCountSingular.getString(context);
+                                    } else {
+                                      taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', itemsToDisplayOrSearchIn.length.toString());
+                                    }
+                                    listContent = Column(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                                          child: Text(taskCountString, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13.0, color: Colors.blueGrey, fontWeight: FontWeight.w500)),
+                                        ),
+                                        Expanded(
+                                          child: ListView.builder(
+                                            itemCount: itemsToDisplayOrSearchIn.length,
+                                            itemBuilder: (context, itemIndex) => getListTile(itemsToDisplayOrSearchIn[itemIndex]),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  } else {
+                                    listContent = ListView(); // Empty list for non-"All" categories that are empty
+                                  }
+                                } else if (_searchResults.isEmpty) { // Query is not empty, but results are empty
+                                  listContent = Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Text(
+                                        AppLocale.noResultsFound.getString(context).replaceAll('{query}', _searchQuery),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(fontSize: 18, color: Colors.grey),
                                       ),
                                     ),
-                                  ],
-                                );
-                              } else {
-                                // This path is for custom categories that are empty (and not searching).
-                                return ListView.builder(
-                                  itemCount: 0,
-                                  itemBuilder: (context, position) => Container(),
-                                );
+                                  );
+                                } else { // Query is not empty, and results are found
+                                  listContent = ListView.builder(
+                                    itemCount: _searchResults.length,
+                                    itemBuilder: (context, searchIdx) {
+                                      final item = _searchResults[searchIdx];
+                                      if (item.text.startsWith(HEADER_PREFIX)) {
+                                        String rawHeaderText = item.text.substring(HEADER_PREFIX.length);
+                                        String displayHeaderText;
+                                        if (rawHeaderText.startsWith(AppLocale.resultsInCategory + "::")) {
+                                          String catName = rawHeaderText.substring((AppLocale.resultsInCategory + "::").length);
+                                          displayHeaderText = AppLocale.resultsInCategory.getString(context).replaceAll('{categoryName}', catName);
+                                        } else {
+                                          // Fallback for safety or if other header types were introduced in the future.
+                                          // Given current _performSearch logic (after removing specific uncategorized header),
+                                          // this branch should ideally not be hit for distinct headers other than 'resultsInCategory'.
+                                          displayHeaderText = rawHeaderText.replaceAll("::", " ");
+                                        }
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                          child: Text(displayHeaderText, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                                        );
+                                      }
+                                      return getListTile(item);
+                                    },
+                                  );
+                                }
+                              } else { // Not searching: Normal category view logic
+                                if (currentCategoryNameForTab == AppLocale.all.getString(context) && itemsToDisplayOrSearchIn.isEmpty) {
+                                   final List<String> motivationalKeys = [
+                                      AppLocale.motivationalSentence1,
+                                      AppLocale.motivationalSentence2,
+                                      AppLocale.motivationalSentence3,
+                                      AppLocale.motivationalSentence4,
+                                      AppLocale.motivationalSentence5,
+                                    ];
+                                    final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
+                                  listContent = Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Text(
+                                        randomKey.getString(context),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(fontSize: 18, color: Colors.grey, fontStyle: FontStyle.italic),
+                                      ),
+                                    ),
+                                  );
+                                } else if (itemsToDisplayOrSearchIn.isNotEmpty) {
+                                  String taskCountString;
+                                  if (itemsToDisplayOrSearchIn.length == 1) {
+                                    taskCountString = AppLocale.tasksCountSingular.getString(context);
+                                  } else {
+                                    taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', itemsToDisplayOrSearchIn.length.toString());
+                                  }
+                                  listContent = Column(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                                        child: Text(taskCountString, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13.0, color: Colors.blueGrey, fontWeight: FontWeight.w500)),
+                                      ),
+                                      Expanded(
+                                        child: ListView.builder(
+                                          itemCount: itemsToDisplayOrSearchIn.length,
+                                          itemBuilder: (context, itemIndex) => getListTile(itemsToDisplayOrSearchIn[itemIndex]),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                } else {
+                                   listContent = ListView(); // Empty list view for non-"All" categories that are empty
+                                }
                               }
+                              return listContent;
                             }
-                           },
-                         );
-                        }
+                          },
+                        );
                     }).toList(),
                   ),
           ),
@@ -736,9 +548,10 @@ class _HomePageState extends State<HomePage>
             width: myBanner?.size.width.toDouble() ?? 0,
             height: myBanner?.size.height.toDouble() ?? 0,
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-            child: Row(
+          if (!_isSearching) // Conditionally render the input field area
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+              child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -752,7 +565,7 @@ class _HomePageState extends State<HomePage>
           ),
         ],
       ),
-      floatingActionButton: (enteredAtLeast1Todo)
+      floatingActionButton: (!_isSearching && enteredAtLeast1Todo) // Updated condition
           ? Opacity(
               opacity: fabOpacity,
               child: FloatingActionButton(
@@ -1706,6 +1519,7 @@ class _HomePageState extends State<HomePage>
         }
       }
        // Also search for items that are uncategorized if current tab isn't "All"
+      // and add them directly without a header.
       if (currentCategoryName != AppLocale.all.getString(context)) {
         final List<TodoListItem> uncategorizedMatches = items
             .where((item) =>
@@ -1714,7 +1528,7 @@ class _HomePageState extends State<HomePage>
                 item.text.toLowerCase().contains(lowerCaseQuery))
             .toList();
         if (uncategorizedMatches.isNotEmpty) {
-          newResults.add(TodoListItem("$HEADER_PREFIX${AppLocale.uncategorizedResults}", category: null));
+          // Add uncategorized matches directly without a header
           newResults.addAll(uncategorizedMatches);
         }
       }
@@ -1724,6 +1538,212 @@ class _HomePageState extends State<HomePage>
       _searchResults = newResults;
     });
     debugPrint("Performing search for: $query. Found ${_searchResults.length} results.");
+  }
+
+  List<Widget> _buildDefaultAppBarActions(BuildContext context) {
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+
+    final searchIconButton = IconButton(
+      icon: const Icon(Icons.search),
+      onPressed: _handleSearch,
+      tooltip: AppLocale.searchTodosTooltip.getString(context),
+    );
+
+    final popupMenuButton = PopupMenuButton<String>(
+      onSelected: (value) async {
+        // Make async
+        if (value == kInstallMenuButtonName) {
+          showInstallPrompt();
+          context.showSnackBar(AppLocale.appIsInstalled.getString(context));
+        } else if (value == kArchiveMenuButtonName) {
+          showArchivedTodos();
+        } else if (value == kLoginButtonMenu) {
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const OnboardingScreen()));
+        } else if (value == kSettingsMenuButtonName) {
+          final result = await Navigator.push( // await the result
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const SettingsScreen()));
+          if (result == true && mounted) { // Check if mounted before setState
+            // First, trigger item loading
+            setState(() {
+              _loadingData = loadList(); // Re-trigger FutureBuilder
+            });
+
+            // Then, re-initialize tabs which will also call setState internally
+            await _initializeTabs();
+
+            // Optionally, ensure the first tab ("All") is selected if controller exists
+            if (mounted && _tabController != null && _tabController!.length > 0) {
+                _tabController!.animateTo(0); // Go to "All" tab
+            }
+          }
+        } else if (value == kRandomTaskMenuButtonName) {
+          _showRandomTask();
+        } else if (value == kRenameCategoryMenuButtonName) {
+          if (_isCurrentCategoryCustom()) {
+            final currentCategoryName = _categories[_tabController!.index];
+            _promptRenameCategory(currentCategoryName);
+          }
+        } else if (value == kDeleteCategoryMenuButtonName) {
+          if (_isCurrentCategoryCustom()) {
+            final currentCategoryName = _categories[_tabController!.index];
+            DialogHelper.showAlertDialog(
+              context,
+              AppLocale.deleteCategoryConfirmationTitle.getString(context),
+              AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', currentCategoryName),
+              () { // onOkButton
+                Navigator.of(context).pop(); // Dismiss confirmation dialog
+                setState(() {
+                  _customCategories.removeWhere((cat) => cat.toLowerCase() == currentCategoryName.toLowerCase());
+                  for (var item in items) {
+                    if (item.category == currentCategoryName) {
+                      item.category = null; // Move to "All"
+                    }
+                  }
+                  EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+                    // Notify the widget to update
+                    HomeWidget.updateWidget(
+                      name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
+                      iOSName: 'TodoWidgetProvider',
+                    );
+                    print('[HomeWidget] Sent update request to widget provider after deleting category.');
+                  _updateList();
+                  // Re-initialize tabs and then switch to "All" tab.
+                  _initializeTabs().then((_) {
+                    if (mounted && _tabController != null) {
+                        _tabController!.index = 0;
+                    }
+                  });
+                });
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', currentCategoryName)),
+                ));
+              },
+              () { // onCancelButton
+                Navigator.of(context).pop(); // Dismiss confirmation dialog
+              },
+            );
+          }
+        }
+      },
+      itemBuilder: (BuildContext context) {
+        List<PopupMenuItem<String>> popupMenuItems = [];
+        //Check if should show Login Button
+        if (isLoggedIn == false) {
+          popupMenuItems.add(PopupMenuItem<String>(
+            value: kLoginButtonMenu,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.supervised_user_circle,
+                  color: Colors.blue,
+                ),
+                const SizedBox(width: 8.0),
+                Text(AppLocale.login.getString(context)),
+              ],
+            ),
+          ));
+        }
+        //Check if should show Install App prompt button
+        if (isInstallable()) {
+          popupMenuItems.add(PopupMenuItem<String>(
+            value: kInstallMenuButtonName,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.install_mobile,
+                  color: Colors.blue,
+                ),
+                const SizedBox(width: 8.0),
+                Text(AppLocale.installApp.getString(context)),
+              ],
+            ),
+          ));
+        }
+        //Check if should show Archive Button
+        if (items.any((item) => item.isArchived)) {
+          popupMenuItems.add(PopupMenuItem<String>(
+            value: kArchiveMenuButtonName,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.archive,
+                  color: Colors.blue,
+                ),
+                const SizedBox(width: 8.0),
+                Text(AppLocale.archive.getString(context)),
+              ],
+            ),
+          ));
+        }
+
+        // Add "Rename Current Category" button if a custom category is selected
+        if (_isCurrentCategoryCustom()) {
+          popupMenuItems.add(PopupMenuItem<String>(
+            value: kRenameCategoryMenuButtonName,
+            child: Row(
+              children: [
+                const Icon(Icons.edit, color: Colors.blue), // Or another appropriate icon
+                const SizedBox(width: 8.0),
+                Text(AppLocale.renameCategoryMenuButton.getString(context)),
+              ],
+            ),
+          ));
+          // Add "Delete Current Category" button if a custom category is selected
+          popupMenuItems.add(PopupMenuItem<String>(
+            value: kDeleteCategoryMenuButtonName,
+            child: Row(
+              children: [
+                const Icon(Icons.delete_outline, color: Colors.red), // Or another appropriate icon
+                const SizedBox(width: 8.0),
+                Text(AppLocale.deleteCategoryMenuButton.getString(context), style: const TextStyle(color: Colors.red)),
+              ],
+            ),
+          ));
+        }
+
+        // Add Random Task button
+        popupMenuItems.add(PopupMenuItem<String>(
+          value: kRandomTaskMenuButtonName,
+          child: Row(
+            children: [
+              const Icon(
+                Icons.shuffle,
+                color: Colors.blue,
+              ),
+              const SizedBox(width: 8.0),
+              Text(AppLocale.randomTaskMenuButton.getString(context)),
+            ],
+          ),
+        ));
+
+        // Settings button is typically last or near last
+        popupMenuItems.add(PopupMenuItem<String>(
+          value: kSettingsMenuButtonName,
+          child: Row(
+            children: [
+              const Icon(
+                Icons.settings_outlined,
+                color: Colors.blue,
+              ),
+              const SizedBox(width: 8.0),
+              Text(AppLocale.settings.getString(context)),
+            ],
+          ),
+        ));
+        return popupMenuItems;
+      },
+    );
+
+    if (isRtl) {
+      return [popupMenuButton, searchIconButton];
+    } else {
+      return [searchIconButton, popupMenuButton];
+    }
   }
 }
 
