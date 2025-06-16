@@ -1,81 +1,62 @@
 mixin AppLocale {
-  static const String title = 'title';
-  static const String lang = 'lang';
-  static const String settings = 'settings';
-  static const String archive = "archive";
-  static const String installApp = "installApp";
-  static const String deleteAll = "deleteAll";
-  static const String appIsInstalled = "appIsInstalled";
-  static const String deleteAllSubtitle = "deleteAllSubtitle";
-  static const String logout = "logout";
-  static const String login = "login";
-  static const String add = "add";
-  static const String enterTodoTextPlaceholder = "enterTodoTextPlaceholder";
   static const String account = "account";
-  static const String version = "version";
-  static const String name = "name";
-  static const String archivedTodos = "archivedTodos";
-  static const String guest = "guest";
-  static const String unknown = "unknown";
-  static const String archivedTodosSubtitle = "archivedTodosSubtitle";
-  static const String close = "close";
-  static const String loginWEmail = "loginWEmail";
-  static const String loginAsGuest = "loginAsGuest";
-  static const String todoLater = "todoLater";
-  static const String email = "email";
-  static const String password = "password";
-  static const String or = "or";
-  static const String ok = "ok"; // Consider if this should be okButtonText primarily
-  static const String signup = "signup";
-  static const String cancel = "cancel"; // Consider if this should be cancelButtonText primarily
-  static const String todoExample1 = "todoExample1";
-  static const String todoExample2 = "todoExample2";
-  static const String todoExample3 = "todoExample3";
-  static const String logoutText = "logoutText";
-  static const String areUsure = "areUsure";
-  static const String deleteAllSubtext = "deleteAllSubtext";
-  static const String doUwant2Delete = "doUwant2Delete";
-  static const String thisCantBeUndone = "thisCantBeUndone";
-  static const String selectLanguage = "selectLanguage";
-
-  static const String randomTaskMenuButton = 'randomTaskMenuButton';
-  static const String randomTaskDialogTitle = 'randomTaskDialogTitle';
-  static const String noTasksAvailableDialogTitle = 'noTasksAvailableDialogTitle';
-  static const String noTasksAvailableDialogMessage = 'noTasksAvailableDialogMessage';
-
-  static const String addCategoryTooltip = 'addCategoryTooltip';
-  static const String uncategorizedCategory = 'uncategorizedCategory';
-  static const String itemUncategorizedSnackbar = 'itemUncategorizedSnackbar';
-  static const String itemMovedSnackbar = 'itemMovedSnackbar';
-  static const String all = 'all';
+  static const String add = "add";
   static const String addCategoryDialogTitle = 'addCategoryDialogTitle';
-  static const String cancelButtonText = 'cancelButtonText'; // Moved for alphabetical order
+  static const String addCategoryTooltip = 'addCategoryTooltip';
+  static const String addNewCategoryMenuItem = 'addNewCategoryMenuItem'; // Ensure this is added
+  static const String all = 'all';
+  static const String appIsInstalled = "appIsInstalled";
+  static const String archive = "archive";
+  static const String archivedTodos = "archivedTodos";
+  static const String archivedTodosSubtitle = "archivedTodosSubtitle";
+  static const String areUsure = "areUsure";
+  static const String cancel = "cancel";
+  static const String cancelButtonText = 'cancelButtonText';
   static const String categoryDeletedSnackbar = 'categoryDeletedSnackbar';
   static const String categoryNameEmptyError = 'categoryNameEmptyError';
   static const String categoryNameExistsError = 'categoryNameExistsError';
   static const String categoryNameHintText = 'categoryNameHintText';
   static const String categoryRenamedSnackbar = 'categoryRenamedSnackbar';
+  static const String close = "close";
   static const String closeSearchTooltip = 'closeSearchTooltip';
+  static const String deleteAll = "deleteAll";
+  static const String deleteAllSubtext = "deleteAllSubtext";
+  static const String deleteAllSubtitle = "deleteAllSubtitle";
   static const String deleteCategoryConfirmationMessage = 'deleteCategoryConfirmationMessage';
   static const String deleteCategoryConfirmationTitle = 'deleteCategoryConfirmationTitle';
   static const String deleteCategoryMenuButton = 'deleteCategoryMenuButton';
-  static const String deleteMenuItem = 'deleteMenuItem'; // Corrected
+  static const String deleteMenuItem = 'deleteMenuItem';
+  static const String doUwant2Delete = "doUwant2Delete";
   static const String editMenuItem = 'editMenuItem';
   static const String editTaskHintText = 'editTaskHintText';
+  static const String email = "email";
   static const String emptyTodoDialogMessage = 'emptyTodoDialogMessage';
   static const String emptyTodoDialogTitle = 'emptyTodoDialogTitle';
+  static const String enterTodoTextPlaceholder = "enterTodoTextPlaceholder";
+  static const String guest = "guest";
+  static const String installApp = "installApp";
   static const String itemMovedSnackbar = 'itemMovedSnackbar';
   static const String itemUncategorizedSnackbar = 'itemUncategorizedSnackbar';
+  static const String lang = 'lang';
+  static const String login = "login";
+  static const String loginAsGuest = "loginAsGuest";
+  static const String loginWEmail = "loginWEmail";
+  static const String logout = "logout";
+  static const String logoutText = "logoutText";
   static const String motivationalSentence1 = 'motivationalSentence1';
   static const String motivationalSentence2 = 'motivationalSentence2';
   static const String motivationalSentence3 = 'motivationalSentence3';
   static const String motivationalSentence4 = 'motivationalSentence4';
   static const String motivationalSentence5 = 'motivationalSentence5';
   static const String moveToCategoryMenuItem = 'moveToCategoryMenuItem';
+  static const String name = "name";
   static const String noResultsFound = 'noResultsFound';
   static const String noTasksAvailableDialogMessage = 'noTasksAvailableDialogMessage';
   static const String noTasksAvailableDialogTitle = 'noTasksAvailableDialogTitle';
+  static const String ok = "ok";
   static const String okButtonText = 'okButtonText';
+  static const String or = "or";
+  static const String password = "password";
   static const String randomTaskDialogTitle = 'randomTaskDialogTitle';
   static const String randomTaskMenuButton = 'randomTaskMenuButton';
   static const String renameButtonText = 'renameButtonText';
@@ -85,19 +66,30 @@ mixin AppLocale {
   static const String searchTodosHint = 'searchTodosHint';
   static const String searchTodosTooltip = 'searchTodosTooltip';
   static const String selectCategoryDialogTitle = 'selectCategoryDialogTitle';
+  static const String selectLanguage = "selectLanguage";
+  static const String settings = 'settings';
+  static const String signup = "signup";
   static const String tasksCount = 'tasksCount';
   static const String tasksCountSingular = 'tasksCountSingular';
   static const String tasksCountZero = 'tasksCountZero';
-  static const String timeDaysAgo = 'timeDaysAgo';     // For "{days} days ago"
+  static const String thisCantBeUndone = "thisCantBeUndone";
+  static const String timeDaysAgo = 'timeDaysAgo';
   static const String timeFewMinutesAgo = 'timeFewMinutesAgo';
   static const String timeFewSecondsAgo = 'timeFewSecondsAgo';
-  static const String timeHourAgo = 'timeHourAgo';   // For "{hours} hour ago"
-  static const String timeHoursAgo = 'timeHoursAgo';   // For "{hours} hours ago"
-  static const String timeMinuteAgo = 'timeMinuteAgo'; // For "{minutes} minute ago"
-  static const String timeMinutesAgo = 'timeMinutesAgo'; // For "{minutes} minutes ago"
+  static const String timeHourAgo = 'timeHourAgo';
+  static const String timeHoursAgo = 'timeHoursAgo';
+  static const String timeMinuteAgo = 'timeMinuteAgo';
+  static const String timeMinutesAgo = 'timeMinutesAgo';
   static const String timeYesterday = 'timeYesterday';
-  static const String uncategorizedResults = 'uncategorizedResults'; // Added alphabetically
-
+  static const String title = 'title';
+  static const String todoExample1 = "todoExample1";
+  static const String todoExample2 = "todoExample2";
+  static const String todoExample3 = "todoExample3";
+  static const String todoLater = "todoLater";
+  static const String uncategorizedCategory = 'uncategorizedCategory';
+  static const String uncategorizedResults = 'uncategorizedResults';
+  static const String unknown = "unknown";
+  static const String version = "version";
 
   static const Map<String, dynamic> EN = {
     AppLocale.title: 'Todo List',
@@ -126,9 +118,9 @@ mixin AppLocale {
     AppLocale.email: "Email",
     AppLocale.password: "Password",
     AppLocale.or: "or",
-    AppLocale.ok: "OK", // Retained for broader compatibility if used elsewhere, but specific okButtonText is better for dialogs
+    AppLocale.ok: "OK",
     AppLocale.signup: "Signup",
-    AppLocale.cancel: "Cancel", // Retained for broader compatibility, but specific cancelButtonText is better for dialogs
+    AppLocale.cancel: "Cancel",
     AppLocale.todoExample1: "Get clean clothes",
     AppLocale.todoExample2: "Buy gas",
     AppLocale.todoExample3: "Buy milk",
@@ -143,12 +135,13 @@ mixin AppLocale {
     AppLocale.noTasksAvailableDialogTitle: "No Tasks",
     AppLocale.noTasksAvailableDialogMessage: "There are no tasks available to pick from.",
     AppLocale.addCategoryTooltip: 'Add new category',
-    AppLocale.uncategorizedCategory: 'All', // 'All' is often a better default than 'Uncategorized' for the main view
+    AppLocale.uncategorizedCategory: 'All',
     AppLocale.itemUncategorizedSnackbar: 'Item moved to All',
-    AppLocale.itemMovedSnackbar: 'Item moved to {categoryName}',
+    // AppLocale.itemMovedSnackbar: 'Item moved to {categoryName}', // Already included below
     AppLocale.all: 'All',
     AppLocale.addCategoryDialogTitle: 'Add New Category',
-    AppLocale.cancelButtonText: 'Cancel', // Specific key for dialog cancel
+    AppLocale.addNewCategoryMenuItem: 'Add New Category', // Ensured
+    AppLocale.cancelButtonText: 'Cancel',
     AppLocale.categoryDeletedSnackbar: "Category '{categoryName}' deleted.",
     AppLocale.categoryNameEmptyError: 'Category name cannot be empty',
     AppLocale.categoryNameExistsError: 'Category name already exists',
@@ -158,13 +151,13 @@ mixin AppLocale {
     AppLocale.deleteCategoryConfirmationMessage: "Are you sure you want to delete the category '{categoryName}'? All items in this category will be moved to 'All'.",
     AppLocale.deleteCategoryConfirmationTitle: "Delete Category?",
     AppLocale.deleteCategoryMenuButton: "Delete Current Category",
-    AppLocale.deleteMenuItem: 'Delete', // Corrected from editMenuItem
+    AppLocale.deleteMenuItem: 'Delete',
     AppLocale.editMenuItem: 'Edit',
     AppLocale.editTaskHintText: 'Edit task...',
     AppLocale.emptyTodoDialogMessage: "Please write a Todo",
     AppLocale.emptyTodoDialogTitle: "Empty Todo",
     AppLocale.itemMovedSnackbar: 'Item moved to {categoryName}',
-    AppLocale.itemUncategorizedSnackbar: 'Item moved to All',
+    // AppLocale.itemUncategorizedSnackbar: 'Item moved to All', // Already included above
     AppLocale.motivationalSentence1: "Let's get something done!",
     AppLocale.motivationalSentence2: "What's on your mind today?",
     AppLocale.motivationalSentence3: "Time to be productive!",
@@ -172,11 +165,11 @@ mixin AppLocale {
     AppLocale.motivationalSentence5: "An empty list is a world of possibilities!",
     AppLocale.moveToCategoryMenuItem: 'Move to category',
     AppLocale.noResultsFound: "No results found for '{query}'",
-    AppLocale.noTasksAvailableDialogMessage: "There are no tasks available to pick from.",
-    AppLocale.noTasksAvailableDialogTitle: "No Tasks",
-    AppLocale.okButtonText: 'OK',       // Specific key for dialog OK
-    AppLocale.randomTaskDialogTitle: "Randomly Selected Task",
-    AppLocale.randomTaskMenuButton: "Random Task",
+    // AppLocale.noTasksAvailableDialogMessage: "There are no tasks available to pick from.", // Already included above
+    // AppLocale.noTasksAvailableDialogTitle: "No Tasks", // Already included above
+    AppLocale.okButtonText: 'OK',
+    // AppLocale.randomTaskDialogTitle: "Randomly Selected Task", // Already included above
+    // AppLocale.randomTaskMenuButton: "Random Task", // Already included above
     AppLocale.renameButtonText: 'Rename',
     AppLocale.renameCategoryDialogTitle: 'Rename Category',
     AppLocale.renameCategoryMenuButton: "Rename Current Category",
@@ -225,9 +218,9 @@ mixin AppLocale {
     AppLocale.email: "כתובת דוא''ל",
     AppLocale.password: "סיסמה",
     AppLocale.or: "או",
-    AppLocale.ok: "אוקיי", // Retained for broader compatibility
+    AppLocale.ok: "אוקיי",
     AppLocale.signup: "הרשמה",
-    AppLocale.cancel: "ביטול", // Retained for broader compatibility
+    AppLocale.cancel: "ביטול",
     AppLocale.todoExample1: "להוציא כביסה מהמייבש",
     AppLocale.todoExample2: "לתדלק את האוטו",
     AppLocale.todoExample3: "לקנות חלב",
@@ -243,11 +236,12 @@ mixin AppLocale {
     AppLocale.noTasksAvailableDialogMessage: "אין כרגע משימות שעלייך לבצע",
     AppLocale.addCategoryTooltip: 'הוסף קטגוריה חדשה',
     AppLocale.uncategorizedCategory: 'הכל',
-    AppLocale.itemUncategorizedSnackbar: 'הפריט הועבר להכל',
+    // AppLocale.itemUncategorizedSnackbar: 'הפריט הועבר להכל', // Already included below
     AppLocale.itemMovedSnackbar: 'הפריט הועבר לקטגוריה {categoryName}',
     AppLocale.all: 'הכל',
     AppLocale.addCategoryDialogTitle: 'הוסף קטגוריה חדשה',
-    AppLocale.cancelButtonText: 'ביטול', // Specific key for dialog cancel
+    AppLocale.addNewCategoryMenuItem: 'הוסף קטגוריה חדשה', // Ensured
+    AppLocale.cancelButtonText: 'ביטול',
     AppLocale.categoryDeletedSnackbar: "קטגוריה '{categoryName}' נמחקה.",
     AppLocale.categoryNameEmptyError: 'שם קטגוריה לא יכול להיות ריק',
     AppLocale.categoryNameExistsError: 'שם הקטגוריה כבר קיים',
@@ -262,7 +256,7 @@ mixin AppLocale {
     AppLocale.editTaskHintText: 'ערוך משימה...',
     AppLocale.emptyTodoDialogMessage: "אנא כתוב משימה",
     AppLocale.emptyTodoDialogTitle: "משימה ריקה",
-    AppLocale.itemMovedSnackbar: 'הפריט הועבר לקטגוריה {categoryName}',
+    // AppLocale.itemMovedSnackbar: 'הפריט הועבר לקטגוריה {categoryName}', // Already included above
     AppLocale.itemUncategorizedSnackbar: 'הפריט הועבר להכל',
     AppLocale.motivationalSentence1: "דברים גדולים לעולם לא מגיעים מאזורי נוחות. בוא נתמודד עם משימה!",
     AppLocale.motivationalSentence2: "הסוד להתקדם הוא להתחיל. מה הדבר הראשון?",
@@ -271,11 +265,11 @@ mixin AppLocale {
     AppLocale.motivationalSentence5: "המסע של אלף מייל מתחיל בצעד אחד... או במשימה אחת!",
     AppLocale.moveToCategoryMenuItem: 'העבר לקטגוריה',
     AppLocale.noResultsFound: "לא נמצאו תוצאות עבור '{query}'",
-    AppLocale.noTasksAvailableDialogMessage: "אין כרגע משימות שעלייך לבצע",
-    AppLocale.noTasksAvailableDialogTitle: "אין משימות",
-    AppLocale.okButtonText: 'אישור',    // Specific key for dialog OK
-    AppLocale.randomTaskDialogTitle: "משימה שנבחרה בצורה אקראית",
-    AppLocale.randomTaskMenuButton: "משימה אקראית",
+    // AppLocale.noTasksAvailableDialogMessage: "אין כרגע משימות שעלייך לבצע", // Already included above
+    // AppLocale.noTasksAvailableDialogTitle: "אין משימות", // Already included above
+    AppLocale.okButtonText: 'אישור',
+    // AppLocale.randomTaskDialogTitle: "משימה שנבחרה בצורה אקראית", // Already included above
+    // AppLocale.randomTaskMenuButton: "משימה אקראית", // Already included above
     AppLocale.renameButtonText: 'שנה שם',
     AppLocale.renameCategoryDialogTitle: 'שנה שם קטגוריה',
     AppLocale.renameCategoryMenuButton: "שנה שם קטגוריה נוכחית",
