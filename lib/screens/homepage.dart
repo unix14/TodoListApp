@@ -1701,7 +1701,7 @@ class _HomePageState extends State<HomePage>
         if (otherCategoryMatches.isNotEmpty) {
           // Add header for this category
           // Store AppLocale keys for headers
-          newResults.add(TodoListItem(text:"$HEADER_PREFIX${AppLocale.resultsInCategory}::$otherCategory", dateTime: DateTime.now(), isChecked: false));
+          newResults.add(TodoListItem("$HEADER_PREFIX${AppLocale.resultsInCategory}::$otherCategory", category: null));
           newResults.addAll(otherCategoryMatches);
         }
       }
@@ -1714,7 +1714,7 @@ class _HomePageState extends State<HomePage>
                 item.text.toLowerCase().contains(lowerCaseQuery))
             .toList();
         if (uncategorizedMatches.isNotEmpty) {
-          newResults.add(TodoListItem(text:"$HEADER_PREFIX${AppLocale.uncategorizedResults}", dateTime: DateTime.now(), isChecked: false));
+          newResults.add(TodoListItem("$HEADER_PREFIX${AppLocale.uncategorizedResults}", category: null));
           newResults.addAll(uncategorizedMatches);
         }
       }

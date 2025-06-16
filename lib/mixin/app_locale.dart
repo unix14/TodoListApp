@@ -59,8 +59,8 @@ mixin AppLocale {
   static const String deleteCategoryConfirmationMessage = 'deleteCategoryConfirmationMessage';
   static const String deleteCategoryConfirmationTitle = 'deleteCategoryConfirmationTitle';
   static const String deleteCategoryMenuButton = 'deleteCategoryMenuButton';
-  static const String deleteMenuItem = 'editMenuItem'; // Mistake in original, should be deleteMenuItem. Correcting.
-  static const String editMenuItem = 'editMenuItem'; // Keeping editMenuItem
+  static const String deleteMenuItem = 'deleteMenuItem'; // Corrected
+  static const String editMenuItem = 'editMenuItem';
   static const String editTaskHintText = 'editTaskHintText';
   static const String emptyTodoDialogMessage = 'emptyTodoDialogMessage';
   static const String emptyTodoDialogTitle = 'emptyTodoDialogTitle';
@@ -88,14 +88,16 @@ mixin AppLocale {
   static const String tasksCount = 'tasksCount';
   static const String tasksCountSingular = 'tasksCountSingular';
   static const String tasksCountZero = 'tasksCountZero';
-  static const String timeFewSecondsAgo = 'timeFewSecondsAgo';
+  static const String timeDaysAgo = 'timeDaysAgo';     // For "{days} days ago"
   static const String timeFewMinutesAgo = 'timeFewMinutesAgo';
-  static const String timeMinuteAgo = 'timeMinuteAgo'; // For "{minutes} minute ago"
-  static const String timeMinutesAgo = 'timeMinutesAgo'; // For "{minutes} minutes ago"
+  static const String timeFewSecondsAgo = 'timeFewSecondsAgo';
   static const String timeHourAgo = 'timeHourAgo';   // For "{hours} hour ago"
   static const String timeHoursAgo = 'timeHoursAgo';   // For "{hours} hours ago"
+  static const String timeMinuteAgo = 'timeMinuteAgo'; // For "{minutes} minute ago"
+  static const String timeMinutesAgo = 'timeMinutesAgo'; // For "{minutes} minutes ago"
   static const String timeYesterday = 'timeYesterday';
-  static const String timeDaysAgo = 'timeDaysAgo';     // For "{days} days ago"
+  static const String uncategorizedResults = 'uncategorizedResults'; // Added alphabetically
+
 
   static const Map<String, dynamic> EN = {
     AppLocale.title: 'Todo List',
@@ -185,14 +187,15 @@ mixin AppLocale {
     AppLocale.tasksCount: "{count} tasks",
     AppLocale.tasksCountSingular: "1 task",
     AppLocale.tasksCountZero: "No tasks",
+    AppLocale.timeDaysAgo: '{days} days ago',
     AppLocale.timeFewMinutesAgo: 'a few minutes ago',
     AppLocale.timeFewSecondsAgo: 'a few seconds ago',
-    AppLocale.timeMinuteAgo: '{minutes} minute ago',
-    AppLocale.timeMinutesAgo: '{minutes} minutes ago',
     AppLocale.timeHourAgo: '{hours} hour ago',
     AppLocale.timeHoursAgo: '{hours} hours ago',
+    AppLocale.timeMinuteAgo: '{minutes} minute ago',
+    AppLocale.timeMinutesAgo: '{minutes} minutes ago',
     AppLocale.timeYesterday: 'yesterday',
-    AppLocale.timeDaysAgo: '{days} days ago',
+    AppLocale.uncategorizedResults: "Results in Uncategorized",
   };
 
   static const Map<String, dynamic> HE = {
@@ -283,15 +286,14 @@ mixin AppLocale {
     AppLocale.tasksCount: "{count} משימות",
     AppLocale.tasksCountSingular: "משימה אחת",
     AppLocale.tasksCountZero: "אין משימות",
+    AppLocale.timeDaysAgo: 'לפני {days} ימים',
     AppLocale.timeFewMinutesAgo: 'לפני מספר דקות',
     AppLocale.timeFewSecondsAgo: 'לפני מספר שניות',
     AppLocale.timeHourAgo: 'לפני שעה',
     AppLocale.timeHoursAgo: 'לפני {hours} שעות',
     AppLocale.timeMinuteAgo: 'לפני דקה',
     AppLocale.timeMinutesAgo: 'לפני {minutes} דקות',
-    AppLocale.timeHourAgo: 'לפני שעה',   // Placeholder for singular hour, assuming {hours} will be 1
-    AppLocale.timeHoursAgo: 'לפני {hours} שעות',   // Placeholder
-    AppLocale.timeYesterday: 'אתמול',      // Placeholder
-    AppLocale.timeDaysAgo: 'לפני {days} ימים',     // Placeholder
+    AppLocale.timeYesterday: 'אתמול',
+    AppLocale.uncategorizedResults: "תוצאות ללא קטגוריה",
   };
 }
