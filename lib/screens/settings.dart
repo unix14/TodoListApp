@@ -7,9 +7,10 @@ import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
 import 'package:flutter_example/auth/authenticator.dart'; // Added for account deletion
-import 'package:flutter_example/repo/firebase_realtime_database_repository.dart'; // Added for DB node deletion
+import 'package:flutter_example/repo/firebase_realtime_database_repository.dart';
 import 'package:flutter_example/screens/homepage.dart';
 import 'package:flutter_example/screens/onboarding.dart';
+import 'package:flutter_example/helpers/settings_logic_helper.dart'; // Import the helper
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:convert';
@@ -42,6 +43,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen>
     with PWAInstallerMixin {
   String version = "1.0.0";
+  final SettingsLogicHelper _settingsHelper = SettingsLogicHelper(); // Instantiate the helper
 
   @override
   void initState() {
@@ -144,159 +146,21 @@ class _SettingsScreenState extends State<SettingsScreen>
           simpleDivider,
           ListTile(
             title: Text(AppLocale.settingsExportDataTitle.getString(context)),
-            onTap: () async {
-              print("Export Data tapped");
-              final userId = currentUser?.uid;
-              if (userId == null || userId.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(AppLocale.settingsExportErrorNotLoggedIn.getString(context))),
-                );
-                return;
-              }
-
-              try {
-                // myCurrentUser is already User? from globals.dart, populated by FirebaseRepoInteractor
-                var localMyCurrentUser = await FirebaseRepoInteractor.instance.getUserData(userId);
-                if (localMyCurrentUser != null) {
-                  myCurrentUser = localMyCurrentUser; // Assign to global myCurrentUser
-                  final jsonString = User.toJson(myCurrentUser!);
-
-                  if (kIsWeb) {
-                    // Web: Create a download link and click it
-                    final blob = html.Blob([jsonString], 'application/json');
-                    final url = html.Url.createObjectUrlFromBlob(blob);
-                    final anchor = html.AnchorElement(href: url)
-                      ..setAttribute("download", "user_data.json")
-                      ..click();
-                    html.Url.revokeObjectUrl(url);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Data exported successfully.")),
-                    );
-                  } else {
-                    // Non-Web: Print to console
-                    print('User data JSON: $jsonString');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Data exported to console (mobile download not implemented yet).")),
-                    );
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLocale.settingsExportErrorFetchFailed.getString(context))),
-                  );
-                }
-              } catch (e) {
-                print('Error exporting data: $e');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(AppLocale.settingsExportErrorGeneral.getString(context))),
-                );
-              }
+            onTap: () {
+              // Note: currentUser and myCurrentUser are global variables from globals.dart
+              _settingsHelper.exportData(context, currentUser, myCurrentUser);
             },
           ),
           simpleDivider,
           ListTile(
             title: Text(AppLocale.settingsImportDataTitle.getString(context)),
-            onTap: () async {
-              print("Import Data tapped");
-              try {
-                FilePickerResult? result = await FilePicker.platform.pickFiles(
-                  type: FileType.custom,
-                  allowedExtensions: ['json'],
-                );
-
-                if (result != null && result.files.isNotEmpty) {
-                  final fileBytes = result.files.first.bytes;
-                  final filePath = result.files.first.path; // For non-web, if needed later
-
-                  if (kIsWeb && fileBytes != null) {
-                    String jsonString = utf8.decode(fileBytes);
-                    final Map<String, dynamic> jsonData = jsonDecode(jsonString);
-                    User importedUser = User.fromJson(jsonData);
-                    // importedUser is available, show confirmation dialog
-                    DialogHelper.showAlertDialog(
-                      context,
-                      AppLocale.settingsImportConfirmDialogTitle.getString(context),
-                      AppLocale.settingsImportConfirmDialogMessage.getString(context),
-                      () async { // On Confirm
-                        Navigator.of(context).pop(); // Dismiss dialog first
-                        print("Import confirmed by user.");
-
-                        if (currentUser == null || currentUser!.email == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Error: Current user not available or email is missing.")),
-                          );
-                          return;
-                        }
-                        if (importedUser.email == null) {
-                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Error: Imported data is missing user email.")), // This could be localized too if needed
-                          );
-                          return;
-                        }
-
-                        if (currentUser!.email != importedUser.email) {
-                          final String importedUserEmail = importedUser.email!;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(AppLocale.settingsImportErrorMismatchUser.getString(context).replaceFirst('{email}', importedUserEmail))),
-                          );
-                          return;
-                        }
-
-                        // Emails match, proceed with import
-                        // The line `importedUser.id = currentUser!.uid;` has been removed as per instructions.
-                        // FirebaseRepoInteractor.instance.updateUserData is now responsible for associating
-                        // importedUser data with the current authenticated user.
-
-                        try {
-                          // FirebaseRepoInteractor.updateUserData should expect a User object
-                          bool success = await FirebaseRepoInteractor.instance.updateUserData(importedUser);
-                          if (success) {
-                            myCurrentUser = importedUser; // Update global myCurrentUser
-                            setState(() {}); // Refresh UI
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(AppLocale.settingsImportSuccess.getString(context))),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(AppLocale.settingsImportErrorSaveFailed.getString(context))),
-                            );
-                          }
-                        } catch (e) {
-                          print("Error updating user data: $e");
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("An error occurred while saving data: ${e.toString()}")), // Keep generic or add specific AppLocale
-                          );
-                        }
-                      },
-                      () { // On Cancel
-                        Navigator.of(context).pop(); // Dismiss dialog
-                        print("Import cancelled by user.");
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(AppLocale.settingsImportCancelled.getString(context))),
-                        );
-                      },
-                    );
-
-                  } else if (!kIsWeb && filePath != null) {
-                    print("File path: $filePath");
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(AppLocale.settingsImportErrorMobileNotFullyImplemented.getString(context))),
-                    );
-                  } else if (fileBytes == null && filePath == null) {
-                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Could not access file data.")), // Could be localized
-                    );
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLocale.settingsImportErrorNoFile.getString(context))),
-                  );
-                }
-              } catch (e) {
-                print('Error importing data: $e');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Error importing file: ${e.toString()}")), // Keep generic or add specific AppLocale
-                );
-              }
+            onTap: () {
+              // Note: currentUser is a global variable from globals.dart
+              _settingsHelper.importData(context, currentUser, (updatedUser) {
+                setState(() {
+                  myCurrentUser = updatedUser; // myCurrentUser is a global variable
+                });
+              }, () => setState(() {}));
             },
           ),
           const Divider(color: Color(0x56ff0000)),
@@ -305,13 +169,19 @@ class _SettingsScreenState extends State<SettingsScreen>
               AppLocale.deleteAll.getString(context),
               style: redTextsStyle,
             ),
-            // todo make it possible via archive screen
             subtitle: Text(
               AppLocale.deleteAllSubtitle.getString(context),
               style: redSubTextsStyle,
             ),
             onTap: () {
-              deleteAll();
+              // Note: currentUser and myCurrentUser are global variables from globals.dart
+              _settingsHelper.deleteAllDataAndAccount(context, currentUser, myCurrentUser, () {
+                if (!mounted) return; // Check if the widget is still in the tree
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+                  (Route<dynamic> route) => false,
+                );
+              });
             },
           ),
           // ListTile( // todo think about this
@@ -342,157 +212,13 @@ class _SettingsScreenState extends State<SettingsScreen>
     await EncryptedSharedPreferencesHelper.setString(
         kCurrentLocaleSavedPrefs, currentLocaleStr);
     FlutterLocalization.instance.translate(currentLocaleStr);
-    Navigator.pop(context);
-    Navigator.pop(context);
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));
+    Navigator.pop(context); // Pop the language selection dialog
+    // No, we should not pop settings screen, but refresh it.
+    // However, the original code popped twice and pushed replacement.
+    // For now, to minimize behavioral change beyond refactoring:
+    Navigator.pop(context); // Pop the settings screen itself
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage())); // Then push homepage
   }
 
-  void deleteAll() async {
-    String dialogTitle = AppLocale.areUsure.getString(context);
-    String dialogMessage = AppLocale.settingsDeleteAccountDialogMessage.getString(context);
-
-    DialogHelper.showAlertDialog(context, dialogTitle, dialogMessage,
-        () async { // CONFIRM ACTION
-      print("Account deletion initiated by user.");
-
-      // 1. Clear local preferences (already done)
-      await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, "");
-      await EncryptedSharedPreferencesHelper.saveCategories([]);
-      print("Local preferences cleared.");
-
-      // Capture UID for RTDB deletion BEFORE auth user is deleted.
-      final String? userIdForRtdbDeletion = Authenticator.getCurrentUser()?.uid;
-      var userToDelete = Authenticator.getCurrentUser(); // Used for immediate checks & potentially pre-cleanup context
-
-      if (userToDelete == null) { // This also implies userIdForRtdbDeletion would be null
-        print("No user logged in to delete.");
-        Navigator.of(context).pop(); // Dismiss dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No user is currently signed in.")),
-        );
-        return;
-      }
-      // Note: The original 'userId' was from userToDelete.uid. We'll use userIdForRtdbDeletion for the final RTDB step.
-
-      // 2. Clear user's list items in Firebase (partial data cleanup)
-      // This part might be redundant if we delete the whole user node later,
-      // but can serve as a fallback or if user node deletion fails.
-      // Operates on myCurrentUser, assuming it's the correct user context if logged in.
-      if (isLoggedIn && myCurrentUser != null) {
-        try {
-          print("Attempting to clear todoListItems for user: ${myCurrentUser!.email} before full deletion.");
-          myCurrentUser!.todoListItems = [];
-          bool listCleared = await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
-          if (listCleared) {
-            print("User's todoListItems cleared in Firebase for ${myCurrentUser!.email}.");
-          } else {
-            print("Failed to clear user's todoListItems in Firebase for ${myCurrentUser!.email}. Continuing deletion...");
-          }
-        } catch (e) {
-          print("Error clearing todoListItems for ${myCurrentUser!.email}: $e. Continuing deletion...");
-        }
-      }
-
-      // 3. Delete from Firebase Authentication
-      bool authDeleted = false;
-      try {
-        // Authenticator.deleteCurrentUserAccount() handles its own errors/messages
-        // For this subtask, we assume it doesn't throw an exception that stops execution here
-        // but we should check its outcome if it were to return a status.
-        // The prompt for Step 1 implies deleteCurrentUserAccount is void and prints messages.
-        // Let's assume a more robust version that might throw or return status.
-        // For now, we'll wrap and if an error occurs, consider it a failure.
-        await Authenticator.deleteCurrentUserAccount();
-        // If deleteCurrentUserAccount throws an exception on failure, this line won't be reached.
-        // If it has specific error codes (like 'requires-recent-login'), it should handle them by not setting authDeleted = true.
-        // For simplicity here, if it completes without throwing, we assume success for this step's context.
-        // A better design would be for deleteCurrentUserAccount to return a boolean or specific status.
-        // Let's assume for now if it doesn't throw, it's "successful enough" for this flow.
-        // However, the prompt stated: "if deleteCurrentUserAccount fails ... show a SnackBar ... and abort"
-        // This implies deleteCurrentUserAccount should ideally return a status or throw a specific exception.
-        // Given the existing implementation of deleteCurrentUserAccount just prints, we'll proceed,
-        // but acknowledge this is a weak point. A `try-catch` is the best we can do.
-        authDeleted = true; // Assume success if no exception
-        print("Firebase Authentication deletion call completed.");
-      } catch (e) {
-        print("Authenticator.deleteCurrentUserAccount failed: $e");
-        Navigator.of(context).pop(); // Dismiss dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocale.settingsDeleteErrorAuthFailed.getString(context))),
-        );
-        return; // ABORT further deletion
-      }
-
-      // This check is flawed if deleteCurrentUserAccount only prints.
-      // For the sake of following the prompt to "abort if fails", we'll check authDeleted,
-      // but in a real scenario deleteCurrentUserAccount needs to return a proper status.
-      // As it stands, `authDeleted` will be true if no exception was caught.
-      if (!authDeleted) { // This condition might not be hit if errors are only printed by the method
-         Navigator.of(context).pop(); // Dismiss dialog
-         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocale.settingsDeleteErrorAuthFailed.getString(context))), // Re-using same error for this unlikely path
-        );
-        return;
-      }
-
-      // 4. Delete entire user node from Realtime Database
-      if (userIdForRtdbDeletion != null && userIdForRtdbDeletion.isNotEmpty) {
-        try {
-          String userPath = "users/$userIdForRtdbDeletion";
-          await FirebaseRealtimeDatabaseRepository.instance.deleteData(userPath);
-          print("User data node deleted from Firebase Realtime Database at path: $userPath");
-        } catch (e) {
-          print("Failed to delete user data node from RTDB for $userIdForRtdbDeletion: $e");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocale.settingsDeleteErrorCloudDataFailed.getString(context))),
-          );
-          // Continue to sign out and navigate.
-        }
-      } else {
-        print("Skipping RTDB user node deletion because userIdForRtdbDeletion is null or empty.");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocale.settingsDeleteErrorCloudDataFailed.getString(context))), // Inform that some data might remain
-        );
-      }
-
-      // 5. Sign Out
-      try {
-        await Authenticator.signOut();
-        print("User signed out.");
-      } catch (e) {
-        print("Error during sign out: $e");
-        // Continue, local state will be cleared anyway.
-      }
-
-      // 6. Clear Local User State
-      myCurrentUser = null;
-      // currentUser = null; // This global is Firebase Auth's. signOut handles its state.
-      isLoggedIn = false; // Update global login state flag
-      print("Local user state cleared.");
-
-      // 7. Navigate
-      // Dismiss the confirmation dialog (already popped if error, but ensure it's popped on success path too)
-      // The initial Navigator.pop(context) for the dialog might have already been called in error paths.
-      // Ensure it's called if not already.
-      if (Navigator.canPop(context)) { // Check if dialog is still on top
-          Navigator.of(context).pop();
-      }
-      Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-          (Route<dynamic> route) => false);
-
-      print("Navigated to OnboardingScreen.");
-      // SnackBar after navigation is tricky. A global messaging service or passing a param to OnboardingScreen would be better.
-      // For now, logging is the most reliable.
-      print("Account and all data deleted successfully message logged.");
-
-    }, () { // CANCEL ACTION
-      Navigator.of(context).pop(); // Dismiss DialogHelper's dialog
-      // Pop SettingsScreen itself with a result indicating no change or cancellation
-      // This behavior might be desired if SettingsScreen should close on cancel.
-      // For now, just dismiss the dialog.
-      // Navigator.of(context).pop(false);
-      print("Account deletion cancelled by user.");
-    });
-  }
+  // The deleteAll method is now removed from _SettingsScreenState as its logic is in SettingsLogicHelper
 }
