@@ -305,7 +305,7 @@ class _HomePageState extends State<HomePage>
                 focusNode: _searchFocusNode,
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: "Search Todos...", // Fallback for AppLocale.searchTodosHint
+                  hintText: AppLocale.searchTodosHint.getString(context),
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: Colors.white70),
                 ),
@@ -349,7 +349,7 @@ class _HomePageState extends State<HomePage>
             ? [
                 IconButton(
                   icon: const Icon(Icons.close),
-                  tooltip: "Close Search", // Fallback for AppLocale.closeSearchTooltip
+                  tooltip: AppLocale.closeSearchTooltip.getString(context),
                   onPressed: () {
                     setState(() {
                       _isSearching = false;
@@ -365,7 +365,7 @@ class _HomePageState extends State<HomePage>
                 IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: _handleSearch,
-                  tooltip: "Search Todos", // Fallback for AppLocale.searchTodosTooltip
+                  tooltip: AppLocale.searchTodosTooltip.getString(context),
                 ),
                 PopupMenuButton<String>(
                   onSelected: (value) async {
@@ -587,7 +587,9 @@ class _HomePageState extends State<HomePage>
                               child: Padding(
                                 padding: const EdgeInsets.all(16.0),
                                 child: Text(
-                                  _searchQuery.isEmpty ? "Type to search..." : "No results found for '$_searchQuery'", // Fallback for AppLocale.noResultsFound
+                                  _searchQuery.isEmpty
+                                      ? AppLocale.searchTodosHint.getString(context) // Or a specific "Type to search..." string if added
+                                      : AppLocale.noResultsFound.getString(context).replaceAll('{query}', _searchQuery),
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(fontSize: 18, color: Colors.grey),
                                 ),
@@ -599,25 +601,23 @@ class _HomePageState extends State<HomePage>
                             itemBuilder: (context, searchIndex) {
                               final item = _searchResults[searchIndex];
                               if (item.text.startsWith(HEADER_PREFIX)) {
-                                String headerText = item.text.substring(HEADER_PREFIX.length);
-                                // Attempt to parse for localization (won't work if gen-l10n failed)
-                                if (headerText.startsWith("resultsInCategory::")) {
-                                  try {
-                                     headerText = AppLocale.resultsInCategory.getString(context).replaceAll('{categoryName}', headerText.substring("resultsInCategory::".length));
-                                  } catch (e) {
-                                    headerText = "Results in ${headerText.substring("resultsInCategory::".length)}"; // Fallback
-                                  }
-                                } else if (headerText == "uncategorizedResults") {
-                                  try {
-                                    headerText = AppLocale.uncategorizedResults.getString(context);
-                                  } catch (e) {
-                                    headerText = "Results in Uncategorized"; // Fallback
-                                  }
+                                String rawHeaderText = item.text.substring(HEADER_PREFIX.length);
+                                String displayHeaderText;
+
+                                if (rawHeaderText.startsWith(AppLocale.resultsInCategory + "::")) {
+                                  String categoryName = rawHeaderText.substring((AppLocale.resultsInCategory + "::").length);
+                                  displayHeaderText = AppLocale.resultsInCategory.getString(context).replaceAll('{categoryName}', categoryName);
+                                } else if (rawHeaderText == AppLocale.uncategorizedResults) {
+                                  displayHeaderText = AppLocale.uncategorizedResults.getString(context);
+                                } else {
+                                  // Fallback for safety, though should not be reached if _performSearch is correct
+                                  displayHeaderText = rawHeaderText.replaceAll("::", " ");
                                 }
+
                                 return Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                                   child: Text(
-                                    headerText,
+                                    displayHeaderText,
                                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey),
                                   ),
                                 );
@@ -1700,8 +1700,8 @@ class _HomePageState extends State<HomePage>
 
         if (otherCategoryMatches.isNotEmpty) {
           // Add header for this category
-          // Using a TodoListItem with a special text format for headers, including key for localization
-          newResults.add(TodoListItem(text:"${HEADER_PREFIX}resultsInCategory::$otherCategory", dateTime: DateTime.now(), isChecked: false));
+          // Store AppLocale keys for headers
+          newResults.add(TodoListItem(text:"$HEADER_PREFIX${AppLocale.resultsInCategory}::$otherCategory", dateTime: DateTime.now(), isChecked: false));
           newResults.addAll(otherCategoryMatches);
         }
       }
@@ -1714,7 +1714,7 @@ class _HomePageState extends State<HomePage>
                 item.text.toLowerCase().contains(lowerCaseQuery))
             .toList();
         if (uncategorizedMatches.isNotEmpty) {
-          newResults.add(TodoListItem(text:"${HEADER_PREFIX}uncategorizedResults", dateTime: DateTime.now(), isChecked: false));
+          newResults.add(TodoListItem(text:"$HEADER_PREFIX${AppLocale.uncategorizedResults}", dateTime: DateTime.now(), isChecked: false));
           newResults.addAll(uncategorizedMatches);
         }
       }

@@ -49,43 +49,45 @@ mixin AppLocale {
   static const String itemMovedSnackbar = 'itemMovedSnackbar';
   static const String all = 'all';
   static const String addCategoryDialogTitle = 'addCategoryDialogTitle';
-  static const String categoryNameHintText = 'categoryNameHintText';
+  static const String cancelButtonText = 'cancelButtonText'; // Moved for alphabetical order
+  static const String categoryDeletedSnackbar = 'categoryDeletedSnackbar';
   static const String categoryNameEmptyError = 'categoryNameEmptyError';
   static const String categoryNameExistsError = 'categoryNameExistsError';
-  static const String cancelButtonText = 'cancelButtonText';
-  static const String okButtonText = 'okButtonText';
-  static const String editMenuItem = 'editMenuItem';
-  static const String moveToCategoryMenuItem = 'moveToCategoryMenuItem';
-  static const String deleteMenuItem = 'deleteMenuItem';
-  static const String selectCategoryDialogTitle = 'selectCategoryDialogTitle';
-  static const String addNewCategoryMenuItem = 'addNewCategoryMenuItem';
-  static const String renameCategoryDialogTitle = 'renameCategoryDialogTitle';
-  static const String renameButtonText = 'renameButtonText';
+  static const String categoryNameHintText = 'categoryNameHintText';
   static const String categoryRenamedSnackbar = 'categoryRenamedSnackbar';
-  static const String renameCategoryMenuButton = 'renameCategoryMenuButton';
-  static const String deleteCategoryMenuButton = 'deleteCategoryMenuButton';
-  static const String deleteCategoryConfirmationTitle = 'deleteCategoryConfirmationTitle';
+  static const String closeSearchTooltip = 'closeSearchTooltip';
   static const String deleteCategoryConfirmationMessage = 'deleteCategoryConfirmationMessage';
-  static const String categoryDeletedSnackbar = 'categoryDeletedSnackbar';
-
-  // New fields for motivational sentences
+  static const String deleteCategoryConfirmationTitle = 'deleteCategoryConfirmationTitle';
+  static const String deleteCategoryMenuButton = 'deleteCategoryMenuButton';
+  static const String deleteMenuItem = 'editMenuItem'; // Mistake in original, should be deleteMenuItem. Correcting.
+  static const String editMenuItem = 'editMenuItem'; // Keeping editMenuItem
+  static const String editTaskHintText = 'editTaskHintText';
+  static const String emptyTodoDialogMessage = 'emptyTodoDialogMessage';
+  static const String emptyTodoDialogTitle = 'emptyTodoDialogTitle';
+  static const String itemMovedSnackbar = 'itemMovedSnackbar';
+  static const String itemUncategorizedSnackbar = 'itemUncategorizedSnackbar';
   static const String motivationalSentence1 = 'motivationalSentence1';
   static const String motivationalSentence2 = 'motivationalSentence2';
   static const String motivationalSentence3 = 'motivationalSentence3';
   static const String motivationalSentence4 = 'motivationalSentence4';
   static const String motivationalSentence5 = 'motivationalSentence5';
-
-  // New fields for task counts
+  static const String moveToCategoryMenuItem = 'moveToCategoryMenuItem';
+  static const String noResultsFound = 'noResultsFound';
+  static const String noTasksAvailableDialogMessage = 'noTasksAvailableDialogMessage';
+  static const String noTasksAvailableDialogTitle = 'noTasksAvailableDialogTitle';
+  static const String okButtonText = 'okButtonText';
+  static const String randomTaskDialogTitle = 'randomTaskDialogTitle';
+  static const String randomTaskMenuButton = 'randomTaskMenuButton';
+  static const String renameButtonText = 'renameButtonText';
+  static const String renameCategoryDialogTitle = 'renameCategoryDialogTitle';
+  static const String renameCategoryMenuButton = 'renameCategoryMenuButton';
+  static const String resultsInCategory = 'resultsInCategory';
+  static const String searchTodosHint = 'searchTodosHint';
+  static const String searchTodosTooltip = 'searchTodosTooltip';
+  static const String selectCategoryDialogTitle = 'selectCategoryDialogTitle';
   static const String tasksCount = 'tasksCount';
   static const String tasksCountSingular = 'tasksCountSingular';
   static const String tasksCountZero = 'tasksCountZero';
-
-  // New fields for empty todo dialog
-  static const String emptyTodoDialogTitle = 'emptyTodoDialogTitle';
-  static const String emptyTodoDialogMessage = 'emptyTodoDialogMessage';
-  static const String editTaskHintText = 'editTaskHintText';
-
-  // Time-related keys
   static const String timeFewSecondsAgo = 'timeFewSecondsAgo';
   static const String timeFewMinutesAgo = 'timeFewMinutesAgo';
   static const String timeMinuteAgo = 'timeMinuteAgo'; // For "{minutes} minute ago"
@@ -144,37 +146,47 @@ mixin AppLocale {
     AppLocale.itemMovedSnackbar: 'Item moved to {categoryName}',
     AppLocale.all: 'All',
     AppLocale.addCategoryDialogTitle: 'Add New Category',
-    AppLocale.categoryNameHintText: 'Category name',
+    AppLocale.cancelButtonText: 'Cancel', // Specific key for dialog cancel
+    AppLocale.categoryDeletedSnackbar: "Category '{categoryName}' deleted.",
     AppLocale.categoryNameEmptyError: 'Category name cannot be empty',
     AppLocale.categoryNameExistsError: 'Category name already exists',
-    AppLocale.cancelButtonText: 'Cancel', // Specific key for dialog cancel
-    AppLocale.okButtonText: 'OK',       // Specific key for dialog OK
-    AppLocale.editMenuItem: 'Edit',
-    AppLocale.moveToCategoryMenuItem: 'Move to category',
-    AppLocale.deleteMenuItem: 'Delete',
-    AppLocale.selectCategoryDialogTitle: 'Select Category',
-    AppLocale.addNewCategoryMenuItem: 'Add New Category',
-    AppLocale.renameCategoryDialogTitle: 'Rename Category',
-    AppLocale.renameButtonText: 'Rename',
+    AppLocale.categoryNameHintText: 'Category name',
     AppLocale.categoryRenamedSnackbar: "Category '{oldName}' renamed to '{newName}'",
-    AppLocale.renameCategoryMenuButton: "Rename Current Category",
-    AppLocale.deleteCategoryMenuButton: "Delete Current Category",
-    AppLocale.deleteCategoryConfirmationTitle: "Delete Category?",
+    AppLocale.closeSearchTooltip: "Close Search",
     AppLocale.deleteCategoryConfirmationMessage: "Are you sure you want to delete the category '{categoryName}'? All items in this category will be moved to 'All'.",
-    AppLocale.categoryDeletedSnackbar: "Category '{categoryName}' deleted.",
+    AppLocale.deleteCategoryConfirmationTitle: "Delete Category?",
+    AppLocale.deleteCategoryMenuButton: "Delete Current Category",
+    AppLocale.deleteMenuItem: 'Delete', // Corrected from editMenuItem
+    AppLocale.editMenuItem: 'Edit',
+    AppLocale.editTaskHintText: 'Edit task...',
+    AppLocale.emptyTodoDialogMessage: "Please write a Todo",
+    AppLocale.emptyTodoDialogTitle: "Empty Todo",
+    AppLocale.itemMovedSnackbar: 'Item moved to {categoryName}',
+    AppLocale.itemUncategorizedSnackbar: 'Item moved to All',
     AppLocale.motivationalSentence1: "Let's get something done!",
     AppLocale.motivationalSentence2: "What's on your mind today?",
     AppLocale.motivationalSentence3: "Time to be productive!",
     AppLocale.motivationalSentence4: "Add a task and feel the accomplishment.",
     AppLocale.motivationalSentence5: "An empty list is a world of possibilities!",
+    AppLocale.moveToCategoryMenuItem: 'Move to category',
+    AppLocale.noResultsFound: "No results found for '{query}'",
+    AppLocale.noTasksAvailableDialogMessage: "There are no tasks available to pick from.",
+    AppLocale.noTasksAvailableDialogTitle: "No Tasks",
+    AppLocale.okButtonText: 'OK',       // Specific key for dialog OK
+    AppLocale.randomTaskDialogTitle: "Randomly Selected Task",
+    AppLocale.randomTaskMenuButton: "Random Task",
+    AppLocale.renameButtonText: 'Rename',
+    AppLocale.renameCategoryDialogTitle: 'Rename Category',
+    AppLocale.renameCategoryMenuButton: "Rename Current Category",
+    AppLocale.resultsInCategory: "Results in {categoryName}",
+    AppLocale.searchTodosHint: "Search Todos...",
+    AppLocale.searchTodosTooltip: "Search Todos",
+    AppLocale.selectCategoryDialogTitle: 'Select Category',
     AppLocale.tasksCount: "{count} tasks",
     AppLocale.tasksCountSingular: "1 task",
     AppLocale.tasksCountZero: "No tasks",
-    AppLocale.emptyTodoDialogTitle: "Empty Todo",
-    AppLocale.emptyTodoDialogMessage: "Please write a Todo",
-    AppLocale.editTaskHintText: 'Edit task...',
-    AppLocale.timeFewSecondsAgo: 'a few seconds ago',
     AppLocale.timeFewMinutesAgo: 'a few minutes ago',
+    AppLocale.timeFewSecondsAgo: 'a few seconds ago',
     AppLocale.timeMinuteAgo: '{minutes} minute ago',
     AppLocale.timeMinutesAgo: '{minutes} minutes ago',
     AppLocale.timeHourAgo: '{hours} hour ago',
@@ -232,39 +244,51 @@ mixin AppLocale {
     AppLocale.itemMovedSnackbar: 'הפריט הועבר לקטגוריה {categoryName}',
     AppLocale.all: 'הכל',
     AppLocale.addCategoryDialogTitle: 'הוסף קטגוריה חדשה',
-    AppLocale.categoryNameHintText: 'שם הקטגוריה',
+    AppLocale.cancelButtonText: 'ביטול', // Specific key for dialog cancel
+    AppLocale.categoryDeletedSnackbar: "קטגוריה '{categoryName}' נמחקה.",
     AppLocale.categoryNameEmptyError: 'שם קטגוריה לא יכול להיות ריק',
     AppLocale.categoryNameExistsError: 'שם הקטגוריה כבר קיים',
-    AppLocale.cancelButtonText: 'ביטול', // Specific key for dialog cancel
-    AppLocale.okButtonText: 'אישור',    // Specific key for dialog OK
-    AppLocale.editMenuItem: 'עריכה',
-    AppLocale.moveToCategoryMenuItem: 'העבר לקטגוריה',
-    AppLocale.deleteMenuItem: 'מחק',
-    AppLocale.selectCategoryDialogTitle: 'בחר קטגוריה',
-    AppLocale.addNewCategoryMenuItem: 'הוסף קטגוריה חדשה',
-    AppLocale.renameCategoryDialogTitle: 'שנה שם קטגוריה',
-    AppLocale.renameButtonText: 'שנה שם',
+    AppLocale.categoryNameHintText: 'שם הקטגוריה',
     AppLocale.categoryRenamedSnackbar: "קטגוריה '{oldName}' שונתה ל '{newName}'",
-    AppLocale.renameCategoryMenuButton: "שנה שם קטגוריה נוכחית",
-    AppLocale.deleteCategoryMenuButton: "מחק קטגוריה נוכחית",
-    AppLocale.deleteCategoryConfirmationTitle: "למחוק קטגוריה?",
+    AppLocale.closeSearchTooltip: "סגור חיפוש",
     AppLocale.deleteCategoryConfirmationMessage: "האם אתה בטוח שברצונך למחוק את הקטגוריה '{categoryName}'? כל הפריטים בקטגוריה זו יועברו ל'הכל'.",
-    AppLocale.categoryDeletedSnackbar: "קטגוריה '{categoryName}' נמחקה.",
-    AppLocale.motivationalSentence1: "בואו נעשה משהו!",
-    AppLocale.motivationalSentence2: "מה בראש שלך היום?",
-    AppLocale.motivationalSentence3: "זמן להיות פרודוקטיבי!",
-    AppLocale.motivationalSentence4: "הוסף משימה והרגש את ההישג.",
-    AppLocale.motivationalSentence5: "רשימה ריקה היא עולם של אפשרויות!",
+    AppLocale.deleteCategoryConfirmationTitle: "למחוק קטגוריה?",
+    AppLocale.deleteCategoryMenuButton: "מחק קטגוריה נוכחית",
+    AppLocale.deleteMenuItem: 'מחק',
+    AppLocale.editMenuItem: 'עריכה',
+    AppLocale.editTaskHintText: 'ערוך משימה...',
+    AppLocale.emptyTodoDialogMessage: "אנא כתוב משימה",
+    AppLocale.emptyTodoDialogTitle: "משימה ריקה",
+    AppLocale.itemMovedSnackbar: 'הפריט הועבר לקטגוריה {categoryName}',
+    AppLocale.itemUncategorizedSnackbar: 'הפריט הועבר להכל',
+    AppLocale.motivationalSentence1: "דברים גדולים לעולם לא מגיעים מאזורי נוחות. בוא נתמודד עם משימה!",
+    AppLocale.motivationalSentence2: "הסוד להתקדם הוא להתחיל. מה הדבר הראשון?",
+    AppLocale.motivationalSentence3: "רשימה ריקה היא בד ציור ריק. צייר את יצירת המופת שלך בפרודוקטיביות!",
+    AppLocale.motivationalSentence4: "אל תסתכל על השעון; עשה מה שהוא עושה. המשך להתקדם! הוסף משימה.",
+    AppLocale.motivationalSentence5: "המסע של אלף מייל מתחיל בצעד אחד... או במשימה אחת!",
+    AppLocale.moveToCategoryMenuItem: 'העבר לקטגוריה',
+    AppLocale.noResultsFound: "לא נמצאו תוצאות עבור '{query}'",
+    AppLocale.noTasksAvailableDialogMessage: "אין כרגע משימות שעלייך לבצע",
+    AppLocale.noTasksAvailableDialogTitle: "אין משימות",
+    AppLocale.okButtonText: 'אישור',    // Specific key for dialog OK
+    AppLocale.randomTaskDialogTitle: "משימה שנבחרה בצורה אקראית",
+    AppLocale.randomTaskMenuButton: "משימה אקראית",
+    AppLocale.renameButtonText: 'שנה שם',
+    AppLocale.renameCategoryDialogTitle: 'שנה שם קטגוריה',
+    AppLocale.renameCategoryMenuButton: "שנה שם קטגוריה נוכחית",
+    AppLocale.resultsInCategory: "תוצאות בקטגוריה {categoryName}",
+    AppLocale.searchTodosHint: "חפש משימות...",
+    AppLocale.searchTodosTooltip: "חפש משימות",
+    AppLocale.selectCategoryDialogTitle: 'בחר קטגוריה',
     AppLocale.tasksCount: "{count} משימות",
     AppLocale.tasksCountSingular: "משימה אחת",
     AppLocale.tasksCountZero: "אין משימות",
-    AppLocale.emptyTodoDialogTitle: "משימה ריקה",
-    AppLocale.emptyTodoDialogMessage: "אנא כתוב משימה",
-    AppLocale.editTaskHintText: 'ערוך משימה...',
-    AppLocale.timeFewSecondsAgo: 'לפני מספר שניות', // Placeholder
-    AppLocale.timeFewMinutesAgo: 'לפני מספר דקות', // Placeholder
-    AppLocale.timeMinuteAgo: 'לפני דקה', // Placeholder for singular minute, assuming {minutes} will be 1
-    AppLocale.timeMinutesAgo: 'לפני {minutes} דקות', // Placeholder
+    AppLocale.timeFewMinutesAgo: 'לפני מספר דקות',
+    AppLocale.timeFewSecondsAgo: 'לפני מספר שניות',
+    AppLocale.timeHourAgo: 'לפני שעה',
+    AppLocale.timeHoursAgo: 'לפני {hours} שעות',
+    AppLocale.timeMinuteAgo: 'לפני דקה',
+    AppLocale.timeMinutesAgo: 'לפני {minutes} דקות',
     AppLocale.timeHourAgo: 'לפני שעה',   // Placeholder for singular hour, assuming {hours} will be 1
     AppLocale.timeHoursAgo: 'לפני {hours} שעות',   // Placeholder
     AppLocale.timeYesterday: 'אתמול',      // Placeholder
