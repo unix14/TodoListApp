@@ -608,9 +608,7 @@ class _HomePageState extends State<HomePage>
                           }
                         },
                       );
-                    }).toList(),
-                      //todo Container(), // Empty placeholder view for the '+' tab in TabBarView
-                    ],
+                    }).toList()
                   ),
           ),
           Container(
