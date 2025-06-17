@@ -3,12 +3,14 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_example/common/DialogHelper.dart';
 import 'package:flutter_example/common/consts.dart';
 import 'package:flutter_example/common/date_extensions.dart';
 import 'package:flutter_example/common/dialog_extensions.dart';
 import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart';
 import 'package:flutter_example/common/globals.dart';
+import 'package:flutter_example/common/home_widget_helper.dart';
 import 'package:flutter_example/common/stub_data.dart';
 import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
@@ -26,7 +28,6 @@ import 'package:home_widget/home_widget.dart';
 
 import 'onboarding.dart';
 
-const String kRandomTaskMenuButtonName = 'randomTask';
 const String kRenameCategoryMenuButtonName = 'rename_category';
 const String kDeleteCategoryMenuButtonName = 'delete_category';
 
@@ -253,6 +254,7 @@ class _HomePageState extends State<HomePage>
     _textEditingController.dispose(); // Dispose the text controller
     _searchFocusNode.dispose();
     _searchController.dispose();
+    ServicesBinding.instance.keyboard.removeHandler(_onKey);
     super.dispose();
   }
 
@@ -266,6 +268,7 @@ class _HomePageState extends State<HomePage>
     if (false) initAds();
     initializeInstallPrompt();
     // _initializeTabs will be called from didChangeDependencies
+    ServicesBinding.instance.keyboard.addHandler(_onKey);
   }
 
   void _setEditingTodo(TodoListItem? todo) {
@@ -295,8 +298,39 @@ class _HomePageState extends State<HomePage>
     return _categories[_tabController!.index] != AppLocale.all.getString(context);
   }
 
+  bool _onKey(KeyEvent event) {
+    final key = event.logicalKey.keyLabel;
+
+    if (event is KeyDownEvent) {
+      print("Key down: $key");
+      if(key == "Escape") {
+        setState(() {
+          _isSearching = false;
+          _searchQuery = "";
+          _searchController.clear();
+          _searchResults = []; // Clear search results when exiting search mode
+        });
+      }
+
+    } else if (event is KeyUpEvent) {
+      print("Key up: $key");
+    } else if (event is KeyRepeatEvent) {
+      print("Key repeat: $key");
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final List<String> motivationalKeys = [
+      AppLocale.motivationalSentence1,
+      AppLocale.motivationalSentence2,
+      AppLocale.motivationalSentence3,
+      AppLocale.motivationalSentence4,
+      AppLocale.motivationalSentence5,
+    ];
+    final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -305,12 +339,13 @@ class _HomePageState extends State<HomePage>
                 controller: _searchController,
                 focusNode: _searchFocusNode,
                 autofocus: true,
+                cursorColor: Colors.white,
                 decoration: InputDecoration(
                   hintText: AppLocale.searchTodosHint.getString(context),
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.white70),
+                  hintStyle: const TextStyle(color: Colors.white70),
                 ),
-                style: TextStyle(color: Colors.white, fontSize: 18),
+                style: const TextStyle(color: Colors.white, fontSize: 18),
                 onChanged: (query) {
                   setState(() {
                     _searchQuery = query;
@@ -346,6 +381,11 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
               ),
+        leading: _isSearching ? null : IconButton(
+          icon: const Icon(Icons.shuffle,),
+          onPressed: _showRandomTask, // Call renamed method
+          tooltip: AppLocale.randomTaskMenuButton.getString(context),
+        ),
         actions: _isSearching
             ? [
                 IconButton(
@@ -411,15 +451,7 @@ class _HomePageState extends State<HomePage>
                               if (_isSearching) {
                                 if (_searchQuery.isEmpty) {
                                   // Searching but query is empty: show original list for the category
-                                  if (currentCategoryNameForTab == AppLocale.all.getString(context) && itemsToDisplayOrSearchIn.isEmpty) {
-                                    final List<String> motivationalKeys = [
-                                      AppLocale.motivationalSentence1,
-                                      AppLocale.motivationalSentence2,
-                                      AppLocale.motivationalSentence3,
-                                      AppLocale.motivationalSentence4,
-                                      AppLocale.motivationalSentence5,
-                                    ];
-                                    final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
+                                  if (itemsToDisplayOrSearchIn.isEmpty) {
                                     listContent = Center(
                                       child: Padding(
                                         padding: const EdgeInsets.all(16.0),
@@ -466,9 +498,24 @@ class _HomePageState extends State<HomePage>
                                     ),
                                   );
                                 } else { // Query is not empty, and results are found
+                                  String taskCountString;
+                                  if (_searchResults.length == 1) {
+                                    taskCountString = AppLocale.tasksCountSingular.getString(context);
+                                  } else {
+                                    taskCountString = AppLocale.tasksFoundCount.getString(context).replaceAll('{count}', _searchResults.where((TodoListItem item) => item.text.startsWith(HEADER_PREFIX) == false).length.toString());
+                                  }
                                   listContent = ListView.builder(
-                                    itemCount: _searchResults.length,
-                                    itemBuilder: (context, searchIdx) {
+                                    itemCount: _searchResults.length + 1,
+                                    itemBuilder: (context, index) {
+                                      if(index == 0) {
+                                        return Center(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                                            child: Text(taskCountString, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13.0, color: Colors.blueGrey, fontWeight: FontWeight.w500)),
+                                          ),
+                                        );
+                                      }
+                                      int searchIdx = index - 1;
                                       final item = _searchResults[searchIdx];
                                       if (item.text.startsWith(HEADER_PREFIX)) {
                                         String rawHeaderText = item.text.substring(HEADER_PREFIX.length);
@@ -513,11 +560,12 @@ class _HomePageState extends State<HomePage>
                                   );
                                 } else if (itemsToDisplayOrSearchIn.isNotEmpty) {
                                   String taskCountString;
-                                  if (itemsToDisplayOrSearchIn.length == 1) {
+                                  if (itemsToDisplayOrSearchIn.length == 1) { //
                                     taskCountString = AppLocale.tasksCountSingular.getString(context);
                                   } else {
                                     taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', itemsToDisplayOrSearchIn.length.toString());
                                   }
+                                  //
                                   listContent = Column(
                                     children: [
                                       Padding(
@@ -533,7 +581,16 @@ class _HomePageState extends State<HomePage>
                                     ],
                                   );
                                 } else {
-                                   listContent = ListView(); // Empty list view for non-"All" categories that are empty
+                                   listContent = Center(
+                                     child: Padding(
+                                       padding: const EdgeInsets.all(16.0),
+                                       child: Text(
+                                         randomKey.getString(context),
+                                         textAlign: TextAlign.center,
+                                         style: const TextStyle(fontSize: 18, color: Colors.grey, fontStyle: FontStyle.italic),
+                                       ),
+                                     ),
+                                   ); // Empty list view for non-"All" categories that are empty
                                 }
                               }
                               return listContent;
@@ -639,11 +696,7 @@ class _HomePageState extends State<HomePage>
       }
     }
 
-    // Notify the widget to update
-    HomeWidget.updateWidget(
-      name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider', // Fully qualified name of your AppWidgetProvider
-      iOSName: 'TodoWidgetProvider', // iOSName if you implement for iOS
-    );
+    updateHomeWidget();
     print('[HomeWidget] Sent update request to widget provider after updating list.');
   }
 
@@ -984,33 +1037,6 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  // void toggleEditMode(TodoListItem currentTodo) { // Replaced by _setEditingTodo
-  //   setState(() {
-  //     if (itemOnEditIndex == -1) {
-  //       var index = items.indexOf(currentTodo);
-  //       itemOnEditIndex = index;
-  //     } else {
-  //       itemOnEditIndex = -1;
-  //     }
-  //   });
-  // }
-
-  // void updateTile(TodoListItem currentTodo, String todoText) { // Replaced by _saveTodo
-  //   setState(() {
-  //     var index = items.indexOf(currentTodo);
-  //     var didChanged = false;
-  //     if (todoText.isNotEmpty) {
-  //       didChanged = currentTodo.text != todoText;
-  //       currentTodo.text = todoText; // todo fix issues w updating the text
-  //     }
-  //     if (didChanged) {
-  //       currentTodo.dateTime = DateTime.now();
-  //     }
-  //     items[index] = currentTodo;
-  //     _updateList();
-  //   });
-  // }
-
   void deleteAll() {
     DialogHelper.showAlertDialog(context, AppLocale.areUsure.getString(context),
         AppLocale.deleteAllSubtext.getString(context),
@@ -1141,11 +1167,7 @@ class _HomePageState extends State<HomePage>
         setState(() {
           _customCategories.add(newCategoryName!);
           EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
-          // Notify the widget to update
-          HomeWidget.updateWidget(
-            name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
-            iOSName: 'TodoWidgetProvider',
-          );
+          updateHomeWidget();
           print('[HomeWidget] Sent update request to widget provider after adding category.');
 
           _categories = [AppLocale.all.getString(context), ..._customCategories];
@@ -1412,11 +1434,7 @@ class _HomePageState extends State<HomePage>
           }
 
           EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
-          // Notify the widget to update
-          HomeWidget.updateWidget(
-            name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
-            iOSName: 'TodoWidgetProvider',
-          );
+          updateHomeWidget();
           print('[HomeWidget] Sent update request to widget provider after renaming category.');
           _updateList(); // Persist item changes
           _initializeTabs(); // Refresh UI
@@ -1468,28 +1486,6 @@ class _HomePageState extends State<HomePage>
     debugPrint("Toggle Search UI: _isSearching is now $_isSearching");
   }
 
-  // New method as per request
-  void _handleSearch() {
-    // Ensure 'items' (the master list of todos) and '_categories' are available in _HomePageState
-    // Also ensure _tabController is available to get the current category.
-
-    String currentCategory = AppLocale.all.getString(context); // Default to "All"
-    if (_tabController != null && _tabController!.index < _categories.length) {
-      currentCategory = _categories[_tabController!.index];
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TodoSearchScreen(
-          allItems: List.from(items), // Pass a copy of the master list of todos
-          categories: List.from(_categories), // Pass a copy of available categories
-          initialCategory: currentCategory,
-        ),
-      ),
-    );
-  }
-
   void _performSearch(String query) {
     final String lowerCaseQuery = query.toLowerCase().trim();
     List<TodoListItem> newResults = [];
@@ -1506,7 +1502,7 @@ class _HomePageState extends State<HomePage>
     final String currentCategoryName = _tabController != null && _tabController!.index < _categories.length
         ? _categories[_tabController!.index]
         : AppLocale.all.getString(context);
-    final bool isAllTab = currentCategoryName == AppLocale.all.getString(context);
+    final bool isAllTab = false;//currentCategoryName == AppLocale.all.getString(context);
 
     if (isAllTab) {
       newResults = items
@@ -1516,19 +1512,19 @@ class _HomePageState extends State<HomePage>
           .toList();
     } else {
       // Search in current category first
-      final List<TodoListItem> currentCategoryMatches = items
-          .where((item) =>
-              !item.isArchived &&
-              item.category == currentCategoryName &&
-              item.text.toLowerCase().contains(lowerCaseQuery))
-          .toList();
-      newResults.addAll(currentCategoryMatches);
+      // final List<TodoListItem> currentCategoryMatches = items
+          // .where((item) =>
+          //     !item.isArchived &&
+          //     item.category == currentCategoryName &&
+          //     item.text.toLowerCase().contains(lowerCaseQuery))
+          // .toList();
+      // newResults.addAll(currentCategoryMatches);
 
       // Search in other categories
       for (String otherCategory in _categories) {
-        if (otherCategory == currentCategoryName || otherCategory == AppLocale.all.getString(context)) {
-          continue; // Skip current and "All" tab
-        }
+        // if (otherCategory == currentCategoryName) {// || otherCategory == AppLocale.all.getString(context)) {
+        //   continue; // Skip current and "All" tab
+        // }
         final List<TodoListItem> otherCategoryMatches = items
             .where((item) =>
                 !item.isArchived &&
@@ -1539,13 +1535,13 @@ class _HomePageState extends State<HomePage>
         if (otherCategoryMatches.isNotEmpty) {
           // Add header for this category
           // Store AppLocale keys for headers
-          newResults.add(TodoListItem("$HEADER_PREFIX${AppLocale.resultsInCategory}::$otherCategory", category: null));
+          newResults.add(TodoListItem("$HEADER_PREFIX${AppLocale.resultsInCategory}::$otherCategory", category: otherCategory));
           newResults.addAll(otherCategoryMatches);
         }
       }
        // Also search for items that are uncategorized if current tab isn't "All"
       // and add them directly without a header.
-      if (currentCategoryName != AppLocale.all.getString(context)) {
+      if (!isAllTab) {
         final List<TodoListItem> uncategorizedMatches = items
             .where((item) =>
                 !item.isArchived &&
@@ -1553,7 +1549,8 @@ class _HomePageState extends State<HomePage>
                 item.text.toLowerCase().contains(lowerCaseQuery))
             .toList();
         if (uncategorizedMatches.isNotEmpty) {
-          // Add uncategorized matches directly without a header
+          // Add uncategorized matches directly with a header
+          newResults.add(TodoListItem("$HEADER_PREFIX${AppLocale.resultsInAllCategory.getString(context)}", category: null));
           newResults.addAll(uncategorizedMatches);
         }
       }
@@ -1566,20 +1563,11 @@ class _HomePageState extends State<HomePage>
   }
 
   List<Widget> _buildDefaultAppBarActions(BuildContext context) {
-    final isRtl = Directionality.of(context) == TextDirection.rtl;
-
     // Existing search icon button, now calls the renamed method
     final searchUIToggleButton = IconButton(
       icon: const Icon(Icons.search), // Keep original icon
       onPressed: _toggleSearchUI, // Call renamed method
       tooltip: AppLocale.searchTodosTooltip.getString(context), // Keep original tooltip
-    );
-
-    // New search icon button as per request
-    final newSearchActionButton = IconButton(
-      icon: const Icon(Icons.search, semanticLabel: "New Search Action"), // Icons.search as requested
-      onPressed: _handleSearch, // Call the new _handleSearch method
-      tooltip: "Perform Search Action", // Tooltip for the new button
     );
 
     final popupMenuButton = PopupMenuButton<String>(
@@ -1614,8 +1602,6 @@ class _HomePageState extends State<HomePage>
                 _tabController!.animateTo(0); // Go to "All" tab
             }
           }
-        } else if (value == kRandomTaskMenuButtonName) {
-          _showRandomTask();
         } else if (value == kRenameCategoryMenuButtonName) {
           if (_isCurrentCategoryCustom()) {
             final currentCategoryName = _categories[_tabController!.index];
@@ -1638,11 +1624,7 @@ class _HomePageState extends State<HomePage>
                     }
                   }
                   EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
-                    // Notify the widget to update
-                    HomeWidget.updateWidget(
-                      name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
-                      iOSName: 'TodoWidgetProvider',
-                    );
+                  updateHomeWidget();
                     print('[HomeWidget] Sent update request to widget provider after deleting category.');
                   _updateList();
                   // Re-initialize tabs and then switch to "All" tab.
@@ -1739,21 +1721,6 @@ class _HomePageState extends State<HomePage>
           ));
         }
 
-        // Add Random Task button
-        popupMenuItems.add(PopupMenuItem<String>(
-          value: kRandomTaskMenuButtonName,
-          child: Row(
-            children: [
-              const Icon(
-                Icons.shuffle,
-                color: Colors.blue,
-              ),
-              const SizedBox(width: 8.0),
-              Text(AppLocale.randomTaskMenuButton.getString(context)),
-            ],
-          ),
-        ));
-
         // Settings button is typically last or near last
         popupMenuItems.add(PopupMenuItem<String>(
           value: kSettingsMenuButtonName,
@@ -1771,17 +1738,18 @@ class _HomePageState extends State<HomePage>
         return popupMenuItems;
       },
     );
+    return [searchUIToggleButton, popupMenuButton];
 
     // Add the new search button to the list of actions.
     // Standard practice is to add new actions to the left (for LTR) or right (for RTL) of existing ones.
     // Let's add the new search button before the existing one.
-    if (isRtl) {
-      // Order for RTL: [popup, existingSearch, newSearch] will appear as newSearch, existingSearch, popup
-      return [popupMenuButton, searchUIToggleButton, newSearchActionButton];
-    } else {
-      // Order for LTR: [newSearch, existingSearch, popup]
-      return [newSearchActionButton, searchUIToggleButton, popupMenuButton];
-    }
+    // if (isRtl) {
+    //   // Order for RTL: [popup, existingSearch, newSearch] will appear as newSearch, existingSearch, popup
+    //   return [popupMenuButton, searchUIToggleButton];
+    // } else {
+    //   // Order for LTR: [newSearch, existingSearch, popup]
+    //   return [searchUIToggleButton, popupMenuButton];
+    // }
   }
 }
 

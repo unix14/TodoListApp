@@ -66,6 +66,7 @@ mixin AppLocale {
   static const String renameCategoryMenuButton = 'renameCategoryMenuButton';
   // resultsFromAll removed as per redundancy check
   static const String resultsInCategory = 'resultsInCategory';
+  static const String resultsInAllCategory = 'resultsInAllCategory';
   static const String searchTodosHint = 'searchTodosHint';
   static const String searchTodosTooltip = 'searchTodosTooltip';
   static const String selectCategoryDialogTitle = 'selectCategoryDialogTitle';
@@ -181,6 +182,7 @@ mixin AppLocale {
     AppLocale.renameCategoryMenuButton: "Rename Current Category",
     // AppLocale.resultsFromAll: "Results from All", // Removed
     AppLocale.resultsInCategory: "Results in {categoryName}",
+    AppLocale.resultsInAllCategory: "More results",
     AppLocale.searchTodosHint: "Search Todos...",
     AppLocale.searchTodosTooltip: "Search Todos",
     AppLocale.selectCategoryDialogTitle: 'Select Category',
@@ -285,6 +287,7 @@ mixin AppLocale {
     AppLocale.renameCategoryMenuButton: "שנה שם קטגוריה נוכחית",
     // AppLocale.resultsFromAll: "תוצאות מהכל", // Removed
     AppLocale.resultsInCategory: "תוצאות בקטגוריה {categoryName}",
+    AppLocale.resultsInAllCategory: "תוצאות נוספות",
     AppLocale.searchTodosHint: "חפש משימות...",
     AppLocale.searchTodosTooltip: "חפש משימות",
     AppLocale.selectCategoryDialogTitle: 'בחר קטגוריה',
