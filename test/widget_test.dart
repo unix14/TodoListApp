@@ -666,5 +666,104 @@ void main() {
       expect(todoInputFinder, findsOneWidget);
       expect(find.byType(FloatingActionButton), findsOneWidget);
     });
+
+    testWidgets('search displays overall task count correctly', (WidgetTester tester) async {
+      await _setupMockDataAndPumpWithLocale(tester, defaultMockTodoItems, defaultMockCategories, const Locale('en', 'US'));
+
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+
+      final searchTextFieldInAppBar = find.descendant(of: find.byType(AppBar), matching: find.byType(TextField));
+      await tester.enterText(searchTextFieldInAppBar, 'task'); // Matches 5 items
+      await tester.pumpAndSettle();
+
+      final expectedCountTextEN = (AppLocale.EN[AppLocale.tasksFoundCount] as String).replaceAll('{count}', '5');
+      expect(find.text(expectedCountTextEN), findsOneWidget);
+
+      // Switch to Hebrew
+      await _setupMockDataAndPumpWithLocale(tester, defaultMockTodoItems, defaultMockCategories, const Locale('he', 'IL'));
+
+      // Re-do search in Hebrew
+      final appBarFinderHE = find.byType(AppBar); // Re-find AppBar for Hebrew context
+      final searchIconFinderHE = find.descendant(of: appBarFinderHE, matching: find.byIcon(Icons.search));
+      await tester.tap(searchIconFinderHE);
+      await tester.pumpAndSettle();
+
+      final searchTextFieldInAppBarHE = find.descendant(of: find.byType(AppBar), matching: find.byType(TextField));
+      await tester.enterText(searchTextFieldInAppBarHE, 'task'); // "משימה" would be better for real HE search
+      await tester.pumpAndSettle();
+
+      // Assuming 'task' still matches the same 5 items as their text is English in mock data
+      final expectedCountTextHE = (AppLocale.HE[AppLocale.tasksFoundCount] as String).replaceAll('{count}', '5');
+      expect(find.text(expectedCountTextHE), findsOneWidget);
+    });
+
+    testWidgets('search results ordering and headers are correct (Current > Other Specific > More Results for Uncategorized)', (WidgetTester tester) async {
+      final List<Map<String, dynamic>> specificMockItems = [
+        {"text": "Apple Alpha (Fruit)", "dateTime": DateTime.now().toIso8601String(), "isChecked": false, "category": "Fruit", "isArchived": false},
+        {"text": "Apple Beta (Veg)", "dateTime": DateTime.now().toIso8601String(), "isChecked": false, "category": "Vegetable", "isArchived": false},
+        {"text": "Apple Gamma (Uncat)", "dateTime": DateTime.now().toIso8601String(), "isChecked": false, "category": null, "isArchived": false},
+        {"text": "Extra Fruit Apple", "dateTime": DateTime.now().toIso8601String(), "isChecked": false, "category": "Fruit", "isArchived": false},
+      ];
+      final List<String> categories = ["Fruit", "Vegetable"];
+      await _setupMockDataAndPumpWithLocale(tester, specificMockItems, categories, const Locale('en', 'US'));
+
+      // Start on "Fruit" tab
+      await tester.tap(find.text("Fruit"));
+      await tester.pumpAndSettle();
+
+      // Enter search mode and search for "Apple"
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+      final searchTextField = find.descendant(of: find.byType(AppBar), matching: find.byType(TextField));
+      await tester.enterText(searchTextField, "Apple");
+      await tester.pumpAndSettle();
+
+      // Verify overall count
+      final expectedCountText = (AppLocale.EN[AppLocale.tasksFoundCount] as String).replaceAll('{count}', '4');
+      expect(find.text(expectedCountText), findsOneWidget);
+
+      // Find all relevant Text and ListTile widgets within the TabBarView
+      // This approach is fragile if other Text widgets are present. A more robust way would be to use keys or more specific finders.
+      final Finder ancestor = find.descendant(of: find.byType(TabBarView), matching: find.byType(Column));
+      final Iterable<Widget> widgets = tester.widgetList(find.descendant(of: ancestor, matching: find.bySubtype<Widget>()));
+
+      List<String> visibleTexts = [];
+      for (var widget in widgets) {
+        if (widget is Text) {
+          visibleTexts.add(widget.data!);
+        } else if (widget is ListTile) {
+          final title = widget.title as Text;
+          visibleTexts.add(title.data!);
+        }
+      }
+
+      // Expected order:
+      // 1. Count (already verified)
+      // 2. "Apple Alpha (Fruit)" (current category)
+      // 3. "Extra Fruit Apple" (current category)
+      // 4. Header: "Results in Vegetable"
+      // 5. "Apple Beta (Veg)" (other specific category)
+      // 6. Header: "More results" (for uncategorized) - Assuming _performSearch adds this now
+      // 7. "Apple Gamma (Uncat)" (uncategorized)
+
+      // Remove count text for order check of list items
+      visibleTexts.remove(expectedCountText);
+
+      expect(visibleTexts[0], "Apple Alpha (Fruit)");
+      expect(visibleTexts[1], "Extra Fruit Apple");
+      expect(visibleTexts[2], (AppLocale.EN[AppLocale.resultsInCategory] as String).replaceAll('{categoryName}', "Vegetable"));
+      expect(visibleTexts[3], "Apple Beta (Veg)");
+
+      // Check for "More results" header - this depends on _performSearch correctly adding it for uncategorized/remaining
+      // If _performSearch was not updated to add "More results" for uncategorized, this part will fail.
+      // As per this test's instructions, we expect it.
+      expect(visibleTexts[4], AppLocale.EN[AppLocale.moreResults] as String);
+      expect(visibleTexts[5], "Apple Gamma (Uncat)");
+
+      // Also ensure no "Results in Uncategorized" header
+      expect(find.text(AppLocale.EN[AppLocale.uncategorizedResults] as String), findsNothing);
+
+    });
   });
 }

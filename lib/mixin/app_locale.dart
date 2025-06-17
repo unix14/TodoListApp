@@ -48,6 +48,7 @@ mixin AppLocale {
   static const String motivationalSentence3 = 'motivationalSentence3';
   static const String motivationalSentence4 = 'motivationalSentence4';
   static const String motivationalSentence5 = 'motivationalSentence5';
+  static const String moreResults = 'moreResults'; // Added
   static const String moveToCategoryMenuItem = 'moveToCategoryMenuItem';
   static const String name = "name";
   static const String noResultsFound = 'noResultsFound';
@@ -70,6 +71,7 @@ mixin AppLocale {
   static const String settings = 'settings';
   static const String signup = "signup";
   static const String tasksCount = 'tasksCount';
+  static const String tasksFoundCount = 'tasksFoundCount'; // Added
   static const String tasksCountSingular = 'tasksCountSingular';
   static const String tasksCountZero = 'tasksCountZero';
   static const String thisCantBeUndone = "thisCantBeUndone";
@@ -163,6 +165,7 @@ mixin AppLocale {
     AppLocale.motivationalSentence3: "Time to be productive!",
     AppLocale.motivationalSentence4: "Add a task and feel the accomplishment.",
     AppLocale.motivationalSentence5: "An empty list is a world of possibilities!",
+    AppLocale.moreResults: "More results", // Added
     AppLocale.moveToCategoryMenuItem: 'Move to category',
     AppLocale.noResultsFound: "No results found for '{query}'",
     // AppLocale.noTasksAvailableDialogMessage: "There are no tasks available to pick from.", // Already included above
@@ -178,6 +181,7 @@ mixin AppLocale {
     AppLocale.searchTodosTooltip: "Search Todos",
     AppLocale.selectCategoryDialogTitle: 'Select Category',
     AppLocale.tasksCount: "{count} tasks",
+    AppLocale.tasksFoundCount: "{count} tasks found", // Added
     AppLocale.tasksCountSingular: "1 task",
     AppLocale.tasksCountZero: "No tasks",
     AppLocale.timeDaysAgo: '{days} days ago',
@@ -263,6 +267,7 @@ mixin AppLocale {
     AppLocale.motivationalSentence3: "רשימה ריקה היא בד ציור ריק. צייר את יצירת המופת שלך בפרודוקטיביות!",
     AppLocale.motivationalSentence4: "אל תסתכל על השעון; עשה מה שהוא עושה. המשך להתקדם! הוסף משימה.",
     AppLocale.motivationalSentence5: "המסע של אלף מייל מתחיל בצעד אחד... או במשימה אחת!",
+    AppLocale.moreResults: "תוצאות נוספות", // Added
     AppLocale.moveToCategoryMenuItem: 'העבר לקטגוריה',
     AppLocale.noResultsFound: "לא נמצאו תוצאות עבור '{query}'",
     // AppLocale.noTasksAvailableDialogMessage: "אין כרגע משימות שעלייך לבצע", // Already included above
@@ -278,6 +283,7 @@ mixin AppLocale {
     AppLocale.searchTodosTooltip: "חפש משימות",
     AppLocale.selectCategoryDialogTitle: 'בחר קטגוריה',
     AppLocale.tasksCount: "{count} משימות",
+    AppLocale.tasksFoundCount: "{count} משימות נמצאו", // Added
     AppLocale.tasksCountSingular: "משימה אחת",
     AppLocale.tasksCountZero: "אין משימות",
     AppLocale.timeDaysAgo: 'לפני {days} ימים',
