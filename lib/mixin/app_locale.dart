@@ -100,7 +100,7 @@ mixin AppLocale {
   static const String uploadProfilePictureButton = 'uploadProfilePictureButton'; // May be same as 'change'
   static const String profilePictureUpdated = 'profilePictureUpdated';
   static const String errorUploadingProfilePicture = 'errorUploadingProfilePicture';
-  static const String defaultProfilePicUrl = 'defaultProfilePicUrl';
+  // static const String defaultProfilePicUrl = 'defaultProfilePicUrl'; // Asset path or URL, might be better in Globals or as actual asset. Placeholder if used as locale key.
 
   // Sharing Dialog (ShareListDialog)
   static const String shareDialogTitle = 'shareDialogTitle'; // Takes {categoryName}
@@ -141,6 +141,13 @@ mixin AppLocale {
   static const String noTasksInSharedList = 'noTasksInSharedList';
   static const String noCategoriesYet = 'noCategoriesYet'; // If all tabs (personal & shared) are empty
   static const String addTodo = 'addTodo'; // FAB tooltip, if different from existing AppLocale.add
+
+  // Keys for this subtask (verify/add)
+  static const String imagePickingNotImplemented = 'imagePickingNotImplemented';
+  static const String fetchConfigError = 'fetchConfigError'; // Takes {errorDetails}
+  static const String fetchParticipantsError = 'fetchParticipantsError'; // Takes {errorDetails}
+  static const String adminRequiredToRemoveUser = 'adminRequiredToRemoveUser';
+  static const String errorLoadingList = 'errorLoadingList'; // For StreamBuilder/FutureBuilder errors
 
 
   static const Map<String, dynamic> EN = {
@@ -235,7 +242,7 @@ mixin AppLocale {
     AppLocale.uploadProfilePictureButton: 'Upload Picture',
     AppLocale.profilePictureUpdated: 'Profile picture updated!',
     AppLocale.errorUploadingProfilePicture: 'Error uploading profile picture',
-    AppLocale.defaultProfilePicUrl: 'assets/images/default_avatar.png', // Example if used as locale
+    // AppLocale.defaultProfilePicUrl: 'assets/images/default_avatar.png', // Example if used as locale
 
     // Sharing Dialog (ShareListDialog)
     AppLocale.shareDialogTitle: 'Share \'{categoryName}\'',
@@ -276,6 +283,13 @@ mixin AppLocale {
     AppLocale.noTasksInSharedList: 'No tasks in this shared list yet.',
     AppLocale.noCategoriesYet: 'No categories or shared lists yet. Add one!',
     AppLocale.addTodo: 'Add Todo',
+
+    // Added for current subtask
+    AppLocale.imagePickingNotImplemented: 'Image picking logic to be implemented here.',
+    AppLocale.fetchConfigError: 'Error fetching share configuration: {errorDetails}',
+    AppLocale.fetchParticipantsError: 'Error fetching participant details: {errorDetails}',
+    AppLocale.adminRequiredToRemoveUser: 'Only the list admin can remove users.',
+    AppLocale.errorLoadingList: 'Error loading list: {errorDetails}',
   };
 
   static const Map<String, dynamic> HE = {
@@ -411,5 +425,12 @@ mixin AppLocale {
     AppLocale.noTasksInSharedList: '[HE] No tasks in this shared list yet.',
     AppLocale.noCategoriesYet: '[HE] No categories or shared lists yet. Add one!',
     AppLocale.addTodo: '[HE] Add Todo',
+
+    // Added for current subtask
+    AppLocale.imagePickingNotImplemented: '[HE] Image picking logic to be implemented here.',
+    AppLocale.fetchConfigError: '[HE] Error fetching share configuration: {errorDetails}',
+    AppLocale.fetchParticipantsError: '[HE] Error fetching participant details: {errorDetails}',
+    AppLocale.adminRequiredToRemoveUser: '[HE] Only the list admin can remove users.',
+    AppLocale.errorLoadingList: '[HE] Error loading list: {errorDetails}',
   };
 }

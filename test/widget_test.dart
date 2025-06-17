@@ -6,12 +6,16 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+// import 'package:flutter_example/main.dart'; // MyApp is already imported below effectively
+import 'package:flutter_example/screens/homepage.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_example/common/consts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_example/common/globals.dart'; // For kAllListSavedPrefs
 import 'package:flutter_example/common/encryption_helper.dart'; // For EncryptionHelper
 import 'package:flutter_example/main.dart'; // Ensure MyApp is in scope
-import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // Mock HomeWidget
 class MockHomeWidget {

@@ -5,16 +5,16 @@ import 'package:firebase_storage/firebase_storage.dart'; // Placeholder, for Fir
 import 'package:flutter/material.dart';
 import 'package:flutter_example/common/common_styles.dart';
 import 'package:flutter_example/common/globals.dart';
-// import 'package:flutter_example/l10n/intl_en.arb'; // Not needed if using FlutterLocalization
-import 'package:flutter_localization/flutter_localization.dart'; // Added import
-import 'package:flutter_example/main.dart';
-import 'package:flutter_example/managers/app_initializer.dart';
-import 'package:flutter_example/mixin/app_locale.dart';
+// import 'package:flutter_example/l10n/intl_en.arb';
+import 'package:flutter_localization/flutter_localization.dart';
+import 'package:flutter_example/main.dart'; // main.dart might not be needed directly
+import 'package:flutter_example/managers/app_initializer.dart'; // getIt might be from here or main
+import 'package:flutter_example/mixin/app_locale.dart'; // For AppLocale keys and extension method
 import 'package:flutter_example/models/user.dart' as AppUser;
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
-import 'package:image_picker/image_picker.dart'; // Placeholder, for image_picker
+import 'package:image_picker/image_picker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart'; // Removed Provider
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -74,7 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     //   _uploadProfilePicture();
     // }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.imagePickingNotImplemented))),
+      SnackBar(content: Text(AppLocale.imagePickingNotImplemented.getString(context))),
     );
   }
 
@@ -99,35 +99,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.profilePictureUpdated))),
+        SnackBar(content: Text(AppLocale.profilePictureUpdated.getString(context))),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${FlutterLocalization.instance.getString(context, AppLocale.errorUploadingProfilePicture)}: $e')),
+        SnackBar(content: Text('${AppLocale.errorUploadingProfilePicture.getString(context)}: $e')),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final appLocale = Provider.of<AppLocaleViewModel>(context);
+    // final appLocale = Provider.of<AppLocaleViewModel>(context); // Removed Provider
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(FlutterLocalization.instance.getString(context, AppLocale.settings)),
+        title: Text(AppLocale.settings.getString(context)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: <Widget>[
-            _buildProfileSection(context), // This method also uses context.translate
+            _buildProfileSection(context),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.language),
-              title: Text(FlutterLocalization.instance.getString(context, AppLocale.lang)),
+              title: Text(AppLocale.lang.getString(context)),
               trailing: DropdownButton<String>(
-                value: appLocale.currentLocale.languageCode, // This part remains as it's view model logic
-                items: AppLocaleViewModel.supportedLocales.map((Locale locale) {
+                value: FlutterLocalization.instance.currentLocale?.languageCode ?? 'en', // Get current lang code
+                items: AppLocale.supportedLocales.map((Locale locale) { // Assuming AppLocale.supportedLocales similar to AppLocaleViewModel.supportedLocales
                   return DropdownMenuItem<String>(
                     value: locale.languageCode,
                     child: Text(locale.languageCode.toUpperCase()),
@@ -135,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }).toList(),
                 onChanged: (String? newValue) {
                   if (newValue != null) {
-                    appLocale.setLocale(Locale(newValue));
+                    FlutterLocalization.instance.translate(newValue); // Use new method
                   }
                 },
               ),
@@ -143,14 +143,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.info_outline),
-              title: Text(FlutterLocalization.instance.getString(context, AppLocale.version)),
+              title: Text(AppLocale.version.getString(context)),
               subtitle: Text('$_version ($_buildNumber)'),
             ),
             const Divider(),
             ListTile(
               leading: Icon(Icons.logout, color: _isGuest ? Colors.grey : Colors.red),
               title: Text(
-                _isGuest ? FlutterLocalization.instance.getString(context, AppLocale.login) : FlutterLocalization.instance.getString(context, AppLocale.logout),
+                _isGuest ? AppLocale.login.getString(context) : AppLocale.logout.getString(context),
                 style: TextStyle(color: _isGuest ? Colors.grey : Colors.red),
               ),
               onTap: _isGuest
@@ -160,19 +160,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : () async {
                       final confirmed = await showDialog<bool>(
                         context: context,
-                        builder: (BuildContext dialogContext) { // Changed context to dialogContext for clarity
+                        builder: (BuildContext dialogContext) {
                           return AlertDialog(
-                            title: Text(FlutterLocalization.instance.getString(dialogContext, AppLocale.logout)),
-                            content: Text(FlutterLocalization.instance.getString(dialogContext, AppLocale.logoutText)),
+                            title: Text(AppLocale.logout.getString(dialogContext)),
+                            content: Text(AppLocale.logoutText.getString(dialogContext)),
                             actions: <Widget>[
                               TextButton(
-                                child: Text(FlutterLocalization.instance.getString(dialogContext, AppLocale.cancelButtonText)),
+                                child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
                                 onPressed: () {
                                   Navigator.of(dialogContext).pop(false);
                                 },
                               ),
                               TextButton(
-                                child: Text(FlutterLocalization.instance.getString(dialogContext, AppLocale.okButtonText)),
+                                child: Text(AppLocale.okButtonText.getString(dialogContext)),
                                 onPressed: () {
                                   Navigator.of(dialogContext).pop(true);
                                 },
@@ -195,12 +195,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildProfileSection(BuildContext context) {
-    String displayName = FlutterLocalization.instance.getString(context, AppLocale.guest);
+    String displayName = AppLocale.guest.getString(context);
     String displayEmail = "";
-    String? profilePicUrl = AppLocale.defaultProfilePicUrl;
+    String? profilePicUrl = Globals.defaultProfilePicUrl;
 
     if (!_isGuest && _currentUser != null) {
-      displayName = _currentUser!.name ?? FlutterLocalization.instance.getString(context, AppLocale.unknown);
+      displayName = _currentUser!.name ?? AppLocale.unknown.getString(context);
       displayEmail = _currentUser!.email ?? "";
       if (_currentUser!.profilePictureUrl != null && _currentUser!.profilePictureUrl!.isNotEmpty) {
         profilePicUrl = _currentUser!.profilePictureUrl;
@@ -223,18 +223,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        Text(displayName, style: context.textTheme.headlineSmall),
-        if (displayEmail.isNotEmpty) Text(displayEmail, style: context.textTheme.bodySmall),
+        Text(displayName, style: Theme.of(context).textTheme.headlineSmall),
+        if (displayEmail.isNotEmpty) Text(displayEmail, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 10),
         if (!_isGuest)
           ElevatedButton(
             onPressed: _pickImage,
-            child: Text(FlutterLocalization.instance.getString(context, AppLocale.changeProfilePictureButton)),
+            child: Text(AppLocale.changeProfilePictureButton.getString(context)),
           ),
         if (_pickedImage != null && !_isGuest)
           ElevatedButton(
             onPressed: _uploadProfilePicture,
-            child: Text(FlutterLocalization.instance.getString(context, AppLocale.uploadProfilePictureButton)),
+            child: Text(AppLocale.uploadProfilePictureButton.getString(context)),
           ),
       ],
     );

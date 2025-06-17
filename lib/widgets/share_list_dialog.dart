@@ -53,14 +53,14 @@ class _ShareListDialogState extends State<ShareListDialog> {
   Future<void> _fetchExistingShareConfig() async {
     setState(() {
       _isLoading = true;
-      _currentShareLink = FlutterLocalization.instance.getString(context, AppLocale.loading);
+      _currentShareLink = AppLocale.loading.getString(context);
     });
 
     final currentUserUid = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserUid == null) {
       setState(() {
         _isLoading = false;
-        _currentShareLink = FlutterLocalization.instance.getString(context, AppLocale.loginToSharePrompt);
+        _currentShareLink = AppLocale.loginToSharePrompt.getString(context);
       });
       return;
     }
@@ -78,13 +78,13 @@ class _ShareListDialogState extends State<ShareListDialog> {
         _fetchParticipantsDetails(_existingConfig!);
       } else if (mounted) {
         setState(() {
-           _currentShareLink = FlutterLocalization.instance.getString(context, AppLocale.notSharedYet);
+           _currentShareLink = AppLocale.notSharedYet.getString(context);
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() { _currentShareLink = FlutterLocalization.instance.getString(context, AppLocale.shareError); });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.fetchConfigError).replaceAll('{errorDetails}', e.toString()))));
+        setState(() { _currentShareLink = AppLocale.shareError.getString(context); });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.fetchConfigError.getString(context).replaceAll('{errorDetails}', e.toString()))));
       }
     } finally {
       if (mounted) { setState(() { _isLoading = false; }); }
@@ -104,7 +104,7 @@ class _ShareListDialogState extends State<ShareListDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.fetchParticipantsError).replaceAll('{errorDetails}', e.toString()))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.fetchParticipantsError.getString(context).replaceAll('{errorDetails}', e.toString()))));
       }
     } finally {
       if (mounted) {
@@ -121,10 +121,10 @@ class _ShareListDialogState extends State<ShareListDialog> {
   }
 
   void _onCopyLink() {
-    if (_currentShareLink.isNotEmpty && _currentShareLink != FlutterLocalization.instance.getString(context, AppLocale.notSharedYet) && !_currentShareLink.startsWith("Error:")) {
+    if (_currentShareLink.isNotEmpty && _currentShareLink != AppLocale.notSharedYet.getString(context) && !_currentShareLink.startsWith("Error:")) {
       Clipboard.setData(ClipboardData(text: _currentShareLink));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.linkCopiedToClipboard))),
+        SnackBar(content: Text(AppLocale.linkCopiedToClipboard.getString(context))),
       );
     }
   }
@@ -133,7 +133,7 @@ class _ShareListDialogState extends State<ShareListDialog> {
     final currentUserUid = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserUid == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.loginToSharePrompt))),
+        SnackBar(content: Text(AppLocale.loginToSharePrompt.getString(context))),
       );
       return;
     }
@@ -142,7 +142,7 @@ class _ShareListDialogState extends State<ShareListDialog> {
     // Basic validation (conceptual) - Firebase function might do more robust checks
     if (desiredPath.isNotEmpty && !RegExp(r'^[a-zA-Z0-9-]+$').hasMatch(desiredPath)) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.linkPathInvalid))),
+            SnackBar(content: Text(AppLocale.linkPathInvalid.getString(context))),
         );
         return;
     }
@@ -181,7 +181,7 @@ class _ShareListDialogState extends State<ShareListDialog> {
         if (_existingConfig != null) _fetchParticipantsDetails(_existingConfig!);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.shareSettingsUpdated))),
+          SnackBar(content: Text(AppLocale.shareSettingsUpdated.getString(context))),
         );
       }
     } catch (e) {
@@ -190,7 +190,7 @@ class _ShareListDialogState extends State<ShareListDialog> {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("${FlutterLocalization.instance.getString(context, AppLocale.shareError)}: $e")),
+          SnackBar(content: Text("${AppLocale.shareError.getString(context)}: $e")),
         );
       }
     }
@@ -199,14 +199,14 @@ class _ShareListDialogState extends State<ShareListDialog> {
   @override
   Widget build(BuildContext context) {
     String displayLink = _isLoading
-        ? FlutterLocalization.instance.getString(context, AppLocale.loading)
+        ? AppLocale.loading.getString(context)
         : _currentShareLink;
     if (!_isLoading && displayLink.isEmpty) {
-        displayLink = FlutterLocalization.instance.getString(context, AppLocale.notSharedYet);
+        displayLink = AppLocale.notSharedYet.getString(context);
     }
 
     return AlertDialog(
-      title: Text(FlutterLocalization.instance.getString(context, AppLocale.shareDialogTitle).replaceAll('{categoryName}', widget.categoryName)),
+      title: Text(AppLocale.shareDialogTitle.getString(context).replaceAll('{categoryName}', widget.categoryName)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -219,14 +219,14 @@ class _ShareListDialogState extends State<ShareListDialog> {
                 children: [
                   Expanded(
                     child: Text(
-                      "${FlutterLocalization.instance.getString(context, AppLocale.shareableLink)} $displayLink",
+                      "${AppLocale.shareableLink.getString(context)} $displayLink",
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (displayLink != FlutterLocalization.instance.getString(context, AppLocale.notSharedYet) && displayLink != FlutterLocalization.instance.getString(context, AppLocale.loading) && !displayLink.startsWith("Error:"))
+                  if (displayLink != AppLocale.notSharedYet.getString(context) && displayLink != AppLocale.loading.getString(context) && !displayLink.startsWith("Error:"))
                     IconButton(
                       icon: const Icon(Icons.copy),
-                      tooltip: FlutterLocalization.instance.getString(context, AppLocale.copyLinkButton),
+                      tooltip: AppLocale.copyLinkButton.getString(context),
                       onPressed: _onCopyLink,
                     ),
                 ],
@@ -235,11 +235,11 @@ class _ShareListDialogState extends State<ShareListDialog> {
               TextFormField(
                 controller: _shortLinkController,
                 decoration: InputDecoration(
-                  hintText: FlutterLocalization.instance.getString(context, AppLocale.customLinkPathHint),
-                  labelText: FlutterLocalization.instance.getString(context, AppLocale.customLinkPathHint),
+                  hintText: AppLocale.customLinkPathHint.getString(context),
+                  labelText: AppLocale.customLinkPathHint.getString(context),
                   suffixIcon: IconButton(
                       icon: Icon(_shortLinkController.text.isNotEmpty ? Icons.clear : Icons.edit_note),
-                      tooltip: _shortLinkController.text.isNotEmpty ? FlutterLocalization.instance.getString(context, AppLocale.clearInput) : FlutterLocalization.instance.getString(context, AppLocale.editSuffixTooltip),
+                      tooltip: _shortLinkController.text.isNotEmpty ? AppLocale.clearInput.getString(context) : AppLocale.editSuffixTooltip.getString(context),
                       onPressed: () {
                           setState(() {
                               if(_shortLinkController.text.isNotEmpty) {
@@ -261,14 +261,14 @@ class _ShareListDialogState extends State<ShareListDialog> {
               ),
               const SizedBox(height: 16),
               Text(
-                FlutterLocalization.instance.getString(context, AppLocale.authorizedUsersSectionTitle),
+                AppLocale.authorizedUsersSectionTitle.getString(context),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
               _isLoadingParticipants
                 ? Center(child: CircularProgressIndicator())
                 : (_authorizedUserDetails.isEmpty
-                    ? Text(FlutterLocalization.instance.getString(context, AppLocale.noAuthorizedUsers))
+                    ? Text(AppLocale.noAuthorizedUsers.getString(context))
                     : Column(
                         children: _authorizedUserDetails.map((user) {
                           bool isCurrentUserAdmin = _existingConfig?.adminUserId == FirebaseAuth.instance.currentUser?.uid;
@@ -283,12 +283,12 @@ class _ShareListDialogState extends State<ShareListDialog> {
                                   ? const Icon(Icons.person)
                                   : null,
                             ),
-                            title: Text(user.name ?? FlutterLocalization.instance.getString(context, AppLocale.unknownUser)),
-                            subtitle: isThisUserTheAdmin ? Text(FlutterLocalization.instance.getString(context, AppLocale.adminText)) : null,
+                            title: Text(user.name ?? AppLocale.unknownUser.getString(context)),
+                            subtitle: isThisUserTheAdmin ? Text(AppLocale.adminText.getString(context)) : null,
                             trailing: (isCurrentUserAdmin && !isThisUserTheAdmin && FirebaseAuth.instance.currentUser?.uid != user.id)
                                 ? IconButton(
                                     icon: Icon(Icons.remove_circle_outline, color: Colors.red),
-                                    tooltip: FlutterLocalization.instance.getString(context, AppLocale.removeUserButtonTooltip),
+                                    tooltip: AppLocale.removeUserButtonTooltip.getString(context),
                                     onPressed: () => _removeUserFromSharedList(user.id!),
                                   )
                                 : null,
@@ -301,7 +301,7 @@ class _ShareListDialogState extends State<ShareListDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          child: Text(FlutterLocalization.instance.getString(context, AppLocale.cancelButtonText)),
+          child: Text(AppLocale.cancelButtonText.getString(context)),
           onPressed: _isLoading || _isLoadingParticipants ? null : () {
             Navigator.of(context).pop();
           },
@@ -312,8 +312,8 @@ class _ShareListDialogState extends State<ShareListDialog> {
               ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white,))
               : Text(
                  (_existingConfig != null && _existingConfig!.shortLinkPath.isNotEmpty && !_isEditingLink)
-                    ? FlutterLocalization.instance.getString(context, AppLocale.updateShareButton)
-                    : FlutterLocalization.instance.getString(context, AppLocale.saveShareButton)
+                    ? AppLocale.updateShareButton.getString(context)
+                    : AppLocale.saveShareButton.getString(context)
                 ),
         ),
       ],
@@ -322,18 +322,18 @@ class _ShareListDialogState extends State<ShareListDialog> {
 
   Future<void> _removeUserFromSharedList(String userIdToRemove) async {
     if (_existingConfig == null || _existingConfig!.adminUserId != FirebaseAuth.instance.currentUser?.uid) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.adminRequiredToRemoveUser))));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.adminRequiredToRemoveUser.getString(context))));
       return;
     }
 
-    final AppUser.User? userToRemoveDetails = _authorizedUserDetails.firstWhere((u) => u.id == userIdToRemove, orElse: () => AppUser.User(email: FlutterLocalization.instance.getString(context, AppLocale.unknownUser), imageURL: "", name: FlutterLocalization.instance.getString(context, AppLocale.unknownUser)));
-    final String userNameToRemove = userToRemoveDetails?.name ?? FlutterLocalization.instance.getString(context, AppLocale.unknownUser);
+    final AppUser.User? userToRemoveDetails = _authorizedUserDetails.firstWhere((u) => u.id == userIdToRemove, orElse: () => AppUser.User(email: AppLocale.unknownUser.getString(context), imageURL: "", name: AppLocale.unknownUser.getString(context)));
+    final String userNameToRemove = userToRemoveDetails?.name ?? AppLocale.unknownUser.getString(context);
 
 
     bool? confirmed = await DialogHelper.showAlertDialog(
         context,
-        FlutterLocalization.instance.getString(context, AppLocale.removeUserConfirmationTitle),
-        FlutterLocalization.instance.getString(context, AppLocale.removeUserConfirmationMessage).replaceAll('{userName}', userNameToRemove),
+        AppLocale.removeUserConfirmationTitle.getString(context),
+        AppLocale.removeUserConfirmationMessage.getString(context).replaceAll('{userName}', userNameToRemove),
         () => Navigator.of(context, rootNavigator: true).pop(true),
         () => Navigator.of(context, rootNavigator: true).pop(false),
     );
@@ -348,13 +348,13 @@ class _ShareListDialogState extends State<ShareListDialog> {
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.userRemovedSuccess).replaceAll('{userName}', userNameToRemove))),
+            SnackBar(content: Text(AppLocale.userRemovedSuccess.getString(context).replaceAll('{userName}', userNameToRemove))),
           );
           _fetchParticipantsDetails(_existingConfig!);
         } else {
            _existingConfig!.authorizedUserIds[userIdToRemove] = true;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(FlutterLocalization.instance.getString(context, AppLocale.userRemovedError).replaceAll('{userName}', userNameToRemove))),
+            SnackBar(content: Text(AppLocale.userRemovedError.getString(context).replaceAll('{userName}', userNameToRemove))),
           );
         }
         setState(() => _isLoadingParticipants = false);

@@ -2,9 +2,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/models/shared_list_config.dart';
-import 'package:uuid/uuid.dart'; // Added import
+import 'package:uuid/uuid.dart';
 
 class User {
+  String? id; // Added field for Firebase UID
   String? email;
   String? imageURL;
   String? name;
@@ -21,30 +22,29 @@ class User {
   //todo add date of login in
   DateTime? dateOfLoginIn;
 
-  User({required this.email, required this.imageURL, required this.name, this.profilePictureUrl, List<SharedListConfig>? sharedListsConfigs}) : this.sharedListsConfigs = sharedListsConfigs ?? []; // Updated constructor
+  User({this.id, required this.email, required this.imageURL, required this.name, this.profilePictureUrl, List<SharedListConfig>? sharedListsConfigs}) : this.sharedListsConfigs = sharedListsConfigs ?? [];
 
   static Map<String, dynamic> toJson(User user) {
     return {
+      'id': user.id, // Added to toJson
       'email': user.email,
       'imageURL': user.imageURL,
       'name': user.name,
       'profilePictureUrl': user.profilePictureUrl,
       'todoListItems': user.todoListItems?.map((e) => e.toJson()).toList() ?? [],
-      'sharedListsConfigs': user.sharedListsConfigs?.map((e) => e.toJson()).toList(), // Added to toJson
+      'sharedListsConfigs': user.sharedListsConfigs.map((e) => e.toJson()).toList(), // Ensure not null before map
       'dateOfRegistration': user.dateOfRegistration?.toIso8601String(),
       'dateOfLoginIn': user.dateOfLoginIn?.toIso8601String(),
     };
   }
 
-  static fromJson(Map<String, dynamic> json) {
+  static fromJson(Map<String, dynamic> json, {String? idFromKey}) { // Allow passing ID from key if not in map
     final userInstance = User(
+      id: idFromKey ?? json['id'] as String?, // Populate id
       email: json['email'] as String? ?? '',
       imageURL: json['imageURL'] as String? ?? '',
       name: json['name'] as String? ?? '',
       profilePictureUrl: json['profilePictureUrl'] as String? ?? '',
-      // sharedListsConfigs are typically populated at runtime after fetching user,
-      // or if they were part of user's own document (which is not the current design for shared lists).
-      // Initialize as empty, actual population usually happens in FirebaseRepoInteractor.getUserData()
       sharedListsConfigs: (json['sharedListsConfigs'] as List<dynamic>?)
           ?.map((e) => SharedListConfig.fromJson(Map<String, dynamic>.from(e)))
           .toList() ?? [],
@@ -90,9 +90,11 @@ class User {
 extension UserCredentialExtension on UserCredential {
   User toUser() {
     return User(
-      email: user!.email!,
-      imageURL: user!.photoURL!,
-      name: user!.displayName!,
+      id: this.user!.uid, // Pass UID to the new id field
+      email: this.user!.email!,
+      imageURL: this.user!.photoURL ?? '', // Handle null photoURL
+      name: this.user!.displayName ?? '', // Handle null displayName
+      profilePictureUrl: this.user!.photoURL, // Can also be used for profilePictureUrl initially
     );
   }
 }

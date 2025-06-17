@@ -25,68 +25,57 @@ class FirebaseRepoInteractor {
   // Updated to fetch by userId and include shared list configurations
   Future<MyUser.User?> getUserData(String userId) async {
     final userPath = '$kDBPathUsers/$userId';
-    var userResult = await _firebaseRepo.getData("", userPath, isFullPath: true); // Use isFullPath
+    // Use getDataFromFullPath as userPath is a full path
+    var userResult = await _firebaseRepo.getDataFromFullPath(userPath);
 
     MyUser.User? user;
     if (userResult.isNotEmpty) {
-      user = MyUser.User.fromJson(Map<String, dynamic>.from(userResult));
-      if (user.newIdsWereAssignedDuringDeserialization) {
+      // Pass userId as idFromKey to ensure User object gets its ID
+      user = MyUser.User.fromJson(Map<String, dynamic>.from(userResult), idFromKey: userId);
+      if (user.newIdsWereAssignedDuringDeserialization == true) { // Null check for user already done by isNotEmpty
         print("User $userId had new TodoListItem IDs assigned during deserialization. Re-saving user data.");
         try {
-          // Directly use _firebaseRepo.saveData to ensure correct path for the given userId
-          await _firebaseRepo.saveData(
-            userPath, // This is already '$kDBPathUsers/$userId'
-            MyUser.User.toJson(user),
-            isFullPath: true,
+          await _firebaseRepo.saveData( // Pass full path directly
+            userPath,
+            MyUser.User.toJson(user), // user is guaranteed non-null here
           );
-          user.newIdsWereAssignedDuringDeserialization = false; // Reset flag after successful save
+          user.newIdsWereAssignedDuringDeserialization = false;
           print("Successfully re-saved user data for $userId after ID assignment.");
         } catch (e) {
           print("Error re-saving user $userId after ID assignment: $e");
-          // Decide on error handling: still return user with in-memory IDs, or throw/return null?
-          // For now, log and continue, returning the user object with in-memory IDs.
         }
       }
     } else {
-      return null; // User not found
+      return null;
     }
 
-    // Fetch shared list configurations
-    // This assumes _firebaseRepo.getDataWithQuery can handle this type of query.
-    // This is a placeholder for what might be a more complex denormalization strategy in a real app
-    // for performance, e.g., storing a list of shared list IDs under each user.
     try {
-      // Attempting a direct query. Firebase RTDB capabilities for complex map queries are limited.
-      // This specific query `orderByChild("authorizedUserIds/$userId").equalTo(true)` might not work as expected
-      // directly on a Realtime Database without specific indexing rules defined in Firebase.
-      // A more robust way is often to denormalize and store a list of shared list IDs under each user,
-      // or query all shared_list_configs and filter client-side (not scalable).
-      // For this exercise, we'll proceed with a conceptual query.
-
-      // Conceptual: Fetch all shared list configs and filter client-side if direct query is not feasible/performant.
-      // This is NOT scalable for large number of shared lists.
-      final allSharedConfigsMap = await _firebaseRepo.getData("", kDBPathSharedListConfigs, isFullPath: true);
+      // Fetch all shared list configs and filter client-side
+      final allSharedConfigsMap = await _firebaseRepo.getDataFromFullPath(kDBPathSharedListConfigs);
       List<SharedListConfig> userSharedConfigs = [];
 
       if (allSharedConfigsMap.isNotEmpty && allSharedConfigsMap is Map) {
         (allSharedConfigsMap as Map<String, dynamic>).forEach((listId, configData) {
           if (configData is Map) {
-            final config = SharedListConfig.fromJson(Map<String, dynamic>.from(configData));
+            // Ensure SharedListConfig.fromJson can handle if configData doesn't have an 'id' field,
+            // using listId from the map key.
+            final config = SharedListConfig.fromJson(Map<String, dynamic>.from(configData)..putIfAbsent('id', () => listId));
             if (config.authorizedUserIds[userId] == true || config.adminUserId == userId) {
               userSharedConfigs.add(config);
             }
           }
         });
       }
-      user.sharedListsConfigs = userSharedConfigs;
+      user?.sharedListsConfigs = userSharedConfigs; // Use null-safe operator
     } catch (e) {
       print("Error fetching shared list configs for user $userId: $e");
-      // Decide if user data should still be returned or if this is a critical failure
-      user.sharedListsConfigs = []; // Initialize as empty list on error
+      user?.sharedListsConfigs = [];
     }
 
-    if (user != null) {
-      return user;
+    // The user object should already be non-null if we reached this point after initial fetch.
+    // However, if the initial fetch failed, user would be null.
+    // The original logic `if (user != null) return user; else return null;` is fine.
+    return user;
     } else {
       return null;
     }
@@ -193,18 +182,14 @@ class FirebaseRepoInteractor {
     // otherwise, await them individually. For now, individual awaits.
     bool success = true;
     try {
-      // Save/Update the SharedListConfig
       await _firebaseRepo.saveData(
         "${kDBPathSharedListConfigs}/${configToSave.id}",
         configToSave.toJson(),
-        isFullPath: true, // Assuming saveData can take a full path
       );
 
-      // Save/Update the lookup entry
       await _firebaseRepo.saveData(
         "${kDBPathSharedLinkPaths}/${configToSave.shortLinkPath}",
-        {'list_id': configToSave.id}, // Store as a map
-        isFullPath: true, // Assuming saveData can take a full path
+        {'list_id': configToSave.id},
       );
       print("Successfully saved SharedListConfig and link path.");
     } catch (e) {
@@ -218,14 +203,14 @@ class FirebaseRepoInteractor {
     if (success && isNewShare) {
       print("Starting data migration for new share (id: ${configToSave.id})");
       try {
-        // A. Fetch user's existing TodoListItems
         final userPath = "$kDBPathUsers/${adminUserId}";
-        final userDataMap = await _firebaseRepo.getData("", userPath, isFullPath: true); // Assuming getData can take full path
+        final userDataMap = await _firebaseRepo.getDataFromFullPath(userPath);
 
         if (userDataMap.isNotEmpty) {
-          MyUser.User? user = MyUser.User.fromJson(Map<String, dynamic>.from(userDataMap));
-          if (user != null && user.todoListItems != null) {
-            final itemsToCopy = user.todoListItems!
+          // Pass adminUserId as idFromKey to ensure User object gets its ID
+          MyUser.User? user = MyUser.User.fromJson(Map<String, dynamic>.from(userDataMap), idFromKey: adminUserId);
+          if (user?.todoListItems != null) { // Null-safe access
+            final itemsToCopy = user!.todoListItems! // user is non-null here
                 .where((item) => item.category == categoryName)
                 .toList();
 
@@ -249,20 +234,18 @@ class FirebaseRepoInteractor {
                await _firebaseRepo.saveData(
                  "${kDBPathSharedTodos}/${configToSave.id}/$kDBPathSharedTodosItems",
                  sharedItemsMap,
-                 isFullPath: true,
                );
               print("Copied ${itemsToCopy.length} items to shared list.");
             } else {
               print("No items to copy for category '$categoryName'.");
             }
           } else {
-             print("User data or todoListItems is null, skipping item copy.");
+             print("User data or todoListItems is null for user $adminUserId, skipping item copy.");
           }
         } else {
           print("User data not found for admin $adminUserId, cannot copy items.");
         }
 
-        // C. Save metadata to /shared_todos/{config.id}/metadata/
         final metadata = {
           'adminUserId': adminUserId,
           'originalCategoryName': categoryName,
@@ -272,7 +255,6 @@ class FirebaseRepoInteractor {
         await _firebaseRepo.saveData(
           "${kDBPathSharedTodos}/${configToSave.id}/$kDBPathSharedTodosMetadata",
           metadata,
-          isFullPath: true,
         );
         print("Saved metadata for shared list.");
 
@@ -289,18 +271,16 @@ class FirebaseRepoInteractor {
   }
 
   Future<List<TodoListItem>> getTodosForSharedList(String listId) async {
-    final path = "${kDBPathSharedTodos}/$listId/$kDBPathSharedTodosItems";
-    final itemsMap = await _firebaseRepo.getData("", path, isFullPath: true);
+    final fullPath = "${kDBPathSharedTodos}/$listId/$kDBPathSharedTodosItems";
+    final itemsMap = await _firebaseRepo.getDataFromFullPath(fullPath);
 
-    if (itemsMap.isNotEmpty) {
-      // Assuming itemsMap is Map<String, dynamic> where each key is a todoId
-      // and value is the TodoListItem JSON.
-      return itemsMap.entries.map((entry) {
-        // It's good practice to ensure the value is a Map before attempting fromJson
+    if (itemsMap.isNotEmpty && itemsMap is Map) {
+       return (itemsMap as Map<String,dynamic>).entries.map((entry) {
         if (entry.value is Map) {
-          return TodoListItem.fromJson(Map<String, dynamic>.from(entry.value as Map));
+          // Pass entry.key as idFromKey
+          return TodoListItem.fromJson(Map<String, dynamic>.from(entry.value as Map), idFromKey: entry.key);
         }
-        return null; // Or handle error appropriately
+        return null;
       }).where((item) => item != null).cast<TodoListItem>().toList();
     }
     return [];
@@ -328,9 +308,8 @@ class FirebaseRepoInteractor {
 
     final path = "${kDBPathSharedTodos}/$listId/$kDBPathSharedTodosItems/$todoId";
     await _firebaseRepo.saveData(
-      path,
+      path, // path is already full path
       todo.toJson(),
-      isFullPath: true,
     );
   }
 
@@ -340,22 +319,18 @@ class FirebaseRepoInteractor {
     }
     final path = "${kDBPathSharedTodos}/$listId/$kDBPathSharedTodosItems/${todo.id}";
     await _firebaseRepo.saveData(
-      path,
+      path, // path is already full path
       todo.toJson(),
-      isFullPath: true,
     );
   }
 
   Future<void> deleteTodoFromSharedList(String listId, String todoId) async {
     final path = "${kDBPathSharedTodos}/$listId/$kDBPathSharedTodosItems/$todoId";
-    // Assuming saveData with null value deletes the data, or use a specific deleteData method
+    // Use null data with saveData to delete
     await _firebaseRepo.saveData(
-      path,
-      null, // Passing null as value to delete
-      isFullPath: true,
+      path, // path is already full path
+      null,
     );
-    // OR if _firebaseRepo has a specific delete method:
-    // await _firebaseRepo.deleteData(path, isFullPath: true);
   }
 
   Future<SharedListConfig?> joinSharedList(String shortLinkPath, String currentUserId) async {
@@ -371,10 +346,9 @@ class FirebaseRepoInteractor {
           await _firebaseRepo.saveData(
             "${kDBPathSharedListConfigs}/${config.id}",
             config.toJson(),
-            isFullPath: true,
           );
           print("Successfully updated config for user $currentUserId to join list ${config.id}");
-          return config; // Return the updated config
+          return config;
         } catch (e) {
           print("Error saving updated SharedListConfig for join: $e");
           // Depending on desired behavior, could return original config, or null, or rethrow
@@ -395,13 +369,11 @@ class FirebaseRepoInteractor {
     List<MyUser.User> userDetailsList = [];
     for (String userId in userIds) {
       final userPath = '$kDBPathUsers/$userId';
-      var userResult = await _firebaseRepo.getData("", userPath, isFullPath: true);
+      var userResult = await _firebaseRepo.getDataFromFullPath(userPath); // Use getDataFromFullPath
       if (userResult.isNotEmpty) {
-        // Ensure to pass only the user data map to fromJson, not the whole snapshot if getData returns more.
-        // Assuming userResult is already the Map<String, dynamic> for the user.
-        userDetailsList.add(MyUser.User.fromJson(Map<String, dynamic>.from(userResult)));
+        // Pass userId as idFromKey to ensure User object gets its ID
+        userDetailsList.add(MyUser.User.fromJson(Map<String, dynamic>.from(userResult), idFromKey: userId));
       } else {
-        // Handle case where a user's details might not be found - perhaps add a placeholder or log.
         print("User details not found for UID: $userId");
       }
     }
@@ -413,7 +385,6 @@ class FirebaseRepoInteractor {
       await _firebaseRepo.saveData(
         "${kDBPathSharedListConfigs}/${config.id}",
         config.toJson(),
-        isFullPath: true,
       );
       print("Successfully updated SharedListConfig id: ${config.id}");
       return true;

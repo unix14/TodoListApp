@@ -4,19 +4,17 @@ import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart'
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/managers/app_initializer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:flutter_example/mixin/app_locale.dart'; // Added for AppLocale.EN/HE
 import 'package:home_widget/home_widget.dart';
-import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart'; // For accessing prefs
-import 'package:flutter_example/models/todo_list_item.dart'; // For TodoListItem
-import 'dart:convert'; // For jsonEncode/Decode
-import 'package:flutter_example/common/encryption_helper.dart'; // For EncryptionHelper
-// import 'package:flutter_example/common/globals.dart'; // For kAllListSavedPrefs, kCategoriesPref
-// It seems kCategoriesPref is not a global const, but categories are saved with "categories" key.
-// Let's define it or use the literal string.
-const String kCategoriesPrefKey = "categories"; // As used in EncryptedSharedPreferencesHelper.loadCategories
-
-
 import 'screens/homepage.dart';
-import 'screens/onboarding.dart';
+import 'screens/onboarding.dart'; // Moved up
+import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart';
+import 'package:flutter_example/models/todo_list_item.dart';
+import 'dart:convert';
+import 'package:flutter_example/common/encryption_helper.dart';
+
+// const String kCategoriesPrefKey = "categories"; // This seems to be defined locally or not used here. Keeping it commented.
+
 
 // Must be top-level or static function
 @pragma('vm:entry-point')
@@ -53,8 +51,8 @@ Future<void> backgroundCallback(Uri? uri) async {
 }
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure bindings are initialized
-
+  WidgetsFlutterBinding.ensureInitialized();
+  await FlutterLocalization.instance.ensureInitialized(); // Added ensureInitialized
   // Initialize encryption helper
   await EncryptionHelper.initialize();
 
@@ -82,9 +80,22 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
+    super.initState(); // Call super.initState() first
+
+    FlutterLocalization.instance.init(
+      mapLocales: [
+        const MapLocale('en', AppLocale.EN),
+        const MapLocale('he', AppLocale.HE),
+      ],
+      initLanguageCode: 'en', // Set initial language
+    );
+
     FlutterLocalization.instance.onTranslatedLanguage = _onTranslatedLanguage;
-    _currentLocale = Locale(currentLocaleStr);
-    super.initState();
+    // _currentLocale can be initialized from FlutterLocalization.instance.currentLocale after init
+    // or rely on the onTranslatedLanguage callback to set it.
+    // For simplicity, let's ensure it's set from the instance after init,
+    // though onTranslatedLanguage should also fire.
+    _currentLocale = FlutterLocalization.instance.currentLocale ?? Locale(currentLocaleStr);
   }
 
   // the setState function here is a must to add
