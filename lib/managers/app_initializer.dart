@@ -78,14 +78,16 @@ class AppInitializer {
   }
 
   static Future<void> initLanguages() async {
+    currentLocaleStr = await EncryptedSharedPreferencesHelper
+        .getString(kCurrentLocaleSavedPrefs) ?? currentLocaleStr;
+
+    // Initialize FlutterLocalization
     await FlutterLocalization.instance.init(
       mapLocales: [
         const MapLocale('en', AppLocale.EN),
         const MapLocale('he', AppLocale.HE),
       ],
-      initLanguageCode: 'en',
+      initLanguageCode: currentLocaleStr,
     );
-    currentLocaleStr = await EncryptedSharedPreferencesHelper
-        .getString(kCurrentLocaleSavedPrefs) ?? currentLocaleStr;
   }
 }

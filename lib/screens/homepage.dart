@@ -265,6 +265,10 @@ class _HomePageState extends State<HomePage>
     _loadingData = loadList();
     if (false) initAds();
     initializeInstallPrompt();
+    // Automatically show the install prompt if available
+    if (isInstallable()) {
+      showInstallPrompt();
+    }
     // _initializeTabs will be called from didChangeDependencies
     ServicesBinding.instance.keyboard.addHandler(_onKey);
   }
@@ -628,7 +632,7 @@ class _HomePageState extends State<HomePage>
                 onPressed: () {
                   _onAddItem();
                 },
-                tooltip: AppLocale.deleteAllSubtitle.getString(context),
+                tooltip: AppLocale.add.getString(context),
                 child: const Icon(Icons.add),
               ),
             )

@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_example/common/consts.dart';
-import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart';
+import 'package:flutter_example/common/encryption_helper.dart'; // For EncryptionHelper
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/managers/app_initializer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:home_widget/home_widget.dart';
-import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart'; // For accessing prefs
-import 'package:flutter_example/models/todo_list_item.dart'; // For TodoListItem
-import 'dart:convert'; // For jsonEncode/Decode
-import 'package:flutter_example/common/encryption_helper.dart'; // For EncryptionHelper
+
 import 'screens/homepage.dart';
 import 'screens/onboarding.dart';
 // import 'package:flutter_example/common/globals.dart'; // For kAllListSavedPrefs, kCategoriesPref

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:flutter_example/mixin/app_locale.dart';
 
 class DialogHelper {
   static Future<bool?> showAlertDialog(BuildContext context, String title, String message, // Renamed 'text' to 'message' for clarity

@@ -127,6 +127,18 @@ mixin AppLocale {
   static const String settingsAnonDeleteDialogMessage = 'settingsAnonDeleteDialogMessage';
 
 
+  static const String loginFailedTitle = 'loginFailedTitle';
+  static const String signupFailedTitle = 'signupFailedTitle';
+  static const String authNoUserFound = 'authNoUserFound';
+  static const String authWrongPassword = 'authWrongPassword';
+  static const String authWeakPassword = 'authWeakPassword';
+  static const String authEmailAlreadyInUse = 'authEmailAlreadyInUse';
+  static const String authUnknownError = 'authUnknownError';
+  static const String copiedToClipboard = 'copiedToClipboard';
+  static const String editTodoHint = 'editTodoHint';
+  static const String emptyTodoTitle = 'emptyTodoTitle';
+  static const String emptyTodoMessage = 'emptyTodoMessage';
+
   static const Map<String, dynamic> EN = {
     AppLocale.title: 'Todo List',
     AppLocale.lang: 'Language',
