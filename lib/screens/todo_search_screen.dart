@@ -130,7 +130,7 @@ class _TodoSearchScreenState extends State<TodoSearchScreen> {
           ],
         ),
         body: _searchQuery.isEmpty && _searchResults.isEmpty
-          ? Center(child: Text(AppLocale.enterSearchQuery.getString(context))) // Placeholder, needs new AppLocale key
+          ? Center(child: Text(AppLocale.enterSearchQueryPrompt.getString(context))) // Placeholder, needs new AppLocale key
           : _searchResults.isEmpty && _searchQuery.isNotEmpty
             ? Center(child: Text(AppLocale.noResultsFound.getString(context).replaceAll('{query}', _searchQuery)))
             : Column( // Basic structure for count + list
