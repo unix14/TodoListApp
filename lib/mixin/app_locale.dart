@@ -356,9 +356,6 @@ mixin AppLocale {
     AppLocale.tasksFoundCount: "{count} משימות נמצאו", // Added
     AppLocale.tasksCountSingular: "משימה אחת",
     AppLocale.tasksCountZero: "אין משימות",
-    AppLocale.emptyTodoDialogTitle: "משימה ריקה",
-    AppLocale.emptyTodoDialogMessage: "אנא כתוב משימה",
-    AppLocale.editTaskHintText: 'ערוך משימה...',
     AppLocale.timeFewSecondsAgo: 'לפני מספר שניות', // Placeholder
     AppLocale.timeFewMinutesAgo: 'לפני מספר דקות', // Placeholder
     AppLocale.timeMinuteAgo: 'לפני דקה', // Placeholder for singular minute, assuming {minutes} will be 1
@@ -397,14 +394,6 @@ mixin AppLocale {
     AppLocale.settingsAnonImportCancelled: "ייבוא הנתונים המקומיים בוטל.",
     AppLocale.settingsAnonDeleteDialogTitle: "מחיקת נתונים מקומיים",
     AppLocale.settingsAnonDeleteDialogMessage: "פעולה זו תמחק לצמיתות את כל הנתונים המאוחסנים מקומית. לא ניתן לבטל פעולה זו. האם אתה בטוח?",
-    AppLocale.timeDaysAgo: 'לפני {days} ימים',
-    AppLocale.timeFewMinutesAgo: 'לפני מספר דקות',
-    AppLocale.timeFewSecondsAgo: 'לפני מספר שניות',
-    AppLocale.timeHourAgo: 'לפני שעה',
-    AppLocale.timeHoursAgo: 'לפני {hours} שעות',
-    AppLocale.timeMinuteAgo: 'לפני דקה',
-    AppLocale.timeMinutesAgo: 'לפני {minutes} דקות',
-    AppLocale.timeYesterday: 'אתמול',
     AppLocale.uncategorizedResults: "תוצאות ללא קטגוריה",
   };
 }
