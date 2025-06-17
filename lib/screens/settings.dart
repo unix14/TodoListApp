@@ -47,7 +47,7 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   @override
   void initState() {
-    Future.delayed(const Duration(seconds: 1), () async {
+    Future.delayed(const Duration(milliseconds: 5), () async {
       var returnedVersion = await context.getAppVersion();
       setState(() {
         version = returnedVersion;
@@ -129,7 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           simpleDivider,
           ListTile(
             title: Text(AppLocale.version.getString(context)),
-            subtitle: Text(version), // todo
+            subtitle: Text(version),
             onTap: () {
               context.copyToClipboard(version);
             },
