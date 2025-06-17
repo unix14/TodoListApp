@@ -1,15 +1,65 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_example/common/consts.dart';
-import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart';
+import 'package:flutter_example/common/encryption_helper.dart'; // For EncryptionHelper
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/managers/app_initializer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:flutter_example/mixin/app_locale.dart';
+import 'package:home_widget/home_widget.dart';
 
 import 'screens/homepage.dart';
 import 'screens/onboarding.dart';
+// import 'package:flutter_example/common/globals.dart'; // For kAllListSavedPrefs, kCategoriesPref
+// It seems kCategoriesPref is not a global const, but categories are saved with "categories" key.
+// Let's define it or use the literal string.
+const String kCategoriesPrefKey = "categories"; // As used in EncryptedSharedPreferencesHelper.loadCategories
 
-void main() {
+// Must be top-level or static function
+@pragma('vm:entry-point')
+Future<void> backgroundCallback(Uri? uri) async {
+  print('[HomeWidget] backgroundCallback triggered with uri: $uri');
+  // Initialize Flutter specific services
+  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize encryption if you need to decrypt/encrypt data
+  await EncryptionHelper.initialize();
+  // Initialize SharedPreferences
+  // Note: EncryptedSharedPreferencesHelper itself might need initialization if it's not static or uses a plugin that needs it.
+  // For this example, assuming direct SharedPreferences or that EncryptedSharedPreferencesHelper is safe to call.
+
+  if (uri?.host == 'updatecounter') { // Example action, not used in our current widget
+    // ...
+  } else if (uri?.host == 'widgetclick') {
+    print('[HomeWidget] Clicked on widget');
+    // This area could be used if the widget itself sends data back via URI.
+    // For now, our widget launches MainActivity directly.
+  }
+
+  // This callback is primarily for updating widget data when requested by OS or other triggers.
+  // The current widget reads directly from SharedPreferences.
+  // So, the main app's responsibility is to ensure SharedPreferences is up-to-date.
+  // This callback could be used to *force* an update of SharedPreferences if needed from a background context,
+  // but typically, the widget updates itself by re-reading when notified.
+
+  // For now, this callback doesn't need to do much more than log,
+  // as the widget's RemoteViewsService (`TodoWidgetItemFactory`) fetches data directly from SharedPreferences.
+  // If we needed to *push* data from Flutter to a live widget instance without it re-fetching,
+  // we'd use HomeWidget.saveWidgetData and read it in Kotlin.
+  // But our current design is widget pull from SharedPreferences.
+  print('[HomeWidget] backgroundCallback completed.');
+}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure bindings are initialized
+
+  try {
+    // Initialize encryption helper
+    await EncryptionHelper.initialize();
+
+    // Initialize home_widget background callback
+    HomeWidget.registerInteractivityCallback(backgroundCallback);
+  } catch (e) {
+    
+  }
+
+  // Original AppInitializer logic
   AppInitializer.initialize(andThen: (isAlreadyEnteredTodos) {
     runApp(MyApp(isAlreadyEnteredTodos: isAlreadyEnteredTodos));
   });

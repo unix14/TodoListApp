@@ -89,4 +89,27 @@ class Authenticator {
   static Stream<User?> get onAuthStateChanged {
     return _auth.authStateChanges();
   }
+
+  static Future<void> deleteCurrentUserAccount() async {
+    User? user = _auth.currentUser;
+
+    if (user == null) {
+      print('No user is currently signed in.');
+      return;
+    }
+
+    try {
+      await user.delete();
+      print('User account deleted successfully.');
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        print('This operation is sensitive and requires recent authentication. Please sign in again to delete your account.');
+        // In a real app, you would trigger a re-authentication flow here.
+      } else {
+        print('An error occurred while deleting the user account: ${e.message}');
+      }
+    } catch (e) {
+      print('An unexpected error occurred: $e');
+    }
+  }
 }

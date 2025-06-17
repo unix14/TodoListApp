@@ -8,8 +8,9 @@ class TodoListItem {
 
   DateTime dateTime = DateTime.now();
   bool isArchived = false;
+  String? category;
 
-  TodoListItem(this.text);
+  TodoListItem(this.text, {this.category});
 
   bool isEligibleForArchiving() {
     final now = DateTime.now();
@@ -25,6 +26,7 @@ class TodoListItem {
       'isChecked': isChecked,
       'dateTime': dateTime.toIso8601String(),
       'isArchived': isArchived,
+      'category': category,
     };
   }
 
@@ -45,7 +47,8 @@ class TodoListItem {
     return TodoListItem(decryptedText)
       ..isChecked = json['isChecked'] as bool? ?? false
       ..dateTime = DateTime.parse(json['dateTime'] as String? ?? '')
-      ..isArchived = json['isArchived'] as bool? ?? false;
+      ..isArchived = json['isArchived'] as bool? ?? false
+      ..category = json['category'] as String?;
   }
 
 }
