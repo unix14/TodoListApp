@@ -49,7 +49,7 @@ mixin AppLocale {
   static const String motivationalSentence3 = 'motivationalSentence3';
   static const String motivationalSentence4 = 'motivationalSentence4';
   static const String motivationalSentence5 = 'motivationalSentence5';
-  // moreResults removed as per redundancy check
+  static const String moreResults = 'moreResults'; // Re-added
   static const String moveToCategoryMenuItem = 'moveToCategoryMenuItem';
   static const String name = "name";
   static const String noResultsFound = 'noResultsFound';
@@ -64,7 +64,7 @@ mixin AppLocale {
   static const String renameButtonText = 'renameButtonText';
   static const String renameCategoryDialogTitle = 'renameCategoryDialogTitle';
   static const String renameCategoryMenuButton = 'renameCategoryMenuButton';
-  static const String resultsFromAll = 'resultsFromAll';
+  // resultsFromAll removed as per redundancy check
   static const String resultsInCategory = 'resultsInCategory';
   static const String searchTodosHint = 'searchTodosHint';
   static const String searchTodosTooltip = 'searchTodosTooltip';
@@ -168,7 +168,7 @@ mixin AppLocale {
     AppLocale.motivationalSentence3: "Time to be productive!",
     AppLocale.motivationalSentence4: "Add a task and feel the accomplishment.",
     AppLocale.motivationalSentence5: "An empty list is a world of possibilities!",
-    // AppLocale.moreResults: "More results", // Removed
+    AppLocale.moreResults: "More results", // Re-added
     AppLocale.moveToCategoryMenuItem: 'Move to category',
     AppLocale.noResultsFound: "No results found for '{query}'",
     // AppLocale.noTasksAvailableDialogMessage: "There are no tasks available to pick from.", // Already included above
@@ -179,7 +179,7 @@ mixin AppLocale {
     AppLocale.renameButtonText: 'Rename',
     AppLocale.renameCategoryDialogTitle: 'Rename Category',
     AppLocale.renameCategoryMenuButton: "Rename Current Category",
-    AppLocale.resultsFromAll: "Results from All",
+    // AppLocale.resultsFromAll: "Results from All", // Removed
     AppLocale.resultsInCategory: "Results in {categoryName}",
     AppLocale.searchTodosHint: "Search Todos...",
     AppLocale.searchTodosTooltip: "Search Todos",
@@ -272,7 +272,7 @@ mixin AppLocale {
     AppLocale.motivationalSentence3: "רשימה ריקה היא בד ציור ריק. צייר את יצירת המופת שלך בפרודוקטיביות!",
     AppLocale.motivationalSentence4: "אל תסתכל על השעון; עשה מה שהוא עושה. המשך להתקדם! הוסף משימה.",
     AppLocale.motivationalSentence5: "המסע של אלף מייל מתחיל בצעד אחד... או במשימה אחת!",
-    // AppLocale.moreResults: "תוצאות נוספות", // Removed
+    AppLocale.moreResults: "משימות נוספות", // Re-added with user-specified translation
     AppLocale.moveToCategoryMenuItem: 'העבר לקטגוריה',
     AppLocale.noResultsFound: "לא נמצאו תוצאות עבור '{query}'",
     // AppLocale.noTasksAvailableDialogMessage: "אין כרגע משימות שעלייך לבצע", // Already included above
@@ -283,7 +283,7 @@ mixin AppLocale {
     AppLocale.renameButtonText: 'שנה שם',
     AppLocale.renameCategoryDialogTitle: 'שנה שם קטגוריה',
     AppLocale.renameCategoryMenuButton: "שנה שם קטגוריה נוכחית",
-    AppLocale.resultsFromAll: "תוצאות מהכל",
+    // AppLocale.resultsFromAll: "תוצאות מהכל", // Removed
     AppLocale.resultsInCategory: "תוצאות בקטגוריה {categoryName}",
     AppLocale.searchTodosHint: "חפש משימות...",
     AppLocale.searchTodosTooltip: "חפש משימות",
