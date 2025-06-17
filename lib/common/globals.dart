@@ -17,4 +17,4 @@ String currentLocaleStr = "en";
 // Used in ShareListDialog and potentially other places where full share links are constructed.
 // Example: https://yourdomain.web.app/share (no trailing slash)
 // or just https://yourdomain.web.app if paths are like /share/path
-static const String appBaseUrl = "https://todo-later.web.app";
+const String appBaseUrl = "https://todo-later.web.app";

@@ -1,4 +1,4 @@
-import 'package:encrypt_shared_preferences/provider.dart';
+import 'package:encrypt_shared_preferences/encrypt_shared_preferences.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:encrypt/encrypt.dart';

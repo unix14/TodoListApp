@@ -7,12 +7,11 @@ class FirebaseRealtimeDatabaseRepository {
   static FirebaseRealtimeDatabaseRepository get instance => _testInstance ?? _instance;
   static final FirebaseRealtimeDatabaseRepository _instance = FirebaseRealtimeDatabaseRepository.internal();
 
-  FirebaseRealtimeDatabaseRepository.internal(); // Made constructor internal
-  FirebaseRealtimeDatabaseRepository._() : this.internal(); // Added for original call, redirects to internal. Or remove if _() was a mistake.
+  FirebaseRealtimeDatabaseRepository.internal();
+  // FirebaseRealtimeDatabaseRepository._() : this.internal(); // Removed redundant constructor if internal() is the main one.
 
-  Future<dynamic> saveData(String path, Map<String, dynamic>? data) async { // Made data nullable for deletion
+  // Path is now assumed to be the full path where data should be saved or deleted.
   Future<dynamic> saveData(String fullPath, Map<String, dynamic>? dataToSave) async {
-    // Path is now assumed to be the full path where data should be saved or deleted.
     DatabaseReference reference = FirebaseDatabase.instance.ref().child(fullPath);
 
     if (dataToSave == null) { // If data is null, treat as a delete operation

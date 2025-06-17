@@ -52,7 +52,7 @@ Future<void> backgroundCallback(Uri? uri) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await FlutterLocalization.instance.ensureInitialized(); // Added ensureInitialized
+  // await FlutterLocalization.instance.ensureInitialized(); // Removed as per instruction
   // Initialize encryption helper
   await EncryptionHelper.initialize();
 
