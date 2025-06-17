@@ -6,12 +6,25 @@ import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart'
 import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:flutter_example/auth/authenticator.dart'; // Added for account deletion
+import 'package:flutter_example/repo/firebase_realtime_database_repository.dart';
 import 'package:flutter_example/screens/homepage.dart';
 import 'package:flutter_example/screens/onboarding.dart';
+import 'package:flutter_example/helpers/settings_logic_helper.dart'; // Import the helper
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:convert';
+// Conditional import for dart:html, aliased as html
+// This specific conditional import syntax might need adjustment based on project setup for stubs,
+// but for direct use with kIsWeb, a direct import is often used and guarded.
+// For this exercise, we'll assume a direct import and guard with kIsWeb.
+import 'dart:html' as html;
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_example/models/user.dart'; // Correct import for User model
+
 
 import '../common/consts.dart';
-import '../common/globals.dart';
+import '../common/globals.dart'; // myCurrentUser is of type User? from here
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -30,6 +43,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen>
     with PWAInstallerMixin {
   String version = "1.0.0";
+  final SettingsLogicHelper _settingsHelper = SettingsLogicHelper(); // Instantiate the helper
 
   @override
   void initState() {
@@ -129,19 +143,54 @@ class _SettingsScreenState extends State<SettingsScreen>
               context.showSnackBar(AppLocale.appIsInstalled.getString(context));
             },
           ),
+          simpleDivider,
+          ListTile(
+            title: Text(AppLocale.settingsExportDataTitle.getString(context)),
+            onTap: () {
+              _settingsHelper.exportData(context);
+            },
+          ),
+          simpleDivider,
+          ListTile(
+            title: Text(AppLocale.settingsImportDataTitle.getString(context)),
+            onTap: () async { // Make onTap async
+              bool importSuccess = await _settingsHelper.importData(context, (User? importedUserData) {
+                setState(() {
+                  if (importedUserData != null) {
+                    // Authenticated import: Update screen's local myCurrentUser
+                    myCurrentUser = importedUserData;
+                  } else {
+                    // Anonymous import: Local shared prefs changed.
+                    // Global myCurrentUserGlobal would have been nulled out or set to guest by helper.
+                    // Reflect this in the local state for UI.
+                    myCurrentUser = null;
+                  }
+                });
+              }, () => setState(() {})); // General UI refresh callback
+
+              if (importSuccess && mounted) { // Check if mounted before using context for Navigator
+                Navigator.pop(context, true); // Pop with true to signal HomePage
+              }
+            },
+          ),
           const Divider(color: Color(0x56ff0000)),
           ListTile(
             title: Text(
               AppLocale.deleteAll.getString(context),
               style: redTextsStyle,
             ),
-            // todo make it possible via archive screen
             subtitle: Text(
               AppLocale.deleteAllSubtitle.getString(context),
               style: redSubTextsStyle,
             ),
             onTap: () {
-              deleteAll();
+              _settingsHelper.deleteAllDataAndAccount(context, () {
+                if (!mounted) return;
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+                  (Route<dynamic> route) => false,
+                );
+              });
             },
           ),
           // ListTile( // todo think about this
@@ -172,40 +221,13 @@ class _SettingsScreenState extends State<SettingsScreen>
     await EncryptedSharedPreferencesHelper.setString(
         kCurrentLocaleSavedPrefs, currentLocaleStr);
     FlutterLocalization.instance.translate(currentLocaleStr);
-    Navigator.pop(context);
-    Navigator.pop(context);
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));
+    Navigator.pop(context); // Pop the language selection dialog
+    // No, we should not pop settings screen, but refresh it.
+    // However, the original code popped twice and pushed replacement.
+    // For now, to minimize behavioral change beyond refactoring:
+    Navigator.pop(context); // Pop the settings screen itself
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage())); // Then push homepage
   }
 
-  void deleteAll() async {
-    DialogHelper.showAlertDialog(context, AppLocale.areUsure.getString(context),
-        AppLocale.deleteAllSubtext.getString(context),
-        () async {
-      await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, "");
-      // Clear custom categories
-      await EncryptedSharedPreferencesHelper.saveCategories([]);
-      print("Delete all list and categories from settings");
-
-      // update realtime DB if logged in
-      if (isLoggedIn && currentUser?.uid.isNotEmpty == true) {
-        myCurrentUser ??=
-            await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
-        myCurrentUser!.todoListItems = [];
-
-        var didSuccess = await FirebaseRepoInteractor.instance
-            .updateUserData(myCurrentUser!);
-        if (didSuccess == true) {
-          print("success save to DB");
-        }
-      }
-      Navigator.of(context).pop(); // dismiss DialogHelper's dialog
-      // Pop SettingsScreen itself with a result indicating data changed
-      Navigator.of(context).pop(true);
-    }, () {
-      // Cancel
-      Navigator.of(context).pop(); // dismiss DialogHelper's dialog
-      // Pop SettingsScreen itself with a result indicating no change or cancellation
-      Navigator.of(context).pop(false);
-    });
-  }
+  // The deleteAll method is now removed from _SettingsScreenState as its logic is in SettingsLogicHelper
 }

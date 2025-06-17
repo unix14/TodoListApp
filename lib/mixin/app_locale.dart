@@ -96,6 +96,37 @@ mixin AppLocale {
   static const String unknown = "unknown";
   static const String version = "version";
 
+  // Settings Screen - Import/Export & Delete Account
+  static const String settingsExportDataTitle = 'settingsExportDataTitle';
+  static const String settingsExportErrorNotLoggedIn = 'settingsExportErrorNotLoggedIn';
+  static const String settingsExportErrorFetchFailed = 'settingsExportErrorFetchFailed';
+  static const String settingsExportErrorGeneral = 'settingsExportErrorGeneral';
+  static const String settingsImportDataTitle = 'settingsImportDataTitle';
+  static const String settingsImportFileParseSuccess = 'settingsImportFileParseSuccess';
+  static const String settingsImportErrorNoFile = 'settingsImportErrorNoFile';
+  static const String settingsImportErrorMobileNotFullyImplemented = 'settingsImportErrorMobileNotFullyImplemented';
+  static const String settingsImportConfirmDialogTitle = 'settingsImportConfirmDialogTitle';
+  static const String settingsImportConfirmDialogMessage = 'settingsImportConfirmDialogMessage';
+  static const String settingsImportErrorMismatchUser = 'settingsImportErrorMismatchUser'; // Will take {email}
+  static const String settingsImportSuccess = 'settingsImportSuccess';
+  static const String settingsImportErrorSaveFailed = 'settingsImportErrorSaveFailed';
+  static const String settingsImportCancelled = 'settingsImportCancelled';
+  static const String settingsDeleteAccountDialogMessage = 'settingsDeleteAccountDialogMessage'; // New message for the enhanced delete
+  static const String settingsDeleteErrorAuthFailed = 'settingsDeleteErrorAuthFailed';
+  static const String settingsDeleteErrorCloudDataFailed = 'settingsDeleteErrorCloudDataFailed';
+
+  // Settings Screen - Anonymous User Flows
+  static const String settingsAnonExportTitle = 'settingsAnonExportTitle';
+  static const String settingsAnonExportSuccess = 'settingsAnonExportSuccess';
+  static const String settingsAnonImportTitle = 'settingsAnonImportTitle';
+  static const String settingsAnonImportConfirmMessage = 'settingsAnonImportConfirmMessage';
+  static const String settingsAnonDeleteError = 'settingsAnonDeleteError';
+  static const String settingsAnonImportSuccess = 'settingsAnonImportSuccess';
+  static const String settingsAnonImportCancelled = 'settingsAnonImportCancelled';
+  static const String settingsAnonDeleteDialogTitle = 'settingsAnonDeleteDialogTitle';
+  static const String settingsAnonDeleteDialogMessage = 'settingsAnonDeleteDialogMessage';
+
+
   static const Map<String, dynamic> EN = {
     AppLocale.title: 'Todo List',
     AppLocale.lang: 'Language',
@@ -198,6 +229,36 @@ mixin AppLocale {
     AppLocale.timeMinuteAgo: '{minutes} minute ago',
     AppLocale.timeMinutesAgo: '{minutes} minutes ago',
     AppLocale.timeYesterday: 'yesterday',
+
+    // Settings Screen - Import/Export & Delete Account
+    AppLocale.settingsExportDataTitle: "Export Data",
+    AppLocale.settingsExportErrorNotLoggedIn: "User not logged in. Please log in to export.",
+    AppLocale.settingsExportErrorFetchFailed: "Failed to fetch user data.",
+    AppLocale.settingsExportErrorGeneral: "An error occurred while exporting data.",
+    AppLocale.settingsImportDataTitle: "Import Data",
+    AppLocale.settingsImportFileParseSuccess: "File parsed. Ready for import.",
+    AppLocale.settingsImportErrorNoFile: "No file selected or error during file picking.",
+    AppLocale.settingsImportErrorMobileNotFullyImplemented: "File selected. Full import for mobile not yet implemented.",
+    AppLocale.settingsImportConfirmDialogTitle: "Confirm Import",
+    AppLocale.settingsImportConfirmDialogMessage: "This will overwrite your current cloud data and cannot be undone. Proceed?",
+    AppLocale.settingsImportErrorMismatchUser: "Imported data is for user {email}. Current user is different. Aborting.",
+    AppLocale.settingsImportSuccess: "Data imported successfully.",
+    AppLocale.settingsImportErrorSaveFailed: "Failed to save imported data to the cloud.",
+    AppLocale.settingsImportCancelled: "Import cancelled.",
+    AppLocale.settingsDeleteAccountDialogMessage: "This permanently deletes all your data AND your account. This action cannot be undone. Are you sure?",
+    AppLocale.settingsDeleteErrorAuthFailed: "Failed to delete account. You may need to log out and log back in, then try again.",
+    AppLocale.settingsDeleteErrorCloudDataFailed: "Account deleted, but failed to clear all cloud data. Please contact support.",
+
+    // Settings Screen - Anonymous User Flows
+    AppLocale.settingsAnonExportTitle: "Export Local Data",
+    AppLocale.settingsAnonExportSuccess: "Local data exported.",
+    AppLocale.settingsAnonImportTitle: "Import Local Data",
+    AppLocale.settingsAnonImportConfirmMessage: "This will overwrite your current local data. This action cannot be undone. Proceed?",
+    AppLocale.settingsAnonImportSuccess: "Local data imported successfully.",
+    AppLocale.settingsAnonDeleteError: "Local data import faild, please try again later.",
+    AppLocale.settingsAnonImportCancelled: "Local data import cancelled.",
+    AppLocale.settingsAnonDeleteDialogTitle: "Delete Local Data",
+    AppLocale.settingsAnonDeleteDialogMessage: "This will permanently delete all your locally stored data. This cannot be undone. Are you sure?",
     AppLocale.uncategorizedResults: "Results in Uncategorized",
   };
 
@@ -295,6 +356,47 @@ mixin AppLocale {
     AppLocale.tasksFoundCount: "{count} משימות נמצאו", // Added
     AppLocale.tasksCountSingular: "משימה אחת",
     AppLocale.tasksCountZero: "אין משימות",
+    AppLocale.emptyTodoDialogTitle: "משימה ריקה",
+    AppLocale.emptyTodoDialogMessage: "אנא כתוב משימה",
+    AppLocale.editTaskHintText: 'ערוך משימה...',
+    AppLocale.timeFewSecondsAgo: 'לפני מספר שניות', // Placeholder
+    AppLocale.timeFewMinutesAgo: 'לפני מספר דקות', // Placeholder
+    AppLocale.timeMinuteAgo: 'לפני דקה', // Placeholder for singular minute, assuming {minutes} will be 1
+    AppLocale.timeMinutesAgo: 'לפני {minutes} דקות', // Placeholder
+    AppLocale.timeHourAgo: 'לפני שעה',   // Placeholder for singular hour, assuming {hours} will be 1
+    AppLocale.timeHoursAgo: 'לפני {hours} שעות',   // Placeholder
+    AppLocale.timeYesterday: 'אתמול',      // Placeholder
+    AppLocale.timeDaysAgo: 'לפני {days} ימים',     // Placeholder
+
+    // Settings Screen - Import/Export & Delete Account
+    AppLocale.settingsExportDataTitle: "ייצוא נתונים",
+    AppLocale.settingsExportErrorNotLoggedIn: "המשתמש אינו מחובר. אנא התחבר כדי לייצא.",
+    AppLocale.settingsExportErrorFetchFailed: "נכשל בטעינת נתוני משתמש.",
+    AppLocale.settingsExportErrorGeneral: "אירעה שגיאה במהלך ייצוא הנתונים.",
+    AppLocale.settingsImportDataTitle: "ייבוא נתונים",
+    AppLocale.settingsImportFileParseSuccess: "הקובץ עבר ניתוח. מוכן לייבוא.",
+    AppLocale.settingsImportErrorNoFile: "לא נבחר קובץ או שאירעה שגיאה בבחירת הקובץ.",
+    AppLocale.settingsImportErrorMobileNotFullyImplemented: "הקובץ נבחר. ייבוא מלא למובייל עדיין לא מיושם.",
+    AppLocale.settingsImportConfirmDialogTitle: "אישור ייבוא",
+    AppLocale.settingsImportConfirmDialogMessage: "פעולה זו תחליף את נתוני הענן הנוכחיים שלך ולא ניתן לבטלה. להמשיך?",
+    AppLocale.settingsImportErrorMismatchUser: "הנתונים המיובאים הם עבור משתמש {email}. המשתמש הנוכחי שונה. הייבוא מבוטל.",
+    AppLocale.settingsImportSuccess: "הנתונים יובאו בהצלחה.",
+    AppLocale.settingsImportErrorSaveFailed: "נכשל בשמירת הנתונים המיובאים לענן.",
+    AppLocale.settingsImportCancelled: "הייבוא בוטל.",
+    AppLocale.settingsDeleteAccountDialogMessage: "פעולה זו מוחקת לצמיתות את כל הנתונים שלך ואת חשבונך. לא ניתן לבטל פעולה זו. האם אתה בטוח?",
+    AppLocale.settingsDeleteErrorAuthFailed: "נכשל במחיקת החשבון. ייתכן שתצטרך להתנתק ולהתחבר מחדש, ואז לנסות שוב.",
+    AppLocale.settingsDeleteErrorCloudDataFailed: "החשבון נמחק, אך נכשל בניקוי כל נתוני הענן. אנא פנה לתמיכה.",
+
+    // Settings Screen - Anonymous User Flows
+    AppLocale.settingsAnonExportTitle: "ייצוא נתונים מקומיים",
+    AppLocale.settingsAnonExportSuccess: "הנתונים המקומיים יוצאו.",
+    AppLocale.settingsAnonImportTitle: "ייבוא נתונים מקומיים",
+    AppLocale.settingsAnonImportConfirmMessage: "פעולה זו תחליף את הנתונים המקומיים הנוכחיים שלך. לא ניתן לבטל פעולה זו. להמשיך?",
+    AppLocale.settingsAnonImportSuccess: "הנתונים המקומיים יובאו בהצלחה.",
+    AppLocale.settingsAnonDeleteError: "ייבוא הנתונים המקומיים נכשל, אנא נסה שנית מאוחר יותר.",
+    AppLocale.settingsAnonImportCancelled: "ייבוא הנתונים המקומיים בוטל.",
+    AppLocale.settingsAnonDeleteDialogTitle: "מחיקת נתונים מקומיים",
+    AppLocale.settingsAnonDeleteDialogMessage: "פעולה זו תמחק לצמיתות את כל הנתונים המאוחסנים מקומית. לא ניתן לבטל פעולה זו. האם אתה בטוח?",
     AppLocale.timeDaysAgo: 'לפני {days} ימים',
     AppLocale.timeFewMinutesAgo: 'לפני מספר דקות',
     AppLocale.timeFewSecondsAgo: 'לפני מספר שניות',

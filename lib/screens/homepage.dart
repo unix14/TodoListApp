@@ -16,14 +16,12 @@ import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
-// import 'package:sum_todo/generated/l10n.dart'; // Removed S class import
 import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
 // import 'package:flutter_example/screens/todo_search_screen.dart'; // Removed as file is deleted
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-// import 'dart:html' as html; // Removed as PWAInstallerMixin now handles its own web specifics
 import 'package:home_widget/home_widget.dart';
 
 import 'onboarding.dart';
