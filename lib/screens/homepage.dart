@@ -17,6 +17,7 @@ import 'package:flutter_example/repo/firebase_repo_interactor.dart';
 // import 'package:sum_todo/generated/l10n.dart'; // Removed S class import
 import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
+import 'package:flutter_example/screens/todo_search_screen.dart';
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -1447,7 +1448,8 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  void _handleSearch() {
+  // Renamed existing method to avoid conflict
+  void _toggleSearchUI() {
     setState(() {
       _isSearching = !_isSearching;
       if (_isSearching) {
@@ -1462,7 +1464,30 @@ class _HomePageState extends State<HomePage>
       }
     });
     _performSearch(_searchQuery); // Call perform search even when exiting to potentially clear/reset list
-    debugPrint("Search button tapped! _isSearching is now $_isSearching");
+    // Keep a distinct debug print for the original functionality if needed for testing
+    debugPrint("Toggle Search UI: _isSearching is now $_isSearching");
+  }
+
+  // New method as per request
+  void _handleSearch() {
+    // Ensure 'items' (the master list of todos) and '_categories' are available in _HomePageState
+    // Also ensure _tabController is available to get the current category.
+
+    String currentCategory = AppLocale.all.getString(context); // Default to "All"
+    if (_tabController != null && _tabController!.index < _categories.length) {
+      currentCategory = _categories[_tabController!.index];
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TodoSearchScreen(
+          allItems: List.from(items), // Pass a copy of the master list of todos
+          categories: List.from(_categories), // Pass a copy of available categories
+          initialCategory: currentCategory,
+        ),
+      ),
+    );
   }
 
   void _performSearch(String query) {
@@ -1543,10 +1568,18 @@ class _HomePageState extends State<HomePage>
   List<Widget> _buildDefaultAppBarActions(BuildContext context) {
     final isRtl = Directionality.of(context) == TextDirection.rtl;
 
-    final searchIconButton = IconButton(
-      icon: const Icon(Icons.search),
-      onPressed: _handleSearch,
-      tooltip: AppLocale.searchTodosTooltip.getString(context),
+    // Existing search icon button, now calls the renamed method
+    final searchUIToggleButton = IconButton(
+      icon: const Icon(Icons.search), // Keep original icon
+      onPressed: _toggleSearchUI, // Call renamed method
+      tooltip: AppLocale.searchTodosTooltip.getString(context), // Keep original tooltip
+    );
+
+    // New search icon button as per request
+    final newSearchActionButton = IconButton(
+      icon: const Icon(Icons.search, semanticLabel: "New Search Action"), // Icons.search as requested
+      onPressed: _handleSearch, // Call the new _handleSearch method
+      tooltip: "Perform Search Action", // Tooltip for the new button
     );
 
     final popupMenuButton = PopupMenuButton<String>(
@@ -1739,10 +1772,15 @@ class _HomePageState extends State<HomePage>
       },
     );
 
+    // Add the new search button to the list of actions.
+    // Standard practice is to add new actions to the left (for LTR) or right (for RTL) of existing ones.
+    // Let's add the new search button before the existing one.
     if (isRtl) {
-      return [popupMenuButton, searchIconButton];
+      // Order for RTL: [popup, existingSearch, newSearch] will appear as newSearch, existingSearch, popup
+      return [popupMenuButton, searchUIToggleButton, newSearchActionButton];
     } else {
-      return [searchIconButton, popupMenuButton];
+      // Order for LTR: [newSearch, existingSearch, popup]
+      return [newSearchActionButton, searchUIToggleButton, popupMenuButton];
     }
   }
 }
