@@ -3,12 +3,14 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_example/common/DialogHelper.dart';
 import 'package:flutter_example/common/consts.dart';
 import 'package:flutter_example/common/date_extensions.dart';
 import 'package:flutter_example/common/dialog_extensions.dart';
 import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart';
 import 'package:flutter_example/common/globals.dart';
+import 'package:flutter_example/common/home_widget_helper.dart';
 import 'package:flutter_example/common/stub_data.dart';
 import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
@@ -16,6 +18,7 @@ import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
 import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
+// import 'package:flutter_example/screens/todo_search_screen.dart'; // Removed as file is deleted
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -23,7 +26,6 @@ import 'package:home_widget/home_widget.dart';
 
 import 'onboarding.dart';
 
-const String kRandomTaskMenuButtonName = 'randomTask';
 const String kRenameCategoryMenuButtonName = 'rename_category';
 const String kDeleteCategoryMenuButtonName = 'delete_category';
 
@@ -48,6 +50,15 @@ class _HomePageState extends State<HomePage>
   List<String> _categories = []; // Will be initialized in didChangeDependencies
   List<String> _customCategories = [];
   bool _isPromptingForCategory = false;
+
+  // Search state
+  bool _isSearching = false;
+  String _searchQuery = "";
+  late FocusNode _searchFocusNode;
+  late TextEditingController _searchController;
+  List<TodoListItem> _searchResults = []; // Initialize search results list
+  static const String HEADER_PREFIX = "HEADER::";
+
 
   TodoListItem? _editingTodo; // New state variable for currently edited item
   late TextEditingController _textEditingController; // Controller for inline editing
@@ -239,6 +250,9 @@ class _HomePageState extends State<HomePage>
     myBanner?.dispose();
     _todoLineFocusNode.dispose(); // Dispose of the FocusNode
     _textEditingController.dispose(); // Dispose the text controller
+    _searchFocusNode.dispose();
+    _searchController.dispose();
+    ServicesBinding.instance.keyboard.removeHandler(_onKey);
     super.dispose();
   }
 
@@ -246,10 +260,13 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     _textEditingController = TextEditingController(); // Initialize the controller
+    _searchController = TextEditingController();
+    _searchFocusNode = FocusNode();
     _loadingData = loadList();
     if (false) initAds();
     initializeInstallPrompt();
     // _initializeTabs will be called from didChangeDependencies
+    ServicesBinding.instance.keyboard.addHandler(_onKey);
   }
 
   void _setEditingTodo(TodoListItem? todo) {
@@ -279,15 +296,67 @@ class _HomePageState extends State<HomePage>
     return _categories[_tabController!.index] != AppLocale.all.getString(context);
   }
 
+  bool _onKey(KeyEvent event) {
+    final key = event.logicalKey.keyLabel;
+
+    if (event is KeyDownEvent) {
+      print("Key down: $key");
+      if(key == "Escape") {
+        setState(() {
+          _isSearching = false;
+          _searchQuery = "";
+          _searchController.clear();
+          _searchResults = []; // Clear search results when exiting search mode
+        });
+      }
+
+    } else if (event is KeyUpEvent) {
+      print("Key up: $key");
+    } else if (event is KeyRepeatEvent) {
+      print("Key repeat: $key");
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final List<String> motivationalKeys = [
+      AppLocale.motivationalSentence1,
+      AppLocale.motivationalSentence2,
+      AppLocale.motivationalSentence3,
+      AppLocale.motivationalSentence4,
+      AppLocale.motivationalSentence5,
+    ];
+    final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(AppLocale.title.getString(context)),
-        bottom: _tabController == null
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                autofocus: true,
+                cursorColor: Colors.white,
+                decoration: InputDecoration(
+                  hintText: AppLocale.searchTodosHint.getString(context),
+                  border: InputBorder.none,
+                  hintStyle: const TextStyle(color: Colors.white70),
+                ),
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+                onChanged: (query) {
+                  setState(() {
+                    _searchQuery = query;
+                  });
+                  _performSearch(query);
+                },
+              )
+            : Text(AppLocale.title.getString(context)),
+        bottom: _isSearching // Hide TabBar when searching
             ? null
-            : PreferredSize(
+            : _tabController == null
+                ? null
+                : PreferredSize(
                 preferredSize: const Size.fromHeight(40),
                 child: Align(
                   alignment: currentLocaleStr == "he" ? Alignment.centerRight : Alignment.centerLeft,
@@ -310,196 +379,28 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
               ),
-        actions: [
-                PopupMenuButton<String>(
-                  onSelected: (value) async { // Make async
-                    if (value == kInstallMenuButtonName) {
-                      showInstallPrompt();
-                      context.showSnackBar(AppLocale.appIsInstalled.getString(context));
-                    } else if (value == kArchiveMenuButtonName) {
-                      showArchivedTodos();
-                    } else if (value == kLoginButtonMenu) {
-                      Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const OnboardingScreen()));
-                    } else if (value == kSettingsMenuButtonName) {
-                      final result = await Navigator.push( // await the result
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const SettingsScreen()));
-                      if (result == true && mounted) { // Check if mounted before setState
-                        // First, trigger item loading
-                        setState(() {
-                          _loadingData = loadList(); // Re-trigger FutureBuilder
-                        });
-
-                        // Then, re-initialize tabs which will also call setState internally
-                        await _initializeTabs();
-
-                        // Optionally, ensure the first tab ("All") is selected if controller exists
-                        if (mounted && _tabController != null && _tabController!.length > 0) {
-                           _tabController!.animateTo(0); // Go to "All" tab
-                        }
-                      }
-                    } else if (value == kRandomTaskMenuButtonName) {
-                      _showRandomTask();
-                    } else if (value == kRenameCategoryMenuButtonName) {
-                      if (_isCurrentCategoryCustom()) {
-                        final currentCategoryName = _categories[_tabController!.index];
-                        _promptRenameCategory(currentCategoryName);
-                      }
-                    } else if (value == kDeleteCategoryMenuButtonName) {
-                      if (_isCurrentCategoryCustom()) {
-                        final currentCategoryName = _categories[_tabController!.index];
-                        DialogHelper.showAlertDialog(
-                          context,
-                          AppLocale.deleteCategoryConfirmationTitle.getString(context),
-                          AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', currentCategoryName),
-                          () { // onOkButton
-                            Navigator.of(context).pop(); // Dismiss confirmation dialog
-                            setState(() {
-                              _customCategories.removeWhere((cat) => cat.toLowerCase() == currentCategoryName.toLowerCase());
-                              for (var item in items) {
-                                if (item.category == currentCategoryName) {
-                                  item.category = null; // Move to "All"
-                                }
-                              }
-                              EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
-                                // Notify the widget to update
-                                HomeWidget.updateWidget(
-                                  name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
-                                  iOSName: 'TodoWidgetProvider',
-                                );
-                                print('[HomeWidget] Sent update request to widget provider after deleting category.');
-                              _updateList();
-                              // Re-initialize tabs and then switch to "All" tab.
-                              _initializeTabs().then((_) {
-                                if (mounted && _tabController != null) {
-                                   _tabController!.index = 0;
-                                }
-                              });
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', currentCategoryName)),
-                            ));
-                          },
-                          () { // onCancelButton
-                            Navigator.of(context).pop(); // Dismiss confirmation dialog
-                          },
-                        );
-                      }
-                    }
-                  },
-                  itemBuilder: (BuildContext context) {
-                    List<PopupMenuItem<String>> popupMenuItems = [];
-                    //Check if should show Login Button
-                    if (isLoggedIn == false) {
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kLoginButtonMenu,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.supervised_user_circle,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 8.0),
-                            Text(AppLocale.login.getString(context)),
-                          ],
-                        ),
-                      ));
-                    }
-                    //Check if should show Install App prompt button
-                    if (isInstallable()) {
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kInstallMenuButtonName,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.install_mobile,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 8.0),
-                            Text(AppLocale.installApp.getString(context)),
-                          ],
-                        ),
-                      ));
-                    }
-                    //Check if should show Archive Button
-                    if (items.any((item) => item.isArchived)) {
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kArchiveMenuButtonName,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.archive,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 8.0),
-                            Text(AppLocale.archive.getString(context)),
-                          ],
-                        ),
-                      ));
-                    }
-
-                    // Add "Rename Current Category" button if a custom category is selected
-                    if (_isCurrentCategoryCustom()) {
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kRenameCategoryMenuButtonName,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.edit, color: Colors.blue), // Or another appropriate icon
-                            const SizedBox(width: 8.0),
-                            Text(AppLocale.renameCategoryMenuButton.getString(context)),
-                          ],
-                        ),
-                      ));
-                      // Add "Delete Current Category" button if a custom category is selected
-                      popupMenuItems.add(PopupMenuItem<String>(
-                        value: kDeleteCategoryMenuButtonName,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.delete_outline, color: Colors.red), // Or another appropriate icon
-                            const SizedBox(width: 8.0),
-                            Text(AppLocale.deleteCategoryMenuButton.getString(context), style: const TextStyle(color: Colors.red)),
-                          ],
-                        ),
-                      ));
-                    }
-
-                    // Add Random Task button
-                    popupMenuItems.add(PopupMenuItem<String>(
-                      value: kRandomTaskMenuButtonName,
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.shuffle,
-                            color: Colors.blue,
-                          ),
-                          const SizedBox(width: 8.0),
-                          Text(AppLocale.randomTaskMenuButton.getString(context)),
-                        ],
-                      ),
-                    ));
-
-                    // Settings button is typically last or near last
-                    popupMenuItems.add(PopupMenuItem<String>(
-                      value: kSettingsMenuButtonName,
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.settings_outlined,
-                            color: Colors.blue,
-                          ),
-                          const SizedBox(width: 8.0),
-                          Text(AppLocale.settings.getString(context)),
-                        ],
-                      ),
-                    ));
-                    return popupMenuItems;
+        leading: _isSearching ? null : IconButton(
+          icon: const Icon(Icons.shuffle,),
+          onPressed: _showRandomTask, // Call renamed method
+          tooltip: AppLocale.randomTaskMenuButton.getString(context),
+        ),
+        actions: _isSearching
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  tooltip: AppLocale.closeSearchTooltip.getString(context),
+                  onPressed: () {
+                    setState(() {
+                      _isSearching = false;
+                      _searchQuery = "";
+                      _searchController.clear();
+                      _searchResults = []; // Clear search results
+                    });
+                    // Potentially call _performSearch("") if you want to reset the list
                   },
                 ),
-              ],
+              ]
+            : _buildDefaultAppBarActions(context),
       ),
       body: Column(
         children: [
@@ -516,99 +417,185 @@ class _HomePageState extends State<HomePage>
                           return Container(); // Empty view for the action tab
                         }
                         // Actual category view
-                        final categoryName = _categories[index];
+                        final currentCategoryNameForTab = _categories[index]; // Renamed for clarity
+
                         return FutureBuilder<List<TodoListItem>>(
                           future: _loadingData,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          } else if (snapshot.hasError) {
-                            return Center(
-                              child: Text('Error: ${snapshot.error}'),
-                            );
-                          } else {
-                            final allLoadedItems = snapshot.data ?? [];
-                            items = allLoadedItems; // Keep the main 'items' list updated
-
-                            List<TodoListItem> displayedItems;
-                            if (categoryName == AppLocale.all.getString(context)) {
-                              displayedItems = allLoadedItems.reversed
-                                  .where((item) => !item.isArchived)
-                                  .toList();
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            } else if (snapshot.hasError) {
+                              return Center(child: Text('Error: ${snapshot.error}'));
                             } else {
-                              displayedItems = allLoadedItems.reversed
-                                  .where((item) =>
-                                      !item.isArchived &&
-                                      item.category == categoryName)
-                                  .toList();
-                            }
+                              final allLoadedItems = snapshot.data ?? [];
+                              items = allLoadedItems; // Keep the main 'items' list updated
 
-                            if (displayedItems.isEmpty) {
-                                // Common logic for ANY empty category (including "All")
-                                final List<String> motivationalKeys = [
-                                    AppLocale.motivationalSentence1,
-                                    AppLocale.motivationalSentence2,
-                                    AppLocale.motivationalSentence3,
-                                    AppLocale.motivationalSentence4,
-                                    AppLocale.motivationalSentence5,
-                                ];
-                                final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
-                                return Center(
-                                    child: Padding(
+                              // Determine items to display based on search state and query
+                              List<TodoListItem> itemsToDisplayOrSearchIn;
+                              if (currentCategoryNameForTab == AppLocale.all.getString(context)) {
+                                itemsToDisplayOrSearchIn = allLoadedItems.reversed
+                                    .where((item) => !item.isArchived)
+                                    .toList();
+                              } else {
+                                itemsToDisplayOrSearchIn = allLoadedItems.reversed
+                                    .where((item) =>
+                                        !item.isArchived &&
+                                        item.category == currentCategoryNameForTab)
+                                    .toList();
+                              }
+
+                              Widget listContent;
+
+                              if (_isSearching) {
+                                if (_searchQuery.isEmpty) {
+                                  // Searching but query is empty: show original list for the category
+                                  if (itemsToDisplayOrSearchIn.isEmpty) {
+                                    listContent = Center(
+                                      child: Padding(
                                         padding: const EdgeInsets.all(16.0),
                                         child: Text(
-                                            randomKey.getString(context),
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              color: Colors.grey,
-                                              fontStyle: FontStyle.italic,
-                                            ),
+                                          randomKey.getString(context),
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(fontSize: 18, color: Colors.grey, fontStyle: FontStyle.italic),
                                         ),
-                                    ),
-                                );
-                            } else {
-                                // This block is for when displayedItems is NOT empty.
-                                String taskCountString;
-                                if (displayedItems.length == 1) {
-                                    taskCountString = AppLocale.tasksCountSingular.getString(context);
-                                } else {
-                                    taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', displayedItems.length.toString());
-                                }
-
-                                return Column(
-                                    children: [
+                                      ),
+                                    );
+                                  } else if (itemsToDisplayOrSearchIn.isNotEmpty) {
+                                    String taskCountString;
+                                    if (itemsToDisplayOrSearchIn.length == 1) {
+                                      taskCountString = AppLocale.tasksCountSingular.getString(context);
+                                    } else {
+                                      taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', itemsToDisplayOrSearchIn.length.toString());
+                                    }
+                                    listContent = Column(
+                                      children: [
                                         Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                                            child: Text(
-                                                taskCountString,
-                                                textAlign: TextAlign.center,
-                                                style: const TextStyle(
-                                                    fontSize: 13.0,
-                                                    color: Colors.blueGrey,
-                                                    fontWeight: FontWeight.w500,
-                                                ),
-                                            ),
+                                          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                                          child: Text(taskCountString, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13.0, color: Colors.blueGrey, fontWeight: FontWeight.w500)),
                                         ),
                                         Expanded(
-                                            child: ListView.builder(
-                                                itemCount: displayedItems.length,
-                                                itemBuilder: (context, position) {
-                                                    final TodoListItem currentTodo = displayedItems[position];
-                                                    return getListTile(currentTodo);
-                                                },
-                                            ),
+                                          child: ListView.builder(
+                                            itemCount: itemsToDisplayOrSearchIn.length,
+                                            itemBuilder: (context, itemIndex) => getListTile(itemsToDisplayOrSearchIn[itemIndex]),
+                                          ),
                                         ),
+                                      ],
+                                    );
+                                  } else {
+                                    listContent = ListView(); // Empty list for non-"All" categories that are empty
+                                  }
+                                } else if (_searchResults.isEmpty) { // Query is not empty, but results are empty
+                                  listContent = Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Text(
+                                        AppLocale.noResultsFound.getString(context).replaceAll('{query}', _searchQuery),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(fontSize: 18, color: Colors.grey),
+                                      ),
+                                    ),
+                                  );
+                                } else { // Query is not empty, and results are found
+                                  String taskCountString;
+                                  if (_searchResults.length == 1) {
+                                    taskCountString = AppLocale.tasksCountSingular.getString(context);
+                                  } else {
+                                    taskCountString = AppLocale.tasksFoundCount.getString(context).replaceAll('{count}', _searchResults.where((TodoListItem item) => item.text.startsWith(HEADER_PREFIX) == false).length.toString());
+                                  }
+                                  listContent = ListView.builder(
+                                    itemCount: _searchResults.length + 1,
+                                    itemBuilder: (context, index) {
+                                      if(index == 0) {
+                                        return Center(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                                            child: Text(taskCountString, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13.0, color: Colors.blueGrey, fontWeight: FontWeight.w500)),
+                                          ),
+                                        );
+                                      }
+                                      int searchIdx = index - 1;
+                                      final item = _searchResults[searchIdx];
+                                      if (item.text.startsWith(HEADER_PREFIX)) {
+                                        String rawHeaderText = item.text.substring(HEADER_PREFIX.length);
+                                        String displayHeaderText;
+                                        if (rawHeaderText.startsWith(AppLocale.resultsInCategory + "::")) {
+                                          String catName = rawHeaderText.substring((AppLocale.resultsInCategory + "::").length);
+                                          displayHeaderText = AppLocale.resultsInCategory.getString(context).replaceAll('{categoryName}', catName);
+                                        } else {
+                                          // Fallback for safety or if other header types were introduced in the future.
+                                          // Given current _performSearch logic (after removing specific uncategorized header),
+                                          // this branch should ideally not be hit for distinct headers other than 'resultsInCategory'.
+                                          displayHeaderText = rawHeaderText.replaceAll("::", " ");
+                                        }
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                          child: Text(displayHeaderText, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                                        );
+                                      }
+                                      return getListTile(item);
+                                    },
+                                  );
+                                }
+                              } else { // Not searching: Normal category view logic
+                                if (currentCategoryNameForTab == AppLocale.all.getString(context) && itemsToDisplayOrSearchIn.isEmpty) {
+                                   final List<String> motivationalKeys = [
+                                      AppLocale.motivationalSentence1,
+                                      AppLocale.motivationalSentence2,
+                                      AppLocale.motivationalSentence3,
+                                      AppLocale.motivationalSentence4,
+                                      AppLocale.motivationalSentence5,
+                                    ];
+                                    final randomKey = motivationalKeys[Random().nextInt(motivationalKeys.length)];
+                                  listContent = Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Text(
+                                        randomKey.getString(context),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(fontSize: 18, color: Colors.grey, fontStyle: FontStyle.italic),
+                                      ),
+                                    ),
+                                  );
+                                } else if (itemsToDisplayOrSearchIn.isNotEmpty) {
+                                  String taskCountString;
+                                  if (itemsToDisplayOrSearchIn.length == 1) { //
+                                    taskCountString = AppLocale.tasksCountSingular.getString(context);
+                                  } else {
+                                    taskCountString = AppLocale.tasksCount.getString(context).replaceAll('{count}', itemsToDisplayOrSearchIn.length.toString());
+                                  }
+                                  //
+                                  listContent = Column(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                                        child: Text(taskCountString, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13.0, color: Colors.blueGrey, fontWeight: FontWeight.w500)),
+                                      ),
+                                      Expanded(
+                                        child: ListView.builder(
+                                          itemCount: itemsToDisplayOrSearchIn.length,
+                                          itemBuilder: (context, itemIndex) => getListTile(itemsToDisplayOrSearchIn[itemIndex]),
+                                        ),
+                                      ),
                                     ],
-                                );
+                                  );
+                                } else {
+                                   listContent = Center(
+                                     child: Padding(
+                                       padding: const EdgeInsets.all(16.0),
+                                       child: Text(
+                                         randomKey.getString(context),
+                                         textAlign: TextAlign.center,
+                                         style: const TextStyle(fontSize: 18, color: Colors.grey, fontStyle: FontStyle.italic),
+                                       ),
+                                     ),
+                                   ); // Empty list view for non-"All" categories that are empty
+                                }
+                              }
+                              return listContent;
                             }
-                          }
-                        },
-                      );
-                    }).toList()
+                          },
+                        );
+                    }).toList(),
                   ),
           ),
           Container(
@@ -617,9 +604,10 @@ class _HomePageState extends State<HomePage>
             width: myBanner?.size.width.toDouble() ?? 0,
             height: myBanner?.size.height.toDouble() ?? 0,
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-            child: Row(
+          if (!_isSearching) // Conditionally render the input field area
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+              child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -633,7 +621,7 @@ class _HomePageState extends State<HomePage>
           ),
         ],
       ),
-      floatingActionButton: (enteredAtLeast1Todo)
+      floatingActionButton: (!_isSearching && enteredAtLeast1Todo) // Updated condition
           ? Opacity(
               opacity: fabOpacity,
               child: FloatingActionButton(
@@ -706,11 +694,7 @@ class _HomePageState extends State<HomePage>
       }
     }
 
-    // Notify the widget to update
-    HomeWidget.updateWidget(
-      name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider', // Fully qualified name of your AppWidgetProvider
-      iOSName: 'TodoWidgetProvider', // iOSName if you implement for iOS
-    );
+    updateHomeWidget();
     print('[HomeWidget] Sent update request to widget provider after updating list.');
   }
 
@@ -1051,33 +1035,6 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  // void toggleEditMode(TodoListItem currentTodo) { // Replaced by _setEditingTodo
-  //   setState(() {
-  //     if (itemOnEditIndex == -1) {
-  //       var index = items.indexOf(currentTodo);
-  //       itemOnEditIndex = index;
-  //     } else {
-  //       itemOnEditIndex = -1;
-  //     }
-  //   });
-  // }
-
-  // void updateTile(TodoListItem currentTodo, String todoText) { // Replaced by _saveTodo
-  //   setState(() {
-  //     var index = items.indexOf(currentTodo);
-  //     var didChanged = false;
-  //     if (todoText.isNotEmpty) {
-  //       didChanged = currentTodo.text != todoText;
-  //       currentTodo.text = todoText; // todo fix issues w updating the text
-  //     }
-  //     if (didChanged) {
-  //       currentTodo.dateTime = DateTime.now();
-  //     }
-  //     items[index] = currentTodo;
-  //     _updateList();
-  //   });
-  // }
-
   void deleteAll() {
     DialogHelper.showAlertDialog(context, AppLocale.areUsure.getString(context),
         AppLocale.deleteAllSubtext.getString(context),
@@ -1208,11 +1165,7 @@ class _HomePageState extends State<HomePage>
         setState(() {
           _customCategories.add(newCategoryName!);
           EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
-          // Notify the widget to update
-          HomeWidget.updateWidget(
-            name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
-            iOSName: 'TodoWidgetProvider',
-          );
+          updateHomeWidget();
           print('[HomeWidget] Sent update request to widget provider after adding category.');
 
           _categories = [AppLocale.all.getString(context), ..._customCategories];
@@ -1479,11 +1432,7 @@ class _HomePageState extends State<HomePage>
           }
 
           EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
-          // Notify the widget to update
-          HomeWidget.updateWidget(
-            name: 'com.eyalya94.tools.todoLater.TodoWidgetProvider',
-            iOSName: 'TodoWidgetProvider',
-          );
+          updateHomeWidget();
           print('[HomeWidget] Sent update request to widget provider after renaming category.');
           _updateList(); // Persist item changes
           _initializeTabs(); // Refresh UI
@@ -1513,6 +1462,292 @@ class _HomePageState extends State<HomePage>
       print("Error in _promptRenameCategory: $e");
       return null;
     }
+  }
+
+  // Renamed existing method to avoid conflict
+  void _toggleSearchUI() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (_isSearching) {
+        // Request focus after the frame is built
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _searchFocusNode.requestFocus();
+        });
+      } else {
+        _searchQuery = "";
+        _searchController.clear();
+        _searchResults = []; // Clear search results when exiting search mode
+      }
+    });
+    _performSearch(_searchQuery); // Call perform search even when exiting to potentially clear/reset list
+    // Keep a distinct debug print for the original functionality if needed for testing
+    debugPrint("Toggle Search UI: _isSearching is now $_isSearching");
+  }
+
+  void _performSearch(String query) {
+    final String lowerCaseQuery = query.toLowerCase().trim();
+    List<TodoListItem> newResults = [];
+
+    if (!_isSearching || lowerCaseQuery.isEmpty) {
+      // If not searching or query is empty, results should be empty or reflect current category (handled by main builder)
+      // However, specifically for _performSearch, if query is empty, clear _searchResults
+       setState(() {
+        _searchResults = [];
+      });
+      return;
+    }
+
+    final String currentCategoryName = _tabController != null && _tabController!.index < _categories.length
+        ? _categories[_tabController!.index]
+        : AppLocale.all.getString(context);
+    final bool isAllTab = false;//currentCategoryName == AppLocale.all.getString(context);
+
+    if (isAllTab) {
+      newResults = items
+          .where((item) =>
+              !item.isArchived &&
+              item.text.toLowerCase().contains(lowerCaseQuery))
+          .toList();
+    } else {
+      // Search in current category first
+      // final List<TodoListItem> currentCategoryMatches = items
+          // .where((item) =>
+          //     !item.isArchived &&
+          //     item.category == currentCategoryName &&
+          //     item.text.toLowerCase().contains(lowerCaseQuery))
+          // .toList();
+      // newResults.addAll(currentCategoryMatches);
+
+      // Search in other categories
+      for (String otherCategory in _categories) {
+        // if (otherCategory == currentCategoryName) {// || otherCategory == AppLocale.all.getString(context)) {
+        //   continue; // Skip current and "All" tab
+        // }
+        final List<TodoListItem> otherCategoryMatches = items
+            .where((item) =>
+                !item.isArchived &&
+                item.category == otherCategory && // Make sure item.category can be null for "Uncategorized"
+                item.text.toLowerCase().contains(lowerCaseQuery))
+            .toList();
+
+        if (otherCategoryMatches.isNotEmpty) {
+          // Add header for this category
+          // Store AppLocale keys for headers
+          newResults.add(TodoListItem("$HEADER_PREFIX${AppLocale.resultsInCategory}::$otherCategory", category: otherCategory));
+          newResults.addAll(otherCategoryMatches);
+        }
+      }
+       // Also search for items that are uncategorized if current tab isn't "All"
+      // and add them directly without a header.
+      if (!isAllTab) {
+        final List<TodoListItem> uncategorizedMatches = items
+            .where((item) =>
+                !item.isArchived &&
+                item.category == null && // Uncategorized items
+                item.text.toLowerCase().contains(lowerCaseQuery))
+            .toList();
+        if (uncategorizedMatches.isNotEmpty) {
+          // Add uncategorized matches directly with a header
+          newResults.add(TodoListItem("$HEADER_PREFIX${AppLocale.resultsInAllCategory.getString(context)}", category: null));
+          newResults.addAll(uncategorizedMatches);
+        }
+      }
+    }
+
+    setState(() {
+      _searchResults = newResults;
+    });
+    debugPrint("Performing search for: $query. Found ${_searchResults.length} results.");
+  }
+
+  List<Widget> _buildDefaultAppBarActions(BuildContext context) {
+    // Existing search icon button, now calls the renamed method
+    final searchUIToggleButton = IconButton(
+      icon: const Icon(Icons.search), // Keep original icon
+      onPressed: _toggleSearchUI, // Call renamed method
+      tooltip: AppLocale.searchTodosTooltip.getString(context), // Keep original tooltip
+    );
+
+    final popupMenuButton = PopupMenuButton<String>(
+      onSelected: (value) async {
+        // Make async
+        if (value == kInstallMenuButtonName) {
+          showInstallPrompt();
+          context.showSnackBar(AppLocale.appIsInstalled.getString(context));
+        } else if (value == kArchiveMenuButtonName) {
+          showArchivedTodos();
+        } else if (value == kLoginButtonMenu) {
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const OnboardingScreen()));
+        } else if (value == kSettingsMenuButtonName) {
+          final result = await Navigator.push( // await the result
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const SettingsScreen()));
+          if (result == true && mounted) { // Check if mounted before setState
+            // First, trigger item loading
+            setState(() {
+              _loadingData = loadList(); // Re-trigger FutureBuilder
+            });
+
+            // Then, re-initialize tabs which will also call setState internally
+            await _initializeTabs();
+
+            // Optionally, ensure the first tab ("All") is selected if controller exists
+            if (mounted && _tabController != null && _tabController!.length > 0) {
+                _tabController!.animateTo(0); // Go to "All" tab
+            }
+          }
+        } else if (value == kRenameCategoryMenuButtonName) {
+          if (_isCurrentCategoryCustom()) {
+            final currentCategoryName = _categories[_tabController!.index];
+            _promptRenameCategory(currentCategoryName);
+          }
+        } else if (value == kDeleteCategoryMenuButtonName) {
+          if (_isCurrentCategoryCustom()) {
+            final currentCategoryName = _categories[_tabController!.index];
+            DialogHelper.showAlertDialog(
+              context,
+              AppLocale.deleteCategoryConfirmationTitle.getString(context),
+              AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', currentCategoryName),
+              () { // onOkButton
+                Navigator.of(context).pop(); // Dismiss confirmation dialog
+                setState(() {
+                  _customCategories.removeWhere((cat) => cat.toLowerCase() == currentCategoryName.toLowerCase());
+                  for (var item in items) {
+                    if (item.category == currentCategoryName) {
+                      item.category = null; // Move to "All"
+                    }
+                  }
+                  EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+                  updateHomeWidget();
+                    print('[HomeWidget] Sent update request to widget provider after deleting category.');
+                  _updateList();
+                  // Re-initialize tabs and then switch to "All" tab.
+                  _initializeTabs().then((_) {
+                    if (mounted && _tabController != null) {
+                        _tabController!.index = 0;
+                    }
+                  });
+                });
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', currentCategoryName)),
+                ));
+              },
+              () { // onCancelButton
+                Navigator.of(context).pop(); // Dismiss confirmation dialog
+              },
+            );
+          }
+        }
+      },
+      itemBuilder: (BuildContext context) {
+        List<PopupMenuItem<String>> popupMenuItems = [];
+        //Check if should show Login Button
+        if (isLoggedIn == false) {
+          popupMenuItems.add(PopupMenuItem<String>(
+            value: kLoginButtonMenu,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.supervised_user_circle,
+                  color: Colors.blue,
+                ),
+                const SizedBox(width: 8.0),
+                Text(AppLocale.login.getString(context)),
+              ],
+            ),
+          ));
+        }
+        //Check if should show Install App prompt button
+        if (isInstallable()) {
+          popupMenuItems.add(PopupMenuItem<String>(
+            value: kInstallMenuButtonName,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.install_mobile,
+                  color: Colors.blue,
+                ),
+                const SizedBox(width: 8.0),
+                Text(AppLocale.installApp.getString(context)),
+              ],
+            ),
+          ));
+        }
+        //Check if should show Archive Button
+        if (items.any((item) => item.isArchived)) {
+          popupMenuItems.add(PopupMenuItem<String>(
+            value: kArchiveMenuButtonName,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.archive,
+                  color: Colors.blue,
+                ),
+                const SizedBox(width: 8.0),
+                Text(AppLocale.archive.getString(context)),
+              ],
+            ),
+          ));
+        }
+
+        // Add "Rename Current Category" button if a custom category is selected
+        if (_isCurrentCategoryCustom()) {
+          popupMenuItems.add(PopupMenuItem<String>(
+            value: kRenameCategoryMenuButtonName,
+            child: Row(
+              children: [
+                const Icon(Icons.edit, color: Colors.blue), // Or another appropriate icon
+                const SizedBox(width: 8.0),
+                Text(AppLocale.renameCategoryMenuButton.getString(context)),
+              ],
+            ),
+          ));
+          // Add "Delete Current Category" button if a custom category is selected
+          popupMenuItems.add(PopupMenuItem<String>(
+            value: kDeleteCategoryMenuButtonName,
+            child: Row(
+              children: [
+                const Icon(Icons.delete_outline, color: Colors.red), // Or another appropriate icon
+                const SizedBox(width: 8.0),
+                Text(AppLocale.deleteCategoryMenuButton.getString(context), style: const TextStyle(color: Colors.red)),
+              ],
+            ),
+          ));
+        }
+
+        // Settings button is typically last or near last
+        popupMenuItems.add(PopupMenuItem<String>(
+          value: kSettingsMenuButtonName,
+          child: Row(
+            children: [
+              const Icon(
+                Icons.settings_outlined,
+                color: Colors.blue,
+              ),
+              const SizedBox(width: 8.0),
+              Text(AppLocale.settings.getString(context)),
+            ],
+          ),
+        ));
+        return popupMenuItems;
+      },
+    );
+    return [searchUIToggleButton, popupMenuButton];
+
+    // Add the new search button to the list of actions.
+    // Standard practice is to add new actions to the left (for LTR) or right (for RTL) of existing ones.
+    // Let's add the new search button before the existing one.
+    // if (isRtl) {
+    //   // Order for RTL: [popup, existingSearch, newSearch] will appear as newSearch, existingSearch, popup
+    //   return [popupMenuButton, searchUIToggleButton];
+    // } else {
+    //   // Order for LTR: [newSearch, existingSearch, popup]
+    //   return [searchUIToggleButton, popupMenuButton];
+    // }
   }
 }
 
