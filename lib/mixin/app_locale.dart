@@ -32,6 +32,7 @@ mixin AppLocale {
   static const String email = "email";
   static const String emptyTodoDialogMessage = 'emptyTodoDialogMessage';
   static const String emptyTodoDialogTitle = 'emptyTodoDialogTitle';
+  static const String enterSearchQueryPrompt = 'enterSearchQueryPrompt';
   static const String enterTodoTextPlaceholder = "enterTodoTextPlaceholder";
   static const String guest = "guest";
   static const String installApp = "installApp";
@@ -158,6 +159,7 @@ mixin AppLocale {
     AppLocale.editTaskHintText: 'Edit task...',
     AppLocale.emptyTodoDialogMessage: "Please write a Todo",
     AppLocale.emptyTodoDialogTitle: "Empty Todo",
+    AppLocale.enterSearchQueryPrompt: "Type to start searching.",
     AppLocale.itemMovedSnackbar: 'Item moved to {categoryName}',
     // AppLocale.itemUncategorizedSnackbar: 'Item moved to All', // Already included above
     AppLocale.motivationalSentence1: "Let's get something done!",
@@ -260,6 +262,7 @@ mixin AppLocale {
     AppLocale.editTaskHintText: 'ערוך משימה...',
     AppLocale.emptyTodoDialogMessage: "אנא כתוב משימה",
     AppLocale.emptyTodoDialogTitle: "משימה ריקה",
+    AppLocale.enterSearchQueryPrompt: "הקלד כדי להתחיל בחיפוש.",
     // AppLocale.itemMovedSnackbar: 'הפריט הועבר לקטגוריה {categoryName}', // Already included above
     AppLocale.itemUncategorizedSnackbar: 'הפריט הועבר להכל',
     AppLocale.motivationalSentence1: "דברים גדולים לעולם לא מגיעים מאזורי נוחות. בוא נתמודד עם משימה!",

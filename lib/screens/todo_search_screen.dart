@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/mixin/app_locale.dart'; // For AppLocale.getString
+import 'package:flutter_localization/flutter_localization.dart'; // Added import
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 
