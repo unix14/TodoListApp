@@ -81,9 +81,10 @@ class User {
 }
 
 extension UserCredentialExtension on UserCredential {
-  AppUser.User toUser({String? name, String? email}) { // Ensure AppUser.User is used here if User is ambiguous
-    return AppUser.User(
-      id: this.user?.uid, // Get UID from Firebase UserCredential
+  // Changed return type to User (this file's class)
+  User toUser({String? name, String? email}) {
+    return User( // Changed from AppUser.User
+      id: this.user?.uid,
       name: name ?? this.user?.displayName,
       email: email ?? this.user?.email,
       profilePictureUrl: this.user?.photoURL,
