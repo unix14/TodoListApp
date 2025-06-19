@@ -51,6 +51,31 @@ mixin AppLocale {
   static const String motivationalSentence3 = 'motivationalSentence3';
   static const String motivationalSentence4 = 'motivationalSentence4';
   static const String motivationalSentence5 = 'motivationalSentence5';
+  static const String motivationalSentence6 = 'motivationalSentence6';
+  static const String motivationalSentence7 = 'motivationalSentence7';
+  static const String motivationalSentence8 = 'motivationalSentence8';
+  static const String motivationalSentence9 = 'motivationalSentence9';
+  static const String motivationalSentence10 = 'motivationalSentence10';
+  static const String motivationalSentence11 = 'motivationalSentence11';
+  static const String motivationalSentence12 = 'motivationalSentence12';
+  static const String motivationalSentence13 = 'motivationalSentence13';
+  static const String motivationalSentence14 = 'motivationalSentence14';
+  static const String motivationalSentence15 = 'motivationalSentence15';
+  static const String motivationalSentence16 = 'motivationalSentence16';
+  static const String motivationalSentence17 = 'motivationalSentence17';
+  static const String motivationalSentence18 = 'motivationalSentence18';
+  static const String motivationalSentence19 = 'motivationalSentence19';
+  static const String motivationalSentence20 = 'motivationalSentence20';
+  static const String motivationalSentence21 = 'motivationalSentence21';
+  static const String motivationalSentence22 = 'motivationalSentence22';
+  static const String motivationalSentence23 = 'motivationalSentence23';
+  static const String motivationalSentence24 = 'motivationalSentence24';
+  static const String motivationalSentence25 = 'motivationalSentence25';
+  static const String motivationalSentence26 = 'motivationalSentence26';
+  static const String motivationalSentence27 = 'motivationalSentence27';
+  static const String motivationalSentence28 = 'motivationalSentence28';
+  static const String motivationalSentence29 = 'motivationalSentence29';
+  static const String motivationalSentence30 = 'motivationalSentence30';
   static const String moreResults = 'moreResults'; // Re-added
   static const String moveToCategoryMenuItem = 'moveToCategoryMenuItem';
   static const String name = "name";
@@ -218,6 +243,31 @@ mixin AppLocale {
     AppLocale.motivationalSentence3: "Time to be productive!",
     AppLocale.motivationalSentence4: "Add a task and feel the accomplishment.",
     AppLocale.motivationalSentence5: "An empty list is a world of possibilities!",
+    AppLocale.motivationalSentence6: "Progress begins with a single task.",
+    AppLocale.motivationalSentence7: "Today is a great day to start something new.",
+    AppLocale.motivationalSentence8: "No pressure, just progress.",
+    AppLocale.motivationalSentence9: "One task at a time is how mountains move.",
+    AppLocale.motivationalSentence10: "Let action be your inspiration.",
+    AppLocale.motivationalSentence11: "Start now — perfection can wait.",
+    AppLocale.motivationalSentence12: "Tiny steps lead to big victories.",
+    AppLocale.motivationalSentence13: "You’ve got this. Just begin.",
+    AppLocale.motivationalSentence14: "Don’t wait for the mood. Create the mood.",
+    AppLocale.motivationalSentence15: "One ticked box can make your day.",
+    AppLocale.motivationalSentence16: "Focus. Act. Repeat.",
+    AppLocale.motivationalSentence17: "Tasks won’t do themselves — you’re the hero.",
+    AppLocale.motivationalSentence18: "Make progress your habit.",
+    AppLocale.motivationalSentence19: "Choose momentum over motivation.",
+    AppLocale.motivationalSentence20: "A small start beats no start.",
+    AppLocale.motivationalSentence21: "Write it down. Cross it off. Smile.",
+    AppLocale.motivationalSentence22: "Make today count.",
+    AppLocale.motivationalSentence23: "Nothing feels better than done.",
+    AppLocale.motivationalSentence24: "Turn chaos into checklist.",
+    AppLocale.motivationalSentence25: "You’re not behind. You’re building.",
+    AppLocale.motivationalSentence26: "Let’s turn thoughts into actions.",
+    AppLocale.motivationalSentence27: "The task list is your launchpad.",
+    AppLocale.motivationalSentence28: "Tasks shrink when you face them.",
+    AppLocale.motivationalSentence29: "You don’t need motivation, just a start.",
+    AppLocale.motivationalSentence30: "The future is built one task at a time.",
     AppLocale.moreResults: "More results", // Re-added
     AppLocale.moveToCategoryMenuItem: 'Move to category',
     AppLocale.noResultsFound: "No results found for '{query}'",
@@ -351,11 +401,36 @@ mixin AppLocale {
     AppLocale.enterSearchQueryPrompt: "הקלד כדי להתחיל בחיפוש.",
     // AppLocale.itemMovedSnackbar: 'הפריט הועבר לקטגוריה {categoryName}', // Already included above
     AppLocale.itemUncategorizedSnackbar: 'הפריט הועבר להכל',
-    AppLocale.motivationalSentence1: "דברים גדולים לעולם לא מגיעים מאזורי נוחות. בוא נתמודד עם משימה!",
-    AppLocale.motivationalSentence2: "הסוד להתקדם הוא להתחיל. מה הדבר הראשון?",
-    AppLocale.motivationalSentence3: "רשימה ריקה היא בד ציור ריק. צייר את יצירת המופת שלך בפרודוקטיביות!",
-    AppLocale.motivationalSentence4: "אל תסתכל על השעון; עשה מה שהוא עושה. המשך להתקדם! הוסף משימה.",
+    AppLocale.motivationalSentence1: "דברים גדולים לא קורים באזורי נוחות. בואו נתחיל במשימה!",
+    AppLocale.motivationalSentence2: "הסוד להתקדם הוא פשוט להתחיל. מה הדבר הראשון שתעשו?",
+    AppLocale.motivationalSentence3: "רשימה ריקה היא בד ריק - צבעו את המאסטרפיס שלכם בפרודוקטיביות!",
+    AppLocale.motivationalSentence4: "אל תביטו בשעון - עשו כמוהו. המשיכו לנוע! הוסיפו משימה.",
     AppLocale.motivationalSentence5: "המסע של אלף מייל מתחיל בצעד אחד... או במשימה אחת!",
+    AppLocale.motivationalSentence6: "כל משימה קטנה היא עוד צעד קדימה.",
+    AppLocale.motivationalSentence7: "היום מושלם להתחלה חדשה.",
+    AppLocale.motivationalSentence8: "לא צריך לחץ - רק התקדמות קטנה בכל פעם.",
+    AppLocale.motivationalSentence9: "גם הרים נעים צעד אחר צעד.",
+    AppLocale.motivationalSentence10: "הפעולה עצמה תביא איתה את ההשראה.",
+    AppLocale.motivationalSentence11: "תתחילו עכשיו - שלמות תחכה.",
+    AppLocale.motivationalSentence12: "צעדים קטנים מובילים לניצחונות גדולים.",
+    AppLocale.motivationalSentence13: "יש לכם את זה. פשוט תתחילו.",
+    AppLocale.motivationalSentence14: "אל תחכו למוטיבציה - צרו אותה בעצמכם.",
+    AppLocale.motivationalSentence15: "משימה אחת שסומנה יכולה לשנות את כל היום.",
+    AppLocale.motivationalSentence16: "התרכזו. פעלו. חזרו על זה.",
+    AppLocale.motivationalSentence17: "המשימות לא יעשו את עצמן - אתם הכוח שמניע אותן.",
+    AppLocale.motivationalSentence18: "הפכו את ההתקדמות להרגל יומי.",
+    AppLocale.motivationalSentence19: "בחרו תנופה על פני המתנה להשראה.",
+    AppLocale.motivationalSentence20: "התחלה קטנה עדיפה על לא להתחיל כלל.",
+    AppLocale.motivationalSentence21: "כתבו. סמנו. תחייכו.",
+    AppLocale.motivationalSentence22: "תנו ליום הזה משמעות.",
+    AppLocale.motivationalSentence23: "אין תחושה טובה יותר מ'בוצע'.",
+    AppLocale.motivationalSentence24: "הפכו את הבלגן לרשימת משימות ברורה.",
+    AppLocale.motivationalSentence25: "אתם לא מאחור - אתם בתהליך בנייה.",
+    AppLocale.motivationalSentence26: "בואו נהפוך מחשבות לפעולות.",
+    AppLocale.motivationalSentence27: "רשימת המשימות שלכם היא משטח ההמראה.",
+    AppLocale.motivationalSentence28: "משימות נעשות קלות יותר כשמתמודדים איתן.",
+    AppLocale.motivationalSentence29: "לא צריך לחכות למוזה - רק להתחיל.",
+    AppLocale.motivationalSentence30: "העתיד נבנה משימה אחת בכל פעם.",
     AppLocale.moreResults: "משימות נוספות", // Re-added with user-specified translation
     AppLocale.moveToCategoryMenuItem: 'העבר לקטגוריה',
     AppLocale.noResultsFound: "לא נמצאו תוצאות עבור '{query}'",

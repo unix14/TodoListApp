@@ -255,6 +255,9 @@ class _HomePageState extends State<HomePage>
     super.dispose();
   }
 
+  // late String randomKey;
+  Map<int, String> randomKeysMap = {};
+
   @override
   void initState() {
     super.initState();
@@ -271,6 +274,8 @@ class _HomePageState extends State<HomePage>
     }
     // _initializeTabs will be called from didChangeDependencies
     ServicesBinding.instance.keyboard.addHandler(_onKey);
+    int categoryIndex = getCategoryIndex();
+    randomKeysMap.putIfAbsent(categoryIndex, _loadRandomMotivational);
   }
 
   void _setEditingTodo(TodoListItem? todo) {
@@ -286,15 +291,23 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  bool _isCurrentCategoryCustom() {
+  int getCategoryIndex() {
     if (_tabController == null || _categories.isEmpty) {
-      return false;
+      return -1;
     }
     // Ensure index is valid for _categories before accessing.
     // _tabController.index can be out of bounds if tabs are being re-initialized,
     // or if it points to the "+" button which is not a category in _categories list.
     if (_tabController!.index < 0 ||
         _tabController!.index >= _categories.length) {
+      return -1;
+    }
+    return _tabController!.index;
+  }
+
+  bool _isCurrentCategoryCustom() {
+    int categoryIndex = getCategoryIndex();
+    if (categoryIndex < 0) {
       return false;
     }
     // Check if the selected category is NOT the "All" category.
@@ -325,15 +338,8 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    final List<String> motivationalKeys = [
-      AppLocale.motivationalSentence1,
-      AppLocale.motivationalSentence2,
-      AppLocale.motivationalSentence3,
-      AppLocale.motivationalSentence4,
-      AppLocale.motivationalSentence5,
-    ];
-    final randomKey = motivationalKeys[Random().nextInt(
-        motivationalKeys.length)];
+    int categoryIndex = getCategoryIndex();
+    randomKeysMap.putIfAbsent(categoryIndex, _loadRandomMotivational);
 
     return Scaffold(
       appBar: AppBar(
@@ -471,7 +477,7 @@ class _HomePageState extends State<HomePage>
                                   child: Padding(
                                     padding: const EdgeInsets.all(16.0),
                                     child: Text(
-                                      randomKey.getString(context),
+                                      (randomKeysMap[categoryIndex])?.getString(context) ?? _loadRandomMotivational(),
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(fontSize: 18,
                                           color: Colors.grey,
@@ -604,13 +610,11 @@ class _HomePageState extends State<HomePage>
                             if (currentCategoryNameForTab ==
                                 AppLocale.all.getString(context) &&
                                 itemsToDisplayOrSearchIn.isEmpty) {
-                              final randomKey = motivationalKeys[Random()
-                                  .nextInt(motivationalKeys.length)];
                               listContent = Center(
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Text(
-                                    randomKey.getString(context),
+                                    (randomKeysMap[categoryIndex])?.getString(context) ?? _loadRandomMotivational(),
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(fontSize: 18,
                                         color: Colors.grey,
@@ -659,7 +663,7 @@ class _HomePageState extends State<HomePage>
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Text(
-                                    randomKey.getString(context),
+                                    (randomKeysMap[categoryIndex])?.getString(context) ?? _loadRandomMotivational(),
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(fontSize: 18,
                                         color: Colors.grey,
@@ -1196,9 +1200,11 @@ class _HomePageState extends State<HomePage>
 
     // Set _isPromptingForCategory at the beginning
     // It's important _isPromptingForCategory is true during the dialog display
-    // setState(() { // Not strictly necessary to call setState just for this flag if no UI depends on it immediately
-    //   _isPromptingForCategory = true;
-    // });
+    setState(() { // Not strictly necessary to call setState just for this flag if no UI depends on it immediately
+      _isPromptingForCategory = true;
+    });
+
+    randomKeysMap.clear();
 
     try {
       // The dialog's result will be the new category name or null
@@ -1851,6 +1857,11 @@ class _HomePageState extends State<HomePage>
     //   // Order for LTR: [newSearch, existingSearch, popup]
     //   return [searchUIToggleButton, popupMenuButton];
     // }
+  }
+
+  String _loadRandomMotivational() {
+    return motivationalKeys[Random().nextInt(
+        motivationalKeys.length)];
   }
 }
 
