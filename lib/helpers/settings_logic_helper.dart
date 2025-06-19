@@ -233,8 +233,6 @@ class SettingsLogicHelper {
            print("Error clearing local data for anonymous user: $e");
            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.settingsAnonDeleteError.getString(context))));
         }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.settingsImportCancelled.getString(context))));
       }
       return;
     }
