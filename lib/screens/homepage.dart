@@ -14,7 +14,7 @@ import 'package:flutter_example/common/home_widget_helper.dart';
 import 'package:flutter_example/common/stub_data.dart';
 import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
-import 'package:flutter_example/models/category.dart';
+import 'package:flutter_example/models/todo_category.dart'; // Updated import
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
 import 'package:flutter_example/screens/onboarding.dart';
@@ -45,8 +45,8 @@ class _HomePageState extends State<HomePage>
   late Future<List<TodoListItem>> _loadingData;
 
   TabController? _tabController;
-  List<Category> _categoryTabsList = []; // Will be initialized in didChangeDependencies
-  List<Category> _customCategories = [];
+  List<TodoCategory> _categoryTabsList = []; // Updated type
+  List<TodoCategory> _customCategories = []; // Updated type
   bool _isPromptingForCategory = false;
 
   // Search state
@@ -160,12 +160,12 @@ class _HomePageState extends State<HomePage>
     _tabController = null; // Set to null immediately
 
     // Perform async operation
-    // _customCategories will be List<Category> after EncryptedSharedPreferencesHelper is updated
+    // _customCategories will be List<TodoCategory> after EncryptedSharedPreferencesHelper is updated
     _customCategories = await EncryptedSharedPreferencesHelper.loadCategories();
 
     // This part should be synchronous and use the updated context from didChangeDependencies
-    List<Category> newCategoryTabsList = [
-      Category(name: AppLocale.all.getString(context), color: 0xFFFFFFFF), // Default "All" category
+    List<TodoCategory> newCategoryTabsList = [ // Updated type
+      TodoCategory(name: AppLocale.all.getString(context), color: 0xFFFFFFFF), // Used TodoCategory
       ..._customCategories
     ];
 
@@ -403,7 +403,7 @@ class _HomePageState extends State<HomePage>
               indicatorColor: _currentIndicatorColor, // Use state variable for indicator color
               tabs: [
                 ..._categoryTabsList
-                    .map((Category category) {
+                    .map((TodoCategory category) { // Updated type
                       String tabText = category.name.substring(0, min(category.name.length, MAX_CHARS_IN_TAB_BAR)) +
                                      (category.name.length > MAX_CHARS_IN_TAB_BAR ? "..." : "");
                       return Tab(
@@ -1124,11 +1124,11 @@ class _HomePageState extends State<HomePage>
                               _categoryTabsList[_tabController!.index].name == AppLocale.all.getString(context);
 
               if (isAllTab && currentTodo.category != null) {
-                Category? itemCategory = _customCategories.firstWhere(
-                  (cat) => cat.name == currentTodo.category,
-                  orElse: () => _categoryTabsList.firstWhere( // Also check _categoryTabsList in case "All" itself or a pre-defined one was somehow assigned
-                                (cat) => cat.name == currentTodo.category,
-                                orElse: () => Category(name: currentTodo.category!, color: 0xFF000000), // Fallback, should not happen if category exists
+                TodoCategory? itemCategory = _customCategories.firstWhere(
+                  (TodoCategory cat) => cat.name == currentTodo.category, // Explicit type
+                  orElse: () => _categoryTabsList.firstWhere(
+                                (TodoCategory cat) => cat.name == currentTodo.category, // Explicit type
+                                orElse: () => TodoCategory(name: currentTodo.category!, color: 0xFF000000),
                               ),
                 );
 
@@ -1289,7 +1289,7 @@ class _HomePageState extends State<HomePage>
   Future<String?> _promptForNewCategory({int? selectedIndexToRestore}) async {
     final TextEditingController categoryController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    Category? newCategory; // To store the Category object if added
+    TodoCategory? newCategory; // Updated type
 
     setState(() {
       _isPromptingForCategory = true;
@@ -1316,7 +1316,7 @@ class _HomePageState extends State<HomePage>
                         if (value == null || value.trim().isEmpty) {
                           return AppLocale.categoryNameEmptyError.getString(dialogContext);
                         }
-                        if (_customCategories.any((cat) => cat.name.toLowerCase() == value.trim().toLowerCase())) {
+                        if (_customCategories.any((TodoCategory cat) => cat.name.toLowerCase() == value.trim().toLowerCase())) { // Explicit type
                           return AppLocale.categoryNameExistsError.getString(dialogContext);
                         }
                         return null;
@@ -1347,13 +1347,13 @@ class _HomePageState extends State<HomePage>
       );
 
       if (newCategoryNameStr != null) {
-        newCategory = Category(name: newCategoryNameStr); // Default color will be used
+        newCategory = TodoCategory(name: newCategoryNameStr); // Used TodoCategory
         setState(() {
           _customCategories.add(newCategory!);
-          EncryptedSharedPreferencesHelper.saveCategories(_customCategories); // Assumes saveCategories takes List<Category>
+          EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
 
           if (myCurrentUser != null) {
-            myCurrentUser!.categories = List<Category>.from(_customCategories); // Ensure it's a new list if needed
+            myCurrentUser!.categories = List<TodoCategory>.from(_customCategories); // Updated type
             FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
           }
 
@@ -1361,11 +1361,11 @@ class _HomePageState extends State<HomePage>
           print('[HomeWidget] Sent update request to widget provider after adding category.');
 
           _categoryTabsList = [
-            Category(name: AppLocale.all.getString(context), color: 0xFFFFFFFF),
+            TodoCategory(name: AppLocale.all.getString(context), color: 0xFFFFFFFF), // Used TodoCategory
             ..._customCategories
           ];
 
-          final newCategoryIndexInTabs = _categoryTabsList.indexWhere((cat) => cat.name == newCategory!.name);
+          final newCategoryIndexInTabs = _categoryTabsList.indexWhere((TodoCategory cat) => cat.name == newCategory!.name); // Explicit type
 
           _tabController?.removeListener(_handleTabSelection);
           _tabController?.dispose();
@@ -1465,10 +1465,10 @@ class _HomePageState extends State<HomePage>
   }
 
   void _promptMoveToCategory(TodoListItem todoItem) async {
-    // availableCategories are List<Category>
-    List<Category> availableCategories = List.from(_customCategories);
+    // availableCategories are List<TodoCategory>
+    List<TodoCategory> availableCategories = List.from(_customCategories); // Updated type
 
-    showDialog<Category?>( // Return type is Category? (Category or null for Uncategorized)
+    showDialog<TodoCategory?>( // Updated return type
       context: context,
       builder: (BuildContext dialogContext) {
         return SimpleDialog(
@@ -1480,7 +1480,7 @@ class _HomePageState extends State<HomePage>
               },
               child: Text(AppLocale.uncategorizedCategory.getString(dialogContext)),
             ),
-            ...availableCategories.map((category) {
+            ...availableCategories.map((TodoCategory category) { // Explicit type
               return SimpleDialogOption(
                 onPressed: () {
                   Navigator.pop(dialogContext, category);
@@ -1490,17 +1490,17 @@ class _HomePageState extends State<HomePage>
             }).toList(),
             SimpleDialogOption(
               onPressed: () {
-                // Special value indicating "Add New" - using a Category object with a magic name for now
-                Navigator.pop(dialogContext, Category(name: kAddNewCategoryOption));
+                // Special value indicating "Add New"
+                Navigator.pop(dialogContext, TodoCategory(name: kAddNewCategoryOption)); // Used TodoCategory
               },
               child: Text(AppLocale.addNewCategoryMenuItem.getString(dialogContext)),
             ),
           ],
         );
       },
-    ).then((selectedCategoryOrAction) { // selectedCategoryOrAction is Category?
+    ).then((selectedCategoryOrAction) { // selectedCategoryOrAction is TodoCategory?
       if (selectedCategoryOrAction?.name == kAddNewCategoryOption) {
-        _promptForNewCategory().then((newlyCreatedCategoryName) { // _promptForNewCategory returns String?
+        _promptForNewCategory().then((newlyCreatedCategoryName) {
           if (newlyCreatedCategoryName != null && newlyCreatedCategoryName.isNotEmpty) {
             setState(() {
               todoItem.category = newlyCreatedCategoryName;
@@ -1538,10 +1538,10 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  Future<Category?> _promptRenameCategory(Category oldCategory) async {
+  Future<TodoCategory?> _promptRenameCategory(TodoCategory oldCategory) async { // Updated type
     final TextEditingController categoryController = TextEditingController(text: oldCategory.name);
     final formKey = GlobalKey<FormState>();
-    Category? renamedCategory;
+    TodoCategory? renamedCategory; // Updated type
 
     try {
       String? newNameStr = await showDialog<String>(
@@ -1598,7 +1598,7 @@ class _HomePageState extends State<HomePage>
       );
 
       if (newNameStr != null && newNameStr != oldCategory.name) {
-        renamedCategory = Category(name: newNameStr, color: oldCategory.color); // Preserve color
+        renamedCategory = TodoCategory(name: newNameStr, color: oldCategory.color); // Used TodoCategory
         setState(() {
           final oldCategoryIndex = _customCategories.indexWhere((cat) => cat.name.toLowerCase() == oldCategory.name.toLowerCase());
           if (oldCategoryIndex != -1) {
@@ -1613,7 +1613,7 @@ class _HomePageState extends State<HomePage>
 
           EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
           if (myCurrentUser != null) {
-            myCurrentUser!.categories = List<Category>.from(_customCategories);
+            myCurrentUser!.categories = List<TodoCategory>.from(_customCategories); // Updated type
             FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
           }
           updateHomeWidget();
@@ -1674,9 +1674,9 @@ class _HomePageState extends State<HomePage>
     }
 
     // Current category from _categoryTabsList
-    final Category currentCategoryObj = (_tabController != null && _tabController!.index < _categoryTabsList.length)
+    final TodoCategory currentCategoryObj = (_tabController != null && _tabController!.index < _categoryTabsList.length) // Updated type
         ? _categoryTabsList[_tabController!.index]
-        : Category(name: AppLocale.all.getString(context)); // Default to "All" Category object
+        : TodoCategory(name: AppLocale.all.getString(context)); // Used TodoCategory
 
     final bool isAllTab = currentCategoryObj.name == AppLocale.all.getString(context);
 
@@ -1697,7 +1697,7 @@ class _HomePageState extends State<HomePage>
     } else {
       // Specific category tab is selected (or was, before search started)
       // Search in other categories (including "All" effectively by checking for null category later)
-      for (Category otherCategory in _categoryTabsList) {
+      for (TodoCategory otherCategory in _categoryTabsList) { // Updated type
         // if (otherCategory.name == currentCategoryObj.name) continue; // Already handled or not needed if we show all results
 
         final List<TodoListItem> otherCategoryMatches = items
@@ -1824,7 +1824,7 @@ class _HomePageState extends State<HomePage>
           }
         } else if (value == kCategoryOptionsMenuButtonName) {
           if (_isCurrentCategoryCustom()) {
-            final Category currentCategory = _categoryTabsList[_tabController!.index];
+            final TodoCategory currentCategory = _categoryTabsList[_tabController!.index]; // Updated type
             _showCategoryOptionsDialog(currentCategory);
           }
         }
@@ -1927,11 +1927,11 @@ class _HomePageState extends State<HomePage>
   }
 
   // Placeholder for _showCategoryOptionsDialog - will be implemented next.
-  void _showCategoryOptionsDialog(Category category) {
+  void _showCategoryOptionsDialog(TodoCategory category) { // Updated type
     final TextEditingController nameController = TextEditingController(text: category.name);
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
     // Create a mutable copy for the dialog to edit, only save back on "Save"
-    Category categoryBeingEdited = Category(name: category.name, color: category.color);
+    TodoCategory categoryBeingEdited = TodoCategory(name: category.name, color: category.color); // Updated type
 
     showDialog(
       context: context,
@@ -1959,7 +1959,7 @@ class _HomePageState extends State<HomePage>
                             return AppLocale.categoryNameExistsError.getString(dialogContext);
                           }
                           if (newNameTrimmed.toLowerCase() != category.name.toLowerCase() &&
-                              _customCategories.any((cat) => cat.name.toLowerCase() == newNameTrimmed.toLowerCase())) {
+                              _customCategories.any((TodoCategory cat) => cat.name.toLowerCase() == newNameTrimmed.toLowerCase())) { // Explicit type
                             return AppLocale.categoryNameExistsError.getString(dialogContext);
                           }
                           return null;
@@ -2014,11 +2014,11 @@ class _HomePageState extends State<HomePage>
                       if (nameChanged || colorChanged) {
                         final String originalOldName = category.name;
 
-                        int catIndexInCustom = _customCategories.indexWhere((c) => c.name.toLowerCase() == originalOldName.toLowerCase());
+                        int catIndexInCustom = _customCategories.indexWhere((TodoCategory c) => c.name.toLowerCase() == originalOldName.toLowerCase()); // Explicit type
 
                         if (catIndexInCustom != -1) {
                           // Apply changes to the category object in _customCategories
-                          Category categoryToUpdate = _customCategories[catIndexInCustom];
+                          TodoCategory categoryToUpdate = _customCategories[catIndexInCustom]; // Explicit type
                           categoryToUpdate.name = newName;
                           categoryToUpdate.color = categoryBeingEdited.color;
 
@@ -2034,12 +2034,12 @@ class _HomePageState extends State<HomePage>
                           await EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
                           if (myCurrentUser != null) {
                             // Ensure myCurrentUser.categories reflects the change
-                            int userCatIndex = myCurrentUser!.categories!.indexWhere((c) => c.name.toLowerCase() == originalOldName.toLowerCase());
+                            int userCatIndex = myCurrentUser!.categories!.indexWhere((TodoCategory c) => c.name.toLowerCase() == originalOldName.toLowerCase()); // Explicit type
                             if (userCatIndex != -1) {
                               myCurrentUser!.categories![userCatIndex].name = newName;
                               myCurrentUser!.categories![userCatIndex].color = categoryBeingEdited.color;
                             } else { // Should not happen if data is consistent
-                               myCurrentUser!.categories = List<Category>.from(_customCategories);
+                               myCurrentUser!.categories = List<TodoCategory>.from(_customCategories);
                             }
                             await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
                           }
@@ -2063,7 +2063,7 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  void _deleteCategoryFromOptionsDialog(Category categoryToDelete) {
+  void _deleteCategoryFromOptionsDialog(TodoCategory categoryToDelete) { // Updated type
      DialogHelper.showAlertDialog(
       context,
       AppLocale.deleteCategoryConfirmationTitle.getString(context),
@@ -2072,7 +2072,7 @@ class _HomePageState extends State<HomePage>
       () async {
         Navigator.of(context).pop();
 
-        _customCategories.removeWhere((cat) => cat.name.toLowerCase() == categoryToDelete.name.toLowerCase());
+        _customCategories.removeWhere((TodoCategory cat) => cat.name.toLowerCase() == categoryToDelete.name.toLowerCase()); // Explicit type
         for (var item in items) {
           if (item.category == categoryToDelete.name) {
             item.category = null;
@@ -2080,7 +2080,7 @@ class _HomePageState extends State<HomePage>
         }
         await EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
         if (myCurrentUser != null) {
-          myCurrentUser!.categories!.removeWhere((cat) => cat.name.toLowerCase() == categoryToDelete.name.toLowerCase());
+          myCurrentUser!.categories!.removeWhere((TodoCategory cat) => cat.name.toLowerCase() == categoryToDelete.name.toLowerCase()); // Explicit type
           await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
         }
         _updateList();
@@ -2101,7 +2101,7 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Future<void> _selectCategoryColor(Category categoryBeingEdited, StateSetter dialogSetState) async {
+  Future<void> _selectCategoryColor(TodoCategory categoryBeingEdited, StateSetter dialogSetState) async { // Updated type
     final Map<String, Color> predefinedColors = {
       "Red": Colors.red, "Green": Colors.green, "Blue": Colors.blue,
       "Yellow": Colors.yellow, "Purple": Colors.purple, "Orange": Colors.orange,

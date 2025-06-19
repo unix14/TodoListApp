@@ -2,7 +2,7 @@ import 'package:encrypt_shared_preferences/provider.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:encrypt/encrypt.dart';
-import 'package:keep_tasks/models/category.dart';
+import 'package:flutter_example/models/todo_category.dart'; // Corrected import
 
 class EncryptedSharedPreferencesHelper {
   static late EncryptedSharedPreferences _prefs;
@@ -53,22 +53,22 @@ class EncryptedSharedPreferencesHelper {
   }
 
   /// Save a list of categories to the encrypted shared preferences
-  static Future<void> saveCategories(List<Category> categories) async {
+  static Future<void> saveCategories(List<TodoCategory> categories) async { // Updated type
     final List<Map<String, dynamic>> categoriesJson =
-        categories.map((category) => category.toJson()).toList();
+        categories.map((TodoCategory category) => category.toJson()).toList(); // Explicitly typed 'category'
     final String jsonString = json.encode(categoriesJson);
     await setString(kCategoriesListPrefs, jsonString);
   }
 
   /// Load a list of categories from the encrypted shared preferences
-  static Future<List<Category>> loadCategories() async {
+  static Future<List<TodoCategory>> loadCategories() async { // Updated return type
     final String? jsonString = await getString(kCategoriesListPrefs);
     if (jsonString != null && jsonString.isNotEmpty) {
       try {
         final List<dynamic> decodedList = json.decode(jsonString);
         return decodedList
             .map((categoryJson) =>
-                Category.fromJson(categoryJson as Map<String, dynamic>))
+                TodoCategory.fromJson(categoryJson as Map<String, dynamic>)) // Used TodoCategory.fromJson
             .toList();
       } catch (e) {
         print('Error decoding categories from JSON: $e');

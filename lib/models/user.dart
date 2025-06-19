@@ -1,13 +1,13 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
-import 'package:keep_tasks/models/category.dart';
+import 'package:flutter_example/models/todo_category.dart'; // Corrected import
 
 class User {
   String? email;
   String? imageURL;
   String? name;
-  List<Category>? categories;
+  List<TodoCategory>? categories; // Updated type
 
   List<TodoListItem>? todoListItems;
 
@@ -23,7 +23,7 @@ class User {
       'email': user.email,
       'imageURL': user.imageURL,
       'name': user.name,
-      'categories': user.categories?.map((e) => e.toJson()).toList() ?? [],
+      'categories': user.categories?.map((TodoCategory e) => e.toJson()).toList() ?? [], // Explicitly typed 'e'
       'todoListItems': user.todoListItems?.map((e) => e.toJson()).toList() ?? [],
       'dateOfRegistration': user.dateOfRegistration?.toIso8601String(),
       'dateOfLoginIn': user.dateOfLoginIn?.toIso8601String(),
@@ -37,7 +37,7 @@ class User {
       name: json['name'] as String? ?? '',
     )
       ..categories = (json['categories'] as List<dynamic>?)
-          ?.map((e) => Category.fromJson(Map<String, dynamic>.from(e)))
+          ?.map((e) => TodoCategory.fromJson(Map<String, dynamic>.from(e))) // Used TodoCategory.fromJson
           .toList() ?? []
       ..todoListItems = (json['todoListItems'] as List<dynamic>?)
           ?.map((e) => TodoListItem.fromJson(Map<String, dynamic>.from(e)))
@@ -64,7 +64,7 @@ extension UserCredentialExtension on UserCredential {
       email: user!.email!,
       imageURL: user!.photoURL!,
       name: user!.displayName!,
-      categories: [], // Initialize with empty list or load from a default source if needed
+      categories: <TodoCategory>[], // Initialize with empty List<TodoCategory>
     );
   }
 }
