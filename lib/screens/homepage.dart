@@ -1124,10 +1124,10 @@ class _HomePageState extends State<HomePage>
                               _categoryTabsList[_tabController!.index].name == AppLocale.all.getString(context);
 
               if (isAllTab && currentTodo.category != null) {
-                TodoCategory? itemCategory = _customCategories.firstWhere(
-                  (TodoCategory cat) => cat.name == currentTodo.category, // Explicit type
+                TodoCategory? itemCategory = _customCategories.firstWhere( // Corrected type
+                  (TodoCategory cat) => cat.name == currentTodo.category,
                   orElse: () => _categoryTabsList.firstWhere(
-                                (TodoCategory cat) => cat.name == currentTodo.category, // Explicit type
+                                (TodoCategory cat) => cat.name == currentTodo.category,
                                 orElse: () => TodoCategory(name: currentTodo.category!, color: 0xFF000000),
                               ),
                 );
@@ -1927,11 +1927,11 @@ class _HomePageState extends State<HomePage>
   }
 
   // Placeholder for _showCategoryOptionsDialog - will be implemented next.
-  void _showCategoryOptionsDialog(TodoCategory category) { // Updated type
-    final TextEditingController nameController = TextEditingController(text: category.name);
+  void _showCategoryOptionsDialog(TodoCategory originalCategory) { // Renamed for clarity
+    final TextEditingController nameController = TextEditingController(text: originalCategory.name);
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-    // Create a mutable copy for the dialog to edit, only save back on "Save"
-    TodoCategory categoryBeingEdited = TodoCategory(name: category.name, color: category.color); // Updated type
+    // categoryBeingEdited will hold the state of edits within the dialog
+    TodoCategory categoryBeingEdited = originalCategory;
 
     showDialog(
       context: context,
@@ -1965,8 +1965,9 @@ class _HomePageState extends State<HomePage>
                           return null;
                         },
                         onChanged: (value) {
-                           // Update the name in the copy being edited for real-time title feedback if desired
-                           // setStateDialog(() { categoryBeingEdited.name = value.trim(); }); This makes title update live
+                           // No need to update categoryBeingEdited here, nameController holds the latest name
+                           // If live title update is desired for AlertDialog, then use:
+                           // setStateDialog(() { categoryBeingEdited = categoryBeingEdited.copyWith(name: value); });
                         },
                       ),
                       const SizedBox(height: 20),
@@ -1980,7 +1981,12 @@ class _HomePageState extends State<HomePage>
                       ElevatedButton(
                         child: const Text("Change Color"),
                         onPressed: () async {
-                           _selectCategoryColor(categoryBeingEdited, setStateDialog);
+                           // _selectCategoryColor will now update categoryBeingEdited via copyWith
+                           await _selectCategoryColor(categoryBeingEdited, (newColorObject) {
+                             setStateDialog(() {
+                               categoryBeingEdited = newColorObject;
+                             });
+                           });
                         },
                       ),
                       const SizedBox(height: 20),
@@ -1988,8 +1994,8 @@ class _HomePageState extends State<HomePage>
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                         child: const Text("Delete Category", style: TextStyle(color: Colors.white)),
                         onPressed: () {
-                          Navigator.of(dialogContext).pop(); // Close options dialog first
-                          _deleteCategoryFromOptionsDialog(category); // Pass original category for deletion
+                          Navigator.of(dialogContext).pop();
+                          _deleteCategoryFromOptionsDialog(originalCategory); // Pass original category for deletion logic
                         },
                       ),
                     ],
@@ -2007,38 +2013,33 @@ class _HomePageState extends State<HomePage>
                   child: Text(AppLocale.okButtonText.getString(dialogContext)), // Using OK for "Save"
                   onPressed: () async {
                     if (formKey.currentState!.validate()) {
-                      final String newName = nameController.text.trim();
-                      bool nameChanged = newName != category.name;
-                      bool colorChanged = categoryBeingEdited.color != category.color;
+                      final String newNameFromController = nameController.text.trim();
+                      // Apply name from controller to the potentially color-updated categoryBeingEdited
+                      final TodoCategory finalCategoryToSave = categoryBeingEdited.copyWith(name: newNameFromController);
+
+                      bool nameChanged = finalCategoryToSave.name != originalCategory.name;
+                      bool colorChanged = finalCategoryToSave.color != originalCategory.color;
 
                       if (nameChanged || colorChanged) {
-                        final String originalOldName = category.name;
-
-                        int catIndexInCustom = _customCategories.indexWhere((TodoCategory c) => c.name.toLowerCase() == originalOldName.toLowerCase()); // Explicit type
+                        int catIndexInCustom = _customCategories.indexWhere((c) => c.name.toLowerCase() == originalCategory.name.toLowerCase());
 
                         if (catIndexInCustom != -1) {
-                          // Apply changes to the category object in _customCategories
-                          TodoCategory categoryToUpdate = _customCategories[catIndexInCustom]; // Explicit type
-                          categoryToUpdate.name = newName;
-                          categoryToUpdate.color = categoryBeingEdited.color;
+                          _customCategories[catIndexInCustom] = finalCategoryToSave;
 
-                          // If name changed, update TodoListItems
                           if (nameChanged) {
                             for (var item in items) {
-                              if (item.category == originalOldName) {
-                                item.category = newName;
+                              if (item.category == originalCategory.name) {
+                                item.category = finalCategoryToSave.name;
                               }
                             }
                           }
 
                           await EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
                           if (myCurrentUser != null) {
-                            // Ensure myCurrentUser.categories reflects the change
-                            int userCatIndex = myCurrentUser!.categories!.indexWhere((TodoCategory c) => c.name.toLowerCase() == originalOldName.toLowerCase()); // Explicit type
+                            int userCatIndex = myCurrentUser!.categories!.indexWhere((c) => c.name.toLowerCase() == originalCategory.name.toLowerCase());
                             if (userCatIndex != -1) {
-                              myCurrentUser!.categories![userCatIndex].name = newName;
-                              myCurrentUser!.categories![userCatIndex].color = categoryBeingEdited.color;
-                            } else { // Should not happen if data is consistent
+                              myCurrentUser!.categories![userCatIndex] = finalCategoryToSave;
+                            } else {
                                myCurrentUser!.categories = List<TodoCategory>.from(_customCategories);
                             }
                             await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
@@ -2047,7 +2048,7 @@ class _HomePageState extends State<HomePage>
                           await _initializeTabs();
 
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("'${originalOldName}' updated to '${newName}'")),
+                            SnackBar(content: Text("'${originalCategory.name}' updated to '${finalCategoryToSave.name}'")),
                           );
                         }
                       }
@@ -2063,7 +2064,7 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  void _deleteCategoryFromOptionsDialog(TodoCategory categoryToDelete) { // Updated type
+  void _deleteCategoryFromOptionsDialog(TodoCategory categoryToDelete) {
      DialogHelper.showAlertDialog(
       context,
       AppLocale.deleteCategoryConfirmationTitle.getString(context),
@@ -2101,9 +2102,9 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Future<void> _selectCategoryColor(TodoCategory categoryBeingEdited, StateSetter dialogSetState) async { // Updated type
+  Future<void> _selectCategoryColor(TodoCategory currentCategoryStateInDialog, Function(TodoCategory) updateDialogState) async {
     final Map<String, Color> predefinedColors = {
-      "Red": Colors.red, "Green": Colors.green, "Blue": Colors.blue,
+      "Red": Colors.red, "Green": Colors.green, "Blue": Colors.blue, // ... keep others
       "Yellow": Colors.yellow, "Purple": Colors.purple, "Orange": Colors.orange,
       "Pink": Colors.pink, "Brown": Colors.brown, "Teal": Colors.teal, "Cyan": Colors.cyan,
       "White": Colors.white, "Grey": Colors.grey,
@@ -2130,8 +2131,7 @@ class _HomePageState extends State<HomePage>
                     child: CircleAvatar(
                       backgroundColor: color,
                       radius: 20,
-                      // Optionally, add a border or checkmark for the currently selected color
-                      child: categoryBeingEdited.color == color.value
+                      child: currentCategoryStateInDialog.color == color.value
                              ? const Icon(Icons.check, color: Colors.black)
                              : null,
                     ),

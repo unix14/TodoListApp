@@ -17,4 +17,11 @@ class TodoCategory {
       'color': color,
     };
   }
+
+  TodoCategory copyWith({String? name, int? color}) {
+    return TodoCategory(
+      name: name ?? this.name,
+      color: color ?? this.color,
+    );
+  }
 }

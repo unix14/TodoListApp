@@ -27,12 +27,14 @@ class SettingsLogicHelper {
       try {
         String todoListItemsJsonString = await EncryptedSharedPreferencesHelper.getString(kAllListSavedPrefs) ?? "[]";
         List<dynamic> todoListItems = jsonDecode(todoListItemsJsonString);
-        List<String> categories = await EncryptedSharedPreferencesHelper.loadCategories();
+        // Load categories as TodoCategory objects
+        List<TodoCategory> categories = await EncryptedSharedPreferencesHelper.loadCategories();
 
         Map<String, dynamic> anonymousData = {
           "isAnonymous": true,
           "todoListItems": todoListItems,
-          "categories": categories
+          // Serialize TodoCategory objects to JSON maps
+          "categories": categories.map((TodoCategory c) => c.toJson()).toList()
         };
         final jsonString = jsonEncode(anonymousData);
         final String fileName = "local_user_data.json";
@@ -109,10 +111,17 @@ class SettingsLogicHelper {
 
                   if (confirmAnon == true) {
                     List<dynamic> todoListItemsRaw = jsonData['todoListItems'] as List<dynamic>;
-                    List<String> categories = List<String>.from(jsonData['categories'] as List<dynamic>);
+                    // Deserialize categories from JSON maps to TodoCategory objects
+                    List<TodoCategory> categoriesToImport = [];
+                    if (jsonData['categories'] != null && jsonData['categories'] is List) {
+                      List<dynamic> catsFromJson = jsonData['categories'] as List<dynamic>;
+                      categoriesToImport = catsFromJson
+                          .map((catData) => TodoCategory.fromJson(catData as Map<String, dynamic>))
+                          .toList();
+                    }
 
                     await EncryptedSharedPreferencesHelper.setString(kAllListSavedPrefs, jsonEncode(todoListItemsRaw));
-                    await EncryptedSharedPreferencesHelper.saveCategories(categories);
+                    await EncryptedSharedPreferencesHelper.saveCategories(categoriesToImport);
 
                     currentUser = null; // Ensure global currentUser reflects anonymous state
                     myCurrentUser = null; // Ensure global myCurrentUser reflects no specific user data / guest
