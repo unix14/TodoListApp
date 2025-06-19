@@ -252,8 +252,6 @@ class SettingsLogicHelper {
     );
 
     if (confirmAuth != true) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(AppLocale.settingsImportCancelled.getString(context))));
         return;
     }
 
