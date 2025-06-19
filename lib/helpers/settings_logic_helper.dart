@@ -12,6 +12,7 @@ import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/models/user.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
+import 'package:flutter_example/models/todo_category.dart'; // Added import
 import 'package:flutter_example/repo/firebase_realtime_database_repository.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
 import 'package:flutter_localization/flutter_localization.dart';

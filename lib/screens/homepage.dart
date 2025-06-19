@@ -27,6 +27,15 @@ const String kRenameCategoryMenuButtonName = 'rename_category'; // Will be remov
 const String kDeleteCategoryMenuButtonName = 'delete_category'; // Will be removed
 const String kCategoryOptionsMenuButtonName = 'category_options_menu_button';
 
+// Top-level helper function for tab text color
+Color _getTabTextColorHelper(TodoCategory category) {
+  if (category.color == 0xFFFFFFFF) { // White color
+    return Colors.black54;
+  } else {
+    return Color(category.color);
+  }
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({
     Key? key,
@@ -403,13 +412,13 @@ class _HomePageState extends State<HomePage>
               indicatorColor: _currentIndicatorColor, // Use state variable for indicator color
               tabs: [
                 ..._categoryTabsList
-                    .map((TodoCategory category) { // Updated type
+                    .map((TodoCategory category) {
                       String tabText = category.name.substring(0, min(category.name.length, MAX_CHARS_IN_TAB_BAR)) +
                                      (category.name.length > MAX_CHARS_IN_TAB_BAR ? "..." : "");
                       return Tab(
                         child: Text(
                           tabText,
-                          style: TextStyle(color: getTabTextColor(category)),
+                          style: TextStyle(color: _getTabTextColorHelper(category)), // Updated call site
                         ),
                       );
                     }
@@ -1799,7 +1808,7 @@ class _HomePageState extends State<HomePage>
                   }
                   EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
                   if (myCurrentUser != null) {
-                    myCurrentUser!.categories = List<Category>.from(_customCategories);
+                    myCurrentUser!.categories = List<TodoCategory>.from(_customCategories); // Corrected type
                     FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
                   }
                   updateHomeWidget();
@@ -1958,8 +1967,11 @@ class _HomePageState extends State<HomePage>
                           if (newNameTrimmed.toLowerCase() == AppLocale.all.getString(dialogContext).toLowerCase()) {
                             return AppLocale.categoryNameExistsError.getString(dialogContext);
                           }
-                          if (newNameTrimmed.toLowerCase() != category.name.toLowerCase() &&
-                              _customCategories.any((TodoCategory cat) => cat.name.toLowerCase() == newNameTrimmed.toLowerCase())) { // Explicit type
+                          // Corrected to use originalCategory.name
+                          if (newNameTrimmed.toLowerCase() != originalCategory.name.toLowerCase() &&
+                              _customCategories.any((TodoCategory cat) =>
+                                  cat.name.toLowerCase() == newNameTrimmed.toLowerCase() &&
+                                  cat.name.toLowerCase() != originalCategory.name.toLowerCase())) {
                             return AppLocale.categoryNameExistsError.getString(dialogContext);
                           }
                           return null;
@@ -1981,12 +1993,12 @@ class _HomePageState extends State<HomePage>
                       ElevatedButton(
                         child: const Text("Change Color"),
                         onPressed: () async {
-                           // _selectCategoryColor will now update categoryBeingEdited via copyWith
-                           await _selectCategoryColor(categoryBeingEdited, (newColorObject) {
-                             setStateDialog(() {
-                               categoryBeingEdited = newColorObject;
-                             });
-                           });
+                          final int? selectedColor = await _selectCategoryColor(dialogContext, categoryBeingEdited);
+                          if (selectedColor != null) {
+                            setStateDialog(() { // Use the StateSetter from StatefulBuilder
+                              categoryBeingEdited = categoryBeingEdited.copyWith(color: selectedColor);
+                            });
+                          }
                         },
                       ),
                       const SizedBox(height: 20),
@@ -2102,9 +2114,9 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Future<void> _selectCategoryColor(TodoCategory currentCategoryStateInDialog, Function(TodoCategory) updateDialogState) async {
+  Future<int?> _selectCategoryColor(BuildContext context, TodoCategory currentCategoryInDialog) async {
     final Map<String, Color> predefinedColors = {
-      "Red": Colors.red, "Green": Colors.green, "Blue": Colors.blue, // ... keep others
+      "Red": Colors.red, "Green": Colors.green, "Blue": Colors.blue,
       "Yellow": Colors.yellow, "Purple": Colors.purple, "Orange": Colors.orange,
       "Pink": Colors.pink, "Brown": Colors.brown, "Teal": Colors.teal, "Cyan": Colors.cyan,
       "White": Colors.white, "Grey": Colors.grey,
@@ -2131,7 +2143,7 @@ class _HomePageState extends State<HomePage>
                     child: CircleAvatar(
                       backgroundColor: color,
                       radius: 20,
-                      child: currentCategoryStateInDialog.color == color.value
+                      child: currentCategoryInDialog.color == color.value // Use currentCategoryInDialog
                              ? const Icon(Icons.check, color: Colors.black)
                              : null,
                     ),
@@ -2142,7 +2154,7 @@ class _HomePageState extends State<HomePage>
           ),
           actions: <Widget>[
             TextButton(
-              child: Text(AppLocale.cancelButtonText.getString(colorDialogContext)),
+              child: Text(AppLocale.cancelButtonText.getString(context)), // Use context from parameter
               onPressed: () {
                 Navigator.of(colorDialogContext).pop(null);
               },
@@ -2151,12 +2163,7 @@ class _HomePageState extends State<HomePage>
         );
       },
     );
-
-    if (selectedColorValue != null) {
-      dialogSetState(() {
-        categoryBeingEdited.color = selectedColorValue;
-      });
-    }
+    return selectedColorValue; // Return the selected color value or null
   }
 
   String _loadRandomMotivational() {
