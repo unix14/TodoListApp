@@ -639,7 +639,7 @@ class _HomePageState extends State<HomePage>
                               listContent = Expanded(
                                 child: ListView.builder(
                                   itemCount: itemsToDisplayOrSearchIn
-                                      .length,
+                                      .length + 1,
                                   itemBuilder: (context, index) {
                                     if(index == 0) {
                                       return Padding(
