@@ -30,6 +30,7 @@ const kSettingsMenuButtonName = "settings";
 const kArchiveMenuButtonName = "archive";
 const kInstallMenuButtonName = "installwpa";
 const kLoginButtonMenu = 'login';
+const String kShareBaseUrl = 'todo-later.web.app/lists/';
 
 
 

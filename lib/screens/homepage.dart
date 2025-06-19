@@ -28,6 +28,7 @@ import 'onboarding.dart';
 
 const String kRenameCategoryMenuButtonName = 'rename_category';
 const String kDeleteCategoryMenuButtonName = 'delete_category';
+const String kShareCategoryMenuButtonName = 'share_category';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -140,9 +141,23 @@ class _HomePageState extends State<HomePage>
     // and AppLocale needs it.
     _initializeTabs();
     // Load ad after build is complete
+    _checkIncomingSharedSlug();
     Future.delayed(Duration.zero, () {
       myBanner?.load();
     });
+  }
+  Future<void> _checkIncomingSharedSlug() async {
+    if (incomingSharedSlug != null) {
+      final data = await FirebaseRepoInteractor.instance.getSharedCategoryData(incomingSharedSlug!);
+      if (data.isNotEmpty) {
+        String name = data["name"] ?? "";
+        if (!_customCategories.contains(name)) {
+          _customCategories.add(name);
+          await EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+        }
+      }
+      incomingSharedSlug = null;
+    }
   }
 
   Future<void> _initializeTabs() async {
@@ -1567,6 +1582,31 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  void _showShareDialog(String categoryName) async {
+    String slug = await FirebaseRepoInteractor.instance.generateUniqueSlug(categoryName);
+    TextEditingController controller = TextEditingController(text: slug);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(AppLocale.shareCategory.getString(context)),
+          content: TextField(controller: controller),
+          actions: [
+            TextButton(onPressed: () async {
+              await FirebaseRepoInteractor.instance.saveSharedCategoryData(controller.text, {
+              'name': categoryName,
+              'owner': currentUser?.uid,
+              });
+              context.copyToClipboard(kShareBaseUrl + controller.text);
+              Navigator.of(context).pop();
+            }, child: Text(AppLocale.ok.getString(context))),
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(AppLocale.cancel.getString(context))),
+          ],
+        );
+      },
+    );
+  }
+
   // Renamed existing method to avoid conflict
   void _toggleSearchUI() {
     setState(() {
@@ -1735,6 +1775,12 @@ class _HomePageState extends State<HomePage>
                     }
                   });
                 });
+        } else if (value == kShareCategoryMenuButtonName) {
+          if (_isCurrentCategoryCustom()) {
+            final currentCategoryName = _categories[_tabController!.index];
+            _showShareDialog(currentCategoryName);
+          }
+        }
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', currentCategoryName)),
                 ));
@@ -1817,6 +1863,16 @@ class _HomePageState extends State<HomePage>
                 const Icon(Icons.delete_outline, color: Colors.red), // Or another appropriate icon
                 const SizedBox(width: 8.0),
                 Text(AppLocale.deleteCategoryMenuButton.getString(context), style: const TextStyle(color: Colors.red)),
+              ],
+            ),
+          ));
+          popupMenuItems.add(PopupMenuItem<String>(
+            value: kShareCategoryMenuButtonName,
+            child: Row(
+              children: [
+                const Icon(Icons.share, color: Colors.blue),
+                const SizedBox(width: 8.0),
+                Text(AppLocale.shareCategory.getString(context)),
               ],
             ),
           ));

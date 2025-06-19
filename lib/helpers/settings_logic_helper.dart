@@ -314,4 +314,19 @@ class SettingsLogicHelper {
           content: Text("An unexpected error occurred during deletion.")));
     }
   }
+  Future<void> updateProfilePicture(BuildContext context) async {
+    if (currentUser == null || currentUser!.isAnonymous) return;
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null && result.files.isNotEmpty) {
+      Uint8List? bytes = result.files.first.bytes;
+      if (bytes != null) {
+        String base64Image = base64Encode(bytes);
+        myCurrentUser?.imageURL = base64Image;
+        await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.profilePictureUpdated.getString(context))));
+      }
+    }
+  }
+
+  }
 }

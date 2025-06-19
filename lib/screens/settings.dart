@@ -89,6 +89,13 @@ class _SettingsScreenState extends State<SettingsScreen>
           // ListTile(
           //   title: Text(AppLocale.name.getString(context)),
           //   subtitle: Text(name),
+          if(currentUser != null && currentUser!.isAnonymous == false)
+            ListTile(
+              title: Text(AppLocale.profilePicture.getString(context)),
+              onTap: () {
+                _settingsHelper.updateProfilePicture(context);
+              },
+            ),
           //   onTap: () {
           //     // todo when clicked show different name input dialog and change it in firebase
           //   },
