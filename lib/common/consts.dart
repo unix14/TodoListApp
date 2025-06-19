@@ -45,7 +45,7 @@ final simpleDivider = Container(
 );
 
 double fabOpacityOff = 0.42;
-int MAX_CHARS_IN_TAB_BAR = 7;
+int MAX_CHARS_IN_TAB_BAR = 19;
 
 
   Widget orWidget(BuildContext context) => Padding(
