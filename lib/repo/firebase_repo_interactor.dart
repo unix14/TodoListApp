@@ -74,11 +74,13 @@ class FirebaseRepoInteractor {
 
     // The user object should already be non-null if we reached this point after initial fetch.
     // However, if the initial fetch failed, user would be null.
-    // The original logic `if (user != null) return user; else return null;` is fine.
+    // The user object should already be non-null if we reached this point after initial fetch
+    // or it would have returned null earlier if userResult was empty.
     return user;
-    } else {
-      return null;
-    }
+    // The 'else { return null; }' was removed as it was syntactically incorrect here.
+    // If userResult was empty, 'user' would be null and would have been returned already.
+    // If user deserialization somehow results in a null user (which fromJson shouldn't do if userResult is not empty),
+    // then 'user' would be null and returned.
   }
 
   Future<SharedListConfig?> getSharedListConfigById(String listId) async {
