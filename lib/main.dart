@@ -5,6 +5,7 @@ import 'package:flutter_example/managers/app_initializer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:home_widget/home_widget.dart';
 
+import 'mixin/app_locale.dart';
 import 'screens/homepage.dart';
 import 'screens/onboarding.dart';
 // import 'package:flutter_example/common/globals.dart'; // For kAllListSavedPrefs, kCategoriesPref
@@ -95,7 +96,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Todo Later',
+      title: AppLocale.todoLater.getString(context),
       color: Colors.blueAccent,
       debugShowCheckedModeBanner: false,
       locale: _currentLocale, // Set this dynamically
@@ -117,7 +118,6 @@ class _MyAppState extends State<MyApp> {
           // Add more text styles as needed
         ),
       ),
-      //todo add rtl support??
       // home: Column(
       //   children: [
       home: isLoggedIn || widget.isAlreadyEnteredTodos

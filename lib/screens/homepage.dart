@@ -1667,6 +1667,8 @@ class _HomePageState extends State<HomePage>
       icon: searchIcon, // Keep original icon
       onPressed: _toggleSearchUI, // Call renamed method
       tooltip: AppLocale.searchTodosTooltip.getString(context), // Keep original tooltip
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints(),
     );
 
     final popupMenuButton = PopupMenuButton<String>(
