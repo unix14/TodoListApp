@@ -492,27 +492,27 @@ class _HomePageState extends State<HomePage>
                                           itemsToDisplayOrSearchIn.length
                                               .toString());
                                 }
-                                listContent = Column(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8.0, horizontal: 16.0),
-                                      child: Text(taskCountString,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(fontSize: 13.0,
-                                              color: Colors.blueGrey,
-                                              fontWeight: FontWeight.w500)),
-                                    ),
-                                    Expanded(
-                                      child: ListView.builder(
-                                        itemCount: itemsToDisplayOrSearchIn
-                                            .length,
-                                        itemBuilder: (context, itemIndex) =>
-                                            getListTile(
-                                                itemsToDisplayOrSearchIn[itemIndex]),
-                                      ),
-                                    ),
-                                  ],
+                                listContent = Expanded(
+                                  child: ListView.builder(
+                                    itemCount: itemsToDisplayOrSearchIn
+                                        .length + 1,
+                                    itemBuilder: (context, index) {
+                                      if(index == 0) {
+                                        return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 8.0, horizontal: 16.0),
+                                            child: Text(taskCountString,
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(fontSize: 13.0,
+                                                    color: Colors.blueGrey,
+                                                    fontWeight: FontWeight.w500)),
+                                          );
+                                      }
+                                      int itemIndex = index - 1;
+                                      return getListTile(
+                                            itemsToDisplayOrSearchIn[itemIndex]);
+                                    }
+                                  ),
                                 );
                               } else {
                                 listContent =
@@ -632,27 +632,27 @@ class _HomePageState extends State<HomePage>
                                             .toString());
                               }
                               //
-                              listContent = Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 8.0, horizontal: 16.0),
-                                    child: Text(taskCountString,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(fontSize: 13.0,
-                                            color: Colors.blueGrey,
-                                            fontWeight: FontWeight.w500)),
-                                  ),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      itemCount: itemsToDisplayOrSearchIn
-                                          .length,
-                                      itemBuilder: (context, itemIndex) =>
-                                          getListTile(
-                                              itemsToDisplayOrSearchIn[itemIndex]),
-                                    ),
-                                  ),
-                                ],
+                              listContent = Expanded(
+                                child: ListView.builder(
+                                  itemCount: itemsToDisplayOrSearchIn
+                                      .length,
+                                  itemBuilder: (context, index) {
+                                    if(index == 0) {
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8.0, horizontal: 16.0),
+                                        child: Text(taskCountString,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(fontSize: 13.0,
+                                                color: Colors.blueGrey,
+                                                fontWeight: FontWeight.w500)),
+                                      );
+                                    }
+                                    int itemIndex = index - 1;
+                                    return getListTile(
+                                        itemsToDisplayOrSearchIn[itemIndex]);
+                                  }
+                                ),
                               );
                             } else {
                               listContent = Center(
