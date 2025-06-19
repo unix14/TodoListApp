@@ -1168,7 +1168,15 @@ class _HomePageState extends State<HomePage>
           .toList();
     }
 
+    if(availableTasks.isEmpty) {
+      // if current category is empty
+      availableTasks = items
+          .where((item) => !item.isArchived && !item.isChecked)
+          .toList();
+    }
+
     if (availableTasks.isEmpty) {
+      // all lists are empty
       DialogHelper.showAlertDialog(
         context,
         AppLocale.noTasksAvailableDialogTitle.getString(context),
