@@ -1,74 +1,65 @@
-import 'package:encrypt_shared_preferences/encrypt_shared_preferences.dart';
-import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:encrypt/encrypt.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:encrypt_shared_preferences/encrypt_shared_preferences.dart'; // Corrected import
 
 class EncryptedSharedPreferencesHelper {
-  static late EncryptedSharedPreferences _prefs;
-  static const String kCategoriesListPrefs = 'categories_list_prefs';
+  static late EncryptSharedPref _preferences; // Changed to EncryptSharedPref
+  static const String _encryptionKey = "MAKV2SPbnx9Pk4x2ftT9qr8rYxZ8nQ4A"; // Example key, use a secure, persistent key
 
-  /// Initialize the EncryptedSharedPreferences with the given key
   static Future<void> initialize() async {
-    final config = await rootBundle.loadString('config/encryption_config.json');
-    final jsonConfig = json.decode(config);
-    String key = Key.fromUtf8(jsonConfig['key']).base16.substring(0,16);
-    await EncryptedSharedPreferences.initialize(key);
-    _prefs = EncryptedSharedPreferences.getInstance();
+    // Initialize with a specific key. This key should be securely stored and managed.
+    // For simplicity, it's hardcoded here, but in a real app, consider fetching it from a secure location.
+    _preferences = EncryptSharedPref(password: _encryptionKey); // Use the constructor
+    // No need to await _preferences.init() as per package docs for encrypt_shared_preferences
   }
 
-  /// Save a string value to the encrypted shared preferences
-  static Future<void> setString(String key, String value) async {
-    await _prefs.setString(key, value);
+  // Example method to save a string
+  static Future<bool> saveString(String key, String value) async {
+    return await _preferences.setString(key, value);
   }
 
-  /// Retrieve a string value from the encrypted shared preferences
+  // Example method to get a string
   static Future<String?> getString(String key) async {
-    return _prefs.getString(key);
+    // The package handles decryption automatically upon read.
+    return await _preferences.getString(key);
   }
 
-  /// Save an integer value to the encrypted shared preferences
-  static Future<void> setInt(String key, int value) async {
-    await _prefs.setInt(key, value);
+  // Example method to save a boolean
+  static Future<bool> saveBool(String key, bool value) async {
+    return await _preferences.setBool(key, value);
   }
 
-  /// Retrieve an integer value from the encrypted shared preferences
-  static Future<int?> getInt(String key) async {
-    return _prefs.getInt(key);
-  }
-
-  /// Save a boolean value to the encrypted shared preferences
-  static Future<void> setBool(String key, bool value) async {
-    await _prefs.setBoolean(key, value);
-  }
-
-  /// Retrieve a boolean value from the encrypted shared preferences
+  // Example method to get a boolean
   static Future<bool?> getBool(String key) async {
-    return _prefs.getBoolean(key);
+    return await _preferences.getBool(key);
   }
 
-  /// Remove a value from the encrypted shared preferences
-  static Future<void> remove(String key) async {
-    await _prefs.remove(key);
+  // Example method to save an integer
+  static Future<bool> saveInt(String key, int value) async {
+    return await _preferences.setInt(key, value);
   }
 
-  /// Save a list of categories to the encrypted shared preferences
-  static Future<void> saveCategories(List<String> categories) async {
-    final String jsonString = json.encode(categories);
-    await setString(kCategoriesListPrefs, jsonString);
+  // Example method to get an integer
+  static Future<int?> getInt(String key) async {
+    return await _preferences.getInt(key);
   }
 
-  /// Load a list of categories from the encrypted shared preferences
-  static Future<List<String>> loadCategories() async {
-    final String? jsonString = await getString(kCategoriesListPrefs);
-    if (jsonString != null && jsonString.isNotEmpty) {
-      try {
-        final List<dynamic> decodedList = json.decode(jsonString);
-        return decodedList.map((category) => category.toString()).toList();
-      } catch (e) {
-        print('Error decoding categories from JSON: $e');
-        return [];
-      }
-    }
-    return [];
+  // Example method to remove a value
+  static Future<bool> remove(String key) async {
+    return await _preferences.remove(key);
+  }
+
+  // Example method to clear all values (use with caution)
+  static Future<bool> clearAll() async {
+    return await _preferences.clear();
+  }
+
+  // Add more methods as needed for other data types (double, stringList, etc.)
+  // Example for StringList:
+  static Future<bool> saveStringList(String key, List<String> value) async {
+    return await _preferences.setStringList(key, value);
+  }
+
+  static Future<List<String>?> getStringList(String key) async {
+    return await _preferences.getStringList(key);
   }
 }

@@ -1,100 +1,94 @@
-
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User; // Hide Firebase's User to avoid conflict
 import 'package:flutter_example/models/todo_list_item.dart';
-import 'package:flutter_example/models/shared_list_config.dart';
-import 'package:uuid/uuid.dart';
+import 'package:flutter_example/models/shared_list_config.dart'; // For sharedListsConfigs
+import 'package:uuid/uuid.dart'; // For generating IDs for TodoListItems if needed
 
 class User {
-  String? id; // Added field for Firebase UID
-  String? email;
-  String? imageURL;
+  String? id; // Firebase UID
   String? name;
+  String? email;
   String? profilePictureUrl;
+  Map<String, List<TodoListItem>> todosByCategories;
+  List<SharedListConfig> sharedListsConfigs; // Configurations for lists shared with this user
+  bool newIdsWereAssignedDuringDeserialization; // Transient field
 
-  List<TodoListItem>? todoListItems;
-  List<SharedListConfig> sharedListsConfigs = [];
+  User({
+    this.id,
+    this.name,
+    this.email,
+    this.profilePictureUrl,
+    Map<String, List<TodoListItem>>? todosByCategories,
+    List<SharedListConfig>? sharedListsConfigs,
+    this.newIdsWereAssignedDuringDeserialization = false, // Initialize transient field
+  })  : todosByCategories = todosByCategories ?? {'All': []},
+        sharedListsConfigs = sharedListsConfigs ?? [];
 
-  // Transient field, not part of JSON
-  bool newIdsWereAssignedDuringDeserialization = false;
-
-  DateTime? dateOfRegistration/* = DateTime.now()*/;
-
-  //todo add date of login in
-  DateTime? dateOfLoginIn;
-
-  User({this.id, required this.email, required this.imageURL, required this.name, this.profilePictureUrl, List<SharedListConfig>? sharedListsConfigs}) : this.sharedListsConfigs = sharedListsConfigs ?? [];
-
-  static Map<String, dynamic> toJson(User user) {
-    return {
-      'id': user.id, // Added to toJson
-      'email': user.email,
-      'imageURL': user.imageURL,
-      'name': user.name,
-      'profilePictureUrl': user.profilePictureUrl,
-      'todoListItems': user.todoListItems?.map((e) => e.toJson()).toList() ?? [],
-      'sharedListsConfigs': user.sharedListsConfigs.map((e) => e.toJson()).toList(), // Ensure not null before map
-      'dateOfRegistration': user.dateOfRegistration?.toIso8601String(),
-      'dateOfLoginIn': user.dateOfLoginIn?.toIso8601String(),
-    };
-  }
-
-  static fromJson(Map<String, dynamic> json, {String? idFromKey}) { // Allow passing ID from key if not in map
-    final userInstance = User(
-      id: idFromKey ?? json['id'] as String?, // Populate id
-      email: json['email'] as String? ?? '',
-      imageURL: json['imageURL'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      profilePictureUrl: json['profilePictureUrl'] as String? ?? '',
-      sharedListsConfigs: (json['sharedListsConfigs'] as List<dynamic>?)
-          ?.map((e) => SharedListConfig.fromJson(Map<String, dynamic>.from(e)))
-          .toList() ?? [],
-    );
-
-    userInstance.newIdsWereAssignedDuringDeserialization = false; // Initialize transient field
-
-    final todoItemsData = json['todoListItems'] as List<dynamic>?;
-    if (todoItemsData != null) {
-      userInstance.todoListItems = todoItemsData.map((e) {
-        final itemJson = Map<String, dynamic>.from(e);
-        // Assuming TodoListItem.fromJson can take an optional idFromKey,
-        // but for embedded items, there's no external key.
-        // ID should come from itemJson['id'] or be null.
-        TodoListItem item = TodoListItem.fromJson(itemJson);
-        if (item.id == null) {
-          item.id = Uuid().v4();
-          userInstance.newIdsWereAssignedDuringDeserialization = true;
+  factory User.fromJson(Map<String, dynamic> json, {String? idFromKey}) {
+    bool idsAssigned = false;
+    var categories = <String, List<TodoListItem>>{};
+    if (json['todosByCategories'] != null) {
+      (json['todosByCategories'] as Map<String, dynamic>).forEach((key, value) {
+        if (value is List) {
+          categories[key] = value.map((itemJson) {
+            var item = TodoListItem.fromJson(itemJson as Map<String, dynamic>);
+            if (item.id == null) {
+              item.id = Uuid().v4(); // Assign UUID if ID is missing
+              idsAssigned = true;
+            }
+            return item;
+          }).toList();
         }
-        return item;
-      }).toList();
+      });
     } else {
-      userInstance.todoListItems = [];
+      categories['All'] = [];
     }
 
-    userInstance.dateOfRegistration =  (json['dateOfRegistration'] != null && json['dateOfRegistration'] != '')
-          ? DateTime.parse(json['dateOfRegistration'] as String)
-          : null;
-    userInstance.dateOfLoginIn = (json['dateOfLoginIn'] != null && json['dateOfLoginIn'] != '')
-          ? DateTime.parse(json['dateOfLoginIn'] as String)
-          : null;
+    var configs = <SharedListConfig>[];
+    if (json['sharedListsConfigs'] != null && json['sharedListsConfigs'] is List) {
+      configs = (json['sharedListsConfigs'] as List)
+          .map((configJson) => SharedListConfig.fromJson(configJson as Map<String, dynamic>, configJson['id'] as String? ?? Uuid().v4()))
+          // Ensure ID is passed to SharedListConfig.fromJson if it expects one for documentId
+          .toList();
+    }
 
-    return userInstance;
+    return User(
+      id: idFromKey ?? json['id'] as String?, // Prioritize idFromKey (e.g. Firebase UID)
+      name: json['name'] as String?,
+      email: json['email'] as String?,
+      profilePictureUrl: json['profilePictureUrl'] as String?,
+      todosByCategories: categories,
+      sharedListsConfigs: configs,
+      newIdsWereAssignedDuringDeserialization: idsAssigned,
+    );
   }
 
+  Map<String, dynamic> toJson() {
+    var categoriesJson = <String, dynamic>{};
+    todosByCategories.forEach((key, value) {
+      categoriesJson[key] = value.map((item) => item.toJson()).toList();
+    });
 
-
-
-
+    return {
+      'id': id, // Include ID in JSON if it's managed this way (e.g. for non-Firebase storage)
+      'name': name,
+      'email': email,
+      'profilePictureUrl': profilePictureUrl,
+      'todosByCategories': categoriesJson,
+      'sharedListsConfigs': sharedListsConfigs.map((config) => config.toJson()).toList(),
+      // newIdsWereAssignedDuringDeserialization is transient and typically not serialized
+    };
+  }
 }
 
-
 extension UserCredentialExtension on UserCredential {
-  User toUser() {
-    return User(
-      id: this.user!.uid, // Pass UID to the new id field
-      email: this.user!.email!,
-      imageURL: this.user!.photoURL ?? '', // Handle null photoURL
-      name: this.user!.displayName ?? '', // Handle null displayName
-      profilePictureUrl: this.user!.photoURL, // Can also be used for profilePictureUrl initially
+  AppUser.User toUser({String? name, String? email}) { // Ensure AppUser.User is used here if User is ambiguous
+    return AppUser.User(
+      id: this.user?.uid, // Get UID from Firebase UserCredential
+      name: name ?? this.user?.displayName,
+      email: email ?? this.user?.email,
+      profilePictureUrl: this.user?.photoURL,
+      todosByCategories: {'All': []}, // Default initial todos
+      sharedListsConfigs: [], // Default initial shared lists
     );
   }
 }

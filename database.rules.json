@@ -1,0 +1,33 @@
+{
+  "rules": {
+    "users": {
+      "$user_id": {
+        ".read": "(auth != null && auth.uid == $user_id)",
+        ".write": "(auth != null && auth.uid == $user_id)",
+        "profilePictureUrl": {
+          ".write": "(auth != null && auth.uid == $user_id)"
+        }
+      }
+    },
+    "shared_lists": {
+      "$list_id": {
+        // Read access for authorized users
+        ".read": "data.child('authorized_users').child(auth.uid).exists()",
+        // Write access for authorized users (e.g., adding/editing todos)
+        ".write": "data.child('authorized_users').child(auth.uid).exists()",
+        "admin": {
+          // Admin user cannot be changed
+          ".write": "!data.exists() || data.val() == auth.uid"
+        },
+        "authorized_users": {
+          // Only admin can modify authorized_users
+          ".write": "data.parent().child('admin').val() == auth.uid"
+        },
+        "short_link": {
+          // Allow write only if the new short_link doesn't exist or the user is admin
+          ".write": "newData.val() != null && (data.parent().child('admin').val() == auth.uid || !root.child('shared_lists').orderByChild('short_link').equalTo(newData.val()).exists())"
+        }
+      }
+    }
+  }
+}
