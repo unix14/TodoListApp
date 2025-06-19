@@ -91,56 +91,56 @@ mixin AppLocale {
   static const String timeYesterday = 'timeYesterday';
   static const String timeDaysAgo = 'timeDaysAgo';     // Takes {days}
 
-  // ---- New Keys for Profile Picture & Sharing ----
+  // ---- Keys for Profile Picture & Sharing ----
   static const String changeProfilePictureButton = 'changeProfilePictureButton';
   static const String uploadProfilePictureButton = 'uploadProfilePictureButton';
   static const String profilePictureUpdated = 'profilePictureUpdated';
   static const String errorUploadingProfilePicture = 'errorUploadingProfilePicture'; // Can take {errorDetails}
-  static const String imagePickingNotImplemented = 'imagePickingNotImplemented'; // For settings screen placeholder
+  static const String imagePickingNotImplemented = 'imagePickingNotImplemented';
 
-  static const String shareDialogTitle = 'shareDialogTitle'; // Takes {categoryName}
+  static const String shareDialogTitle = 'shareDialogTitle';
   static const String shareableLink = 'shareableLink';
   static const String notSharedYet = 'notSharedYet';
-  static const String customLinkPathHint = 'customLinkPathHint'; // For Share Dialog
+  static const String customLinkPathHint = 'customLinkPathHint';
   static const String copyLinkButton = 'copyLinkButton';
   static const String linkCopiedToClipboard = 'linkCopiedToClipboard';
   static const String authorizedUsersSectionTitle = 'authorizedUsersSectionTitle';
   static const String saveShareButton = 'saveShareButton';
   static const String updateShareButton = 'updateShareButton';
-  static const String linkPathInvalid = 'linkPathInvalid'; // For Share Dialog & Join Dialog
-  static const String shareError = 'shareError'; // Generic share error
+  static const String linkPathInvalid = 'linkPathInvalid';
+  static const String shareError = 'shareError';
   static const String loading = 'loading';
-  static const String clearInput = 'clearInput'; // Tooltip for clearing text field
-  static const String editSuffixTooltip = 'editSuffixTooltip'; // Tooltip for editing link suffix
+  static const String clearInput = 'clearInput';
+  static const String editSuffixTooltip = 'editSuffixTooltip';
   static const String shareSettingsUpdated = 'shareSettingsUpdated';
   static const String noAuthorizedUsers = 'noAuthorizedUsers';
-  static const String unknownUser = 'unknownUser'; // For when user details can't be fetched
+  static const String unknownUser = 'unknownUser';
   static const String adminText = 'adminText';
   static const String removeUserButtonTooltip = 'removeUserButtonTooltip';
   static const String removeUserConfirmationTitle = 'removeUserConfirmationTitle';
-  static const String removeUserConfirmationMessage = 'removeUserConfirmationMessage'; // Takes {userName}
-  static const String userRemovedSuccess = 'userRemovedSuccess'; // Takes {userName}
-  static const String userRemovedError = 'userRemovedError'; // Takes {userName}
+  static const String removeUserConfirmationMessage = 'removeUserConfirmationMessage';
+  static const String userRemovedSuccess = 'userRemovedSuccess';
+  static const String userRemovedError = 'userRemovedError';
   static const String adminRequiredToRemoveUser = 'adminRequiredToRemoveUser';
-  static const String fetchConfigError = 'fetchConfigError'; // Takes {errorDetails}
-  static const String fetchParticipantsError = 'fetchParticipantsError'; // Takes {errorDetails}
-  static const String loginToSharePrompt = 'loginToSharePrompt'; // Added for ShareListDialog
+  static const String fetchConfigError = 'fetchConfigError';
+  static const String fetchParticipantsError = 'fetchParticipantsError';
+  static const String loginToSharePrompt = 'loginToSharePrompt';
 
-  static const String joinListSuccess = 'joinListSuccess'; // Takes {listName}
-  static const String joinListError = 'joinListError'; // Can take {errorDetails}
+  static const String joinListSuccess = 'joinListSuccess';
+  static const String joinListError = 'joinListError';
   static const String loginToJoinPrompt = 'loginToJoinPrompt';
-  static const String joinSharedListMenuButtonName = 'joinSharedListMenuButtonName'; // Text for menu item / dialog title
-  static const String enterLinkPathHint = 'enterLinkPathHint'; // For Join Dialog
-  static const String joinButtonText = 'joinButtonText'; // For Join Dialog button
+  static const String joinSharedListMenuButtonName = 'joinSharedListMenuButtonName';
+  static const String enterLinkPathHint = 'enterLinkPathHint';
+  static const String joinButtonText = 'joinButtonText';
 
-  static const String manageShareSettings = 'manageShareSettings'; // Menu item for already shared list by admin
-  static const String noTasksInSharedList = 'noTasksInSharedList'; // Empty state for shared list
-  static const String noCategoriesYet = 'noCategoriesYet'; // Overall empty state
-  static const String addTodo = 'addTodo'; // FAB tooltip, if different from AppLocale.add
-  static const String errorLoadingList = 'errorLoadingList'; // Takes {errorDetails} for StreamBuilder error
+  static const String manageShareSettings = 'manageShareSettings';
+  static const String noTasksInSharedList = 'noTasksInSharedList';
+  static const String noCategoriesYet = 'noCategoriesYet';
+  static const String addTodo = 'addTodo';
+  static const String errorLoadingList = 'errorLoadingList';
   static const String shareCategoryButtonTooltip = 'shareCategoryButtonTooltip';
-  static const String personalTasksTab = 'personalTasksTab'; // For HomePage tabs
-  static const String sharedWithYouTab = 'sharedWithYouTab'; // For HomePage tabs
+  static const String personalTasksTab = 'personalTasksTab';
+  static const String sharedWithYouTab = 'sharedWithYouTab';
 
   static const Map<String, dynamic> EN = {
     AppLocale.title: 'Todo List',

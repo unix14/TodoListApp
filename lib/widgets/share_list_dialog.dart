@@ -7,9 +7,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/models/user.dart' as AppUser;
 import 'package:flutter_example/common/DialogHelper.dart';
-// import 'package:flutter_localization/flutter_localization.dart'; // Not directly needed if using AppLocale extension
+// No need for flutter_localization import if AppLocale.getString(context) is used throughout.
 
-// Helper extension for nullable firstWhere
+// Helper extension for nullable firstWhere, if not available globally
 extension _FirstWhereOrNullExtension<E> on Iterable<E> {
   E? firstWhereOrNull(bool Function(E) test) {
     for (E element in this) {
@@ -20,8 +20,8 @@ extension _FirstWhereOrNullExtension<E> on Iterable<E> {
 }
 
 class ShareListDialog extends StatefulWidget {
-  final String categoryId; // For a new share, this is the original category name. For existing, it's the sharedListConfig.id
-  final String categoryName; // User-facing display name of the category/list
+  final String categoryId;
+  final String categoryName;
   final SharedListConfig? existingConfig;
 
   const ShareListDialog({
@@ -38,7 +38,6 @@ class ShareListDialog extends StatefulWidget {
 class _ShareListDialogState extends State<ShareListDialog> {
   late TextEditingController _shortLinkController;
   String _currentShareLinkDisplay = "";
-  // bool _isEditingLink = false; // Not strictly needed if button text changes based on _liveConfig
   bool _isLoading = false;
   bool _isLoadingParticipants = false;
   List<AppUser.User> _authorizedUserDetails = [];
@@ -51,11 +50,12 @@ class _ShareListDialogState extends State<ShareListDialog> {
     super.initState();
     _shortLinkController = TextEditingController();
     _liveConfig = widget.existingConfig;
-
     _initializeDialogState();
   }
 
   void _initializeDialogState() {
+    if (!mounted) return;
+
     if (_liveConfig != null) {
       _shortLinkController.text = _liveConfig!.shortLinkPath;
       _currentShareLinkDisplay = _getFullShareUrl(_liveConfig!.shortLinkPath);
@@ -63,11 +63,9 @@ class _ShareListDialogState extends State<ShareListDialog> {
         _fetchParticipantsDetails(_liveConfig!);
       }
     } else {
-      // For a new share, generate a suggested path
       String defaultPath = widget.categoryName.toLowerCase().replaceAll(' ', '-').replaceAll(RegExp(r'[^a-zA-Z0-9-]'), '');
-      if (defaultPath.isEmpty) defaultPath = "shared-list"; // Fallback for empty/special char names
+      if (defaultPath.isEmpty) defaultPath = "shared-list";
       _shortLinkController.text = defaultPath;
-      // UI will show "Not shared yet" or similar based on _liveConfig being null
       _currentShareLinkDisplay = AppLocale.notSharedYet.getString(context);
     }
   }
@@ -129,13 +127,11 @@ class _ShareListDialogState extends State<ShareListDialog> {
     setState(() => _isLoading = true);
 
     try {
-      // If _liveConfig is null, it's a new share. categoryId is originalCategoryName.
-      // If _liveConfig exists, categoryId is its ID (already a shared list ID).
       final String idForInteractor = _liveConfig?.id ?? widget.categoryId;
 
       final resultingConfig = await FirebaseRepoInteractor.instance.createOrUpdateSharedList(
         categoryId: idForInteractor,
-        categoryName: widget.categoryName, // Always pass the display name
+        categoryName: widget.categoryName,
         adminUserId: currentUserUid,
         desiredShortLinkPath: desiredPath,
         existingConfig: _liveConfig,
@@ -146,7 +142,6 @@ class _ShareListDialogState extends State<ShareListDialog> {
           _liveConfig = resultingConfig;
           _shortLinkController.text = _liveConfig!.shortLinkPath;
           _currentShareLinkDisplay = _getFullShareUrl(_liveConfig!.shortLinkPath);
-          // _isEditingLink = false; // Reset editing state
         });
         _fetchParticipantsDetails(_liveConfig!);
 
@@ -176,13 +171,12 @@ class _ShareListDialogState extends State<ShareListDialog> {
     final String userNameToRemove = userToRemoveDetails?.name ?? AppLocale.unknownUser.getString(context);
 
     bool? confirmed = await DialogHelper.showAlertDialog(
-        context: context, // Ensure this context is correct for DialogHelper
+        context: context,
         title: AppLocale.removeUserConfirmationTitle.getString(context),
         content: AppLocale.removeUserConfirmationMessage.getString(context).replaceAll('{userName}', userNameToRemove),
-        confirmButtonText: AppLocale.okButtonText.getString(context), // Assuming OK for confirm
-        cancelButtonText: AppLocale.cancelButtonText.getString(context), // Assuming Cancel for cancel
+        confirmButtonText: AppLocale.okButtonText.getString(context),
+        cancelButtonText: AppLocale.cancelButtonText.getString(context),
     );
-
 
     if (confirmed == true) {
       if (!mounted) return;
@@ -196,10 +190,9 @@ class _ShareListDialogState extends State<ShareListDialog> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(AppLocale.userRemovedSuccess.getString(context).replaceAll('{userName}', userNameToRemove))),
           );
-          // Refresh participants list
           _authorizedUserDetails.removeWhere((user) => user.id == userIdToRemove);
         } else {
-          _liveConfig!.authorizedUserIds[userIdToRemove] = true; // Revert optimistic removal
+          _liveConfig!.authorizedUserIds[userIdToRemove] = true;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(AppLocale.userRemovedError.getString(context).replaceAll('{userName}', userNameToRemove))),
           );
@@ -211,7 +204,7 @@ class _ShareListDialogState extends State<ShareListDialog> {
 
   @override
   Widget build(BuildContext context) {
-    String displayLink = _isLoading && _liveConfig == null // Only show top level loading if nothing is loaded yet
+    String displayLink = (_isLoading && _liveConfig == null)
         ? AppLocale.loading.getString(context)
         : (_liveConfig?.shortLinkPath == null || _liveConfig!.shortLinkPath.isEmpty
             ? AppLocale.notSharedYet.getString(context)
@@ -257,7 +250,6 @@ class _ShareListDialogState extends State<ShareListDialog> {
                         onPressed: () => setState(() => _shortLinkController.clear()),
                     ),
                   ),
-                  // onChanged: (value) => setState(() => _isEditingLink = true), // Not strictly needed
                 )
               else if (_liveConfig != null)
                   Text("${AppLocale.customLinkPathHint.getString(context)}: ${_liveConfig!.shortLinkPath}"),
@@ -276,8 +268,8 @@ class _ShareListDialogState extends State<ShareListDialog> {
                             leading: CircleAvatar(
                               backgroundImage: (user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty)
                                   ? NetworkImage(user.profilePictureUrl!)
-                                  : AssetImage(Globals.defaultProfilePicAsset) as ImageProvider, // Fallback to default asset
-                              child: (user.profilePictureUrl == null || user.profilePictureUrl!.isEmpty) && !(user.profilePictureUrl is NetworkImage) // Show icon if no network image and no asset as main BG
+                                  : AssetImage(Globals.defaultProfilePicAsset) as ImageProvider,
+                              child: (user.profilePictureUrl == null || user.profilePictureUrl!.isEmpty)
                                   ? const Icon(Icons.person)
                                   : null,
                             ),
@@ -287,7 +279,7 @@ class _ShareListDialogState extends State<ShareListDialog> {
                                 ? IconButton(
                                     icon: Icon(Icons.remove_circle_outline, color: Theme.of(context).colorScheme.error),
                                     tooltip: AppLocale.removeUserButtonTooltip.getString(context),
-                                    onPressed: () => _removeUserFromSharedList(user.id!),
+                                    onPressed: () => _removeUserFromSharedList(user.id!), // Ensure user.id is not null
                                   )
                                 : null,
                           );

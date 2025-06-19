@@ -1,13 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Correct import for Timestamp
 
 class SharedListConfig {
-  String id; // Firestore document ID for this shared list config
-  String originalCategoryName; // The original name of the category as the admin knows it
-  String shortLinkPath; // The user-facing shareable link path (e.g., "work-todos")
+  String id; // Firestore document ID
+  String originalCategoryName;
+  String shortLinkPath;
   String adminUserId;
-  Map<String, bool> authorizedUserIds; // UID -> true (for easy querying in Firebase rules)
-  Timestamp sharedTimestamp; // When the list was initially shared or settings last significantly changed
-  String listNameInSharedCollection; // Name of the list as it appears in the shared collection (could be customized by admin)
+  Map<String, bool> authorizedUserIds; // UID -> true
+  Timestamp sharedTimestamp;
+  String listNameInSharedCollection;
 
   SharedListConfig({
     required this.id,
@@ -25,18 +25,9 @@ class SharedListConfig {
       (json['authorizedUserIds'] as Map).forEach((key, value) {
         if (value is bool) {
           authorizedUsersMap[key as String] = value;
-        } else if (value is String && (value == 'true' || value == 'false')) { // Handle stringified bools if necessary
-          authorizedUsersMap[key as String] = value == 'true';
         }
       });
-    } else if (json['authorizedUserIds'] is List) { // Handle older list format if necessary
-        for (var userId in (json['authorizedUserIds'] as List)) {
-            if (userId is String) {
-                authorizedUsersMap[userId] = true;
-            }
-        }
     }
-
 
     Timestamp timestamp;
     if (json['sharedTimestamp'] is Timestamp) {
@@ -46,14 +37,15 @@ class SharedListConfig {
     } else if (json['sharedTimestamp'] is Map &&
                json['sharedTimestamp']['_seconds'] is int &&
                json['sharedTimestamp']['_nanoseconds'] is int) {
+      // Handling Firestore Timestamp serialized as a map (e.g., from older SDKs or manual JSON)
       timestamp = Timestamp(
         json['sharedTimestamp']['_seconds'] as int,
         json['sharedTimestamp']['_nanoseconds'] as int,
       );
-    }
-
-    else {
-      timestamp = Timestamp.now(); // Fallback or throw error
+    } else {
+      // Fallback or throw error if type is unexpected
+      print("Warning: sharedTimestamp is of unexpected type or null. Defaulting to Timestamp.now(). Type was: ${json['sharedTimestamp'].runtimeType}");
+      timestamp = Timestamp.now();
     }
 
     return SharedListConfig(
@@ -69,12 +61,12 @@ class SharedListConfig {
 
   Map<String, dynamic> toJson() {
     return {
-      // id is not part of the document data itself, it's the document name/ID
+      // id is not part of the document data itself when saving to Firestore with documentId as name
       'originalCategoryName': originalCategoryName,
       'shortLinkPath': shortLinkPath,
       'adminUserId': adminUserId,
-      'authorizedUserIds': authorizedUserIds, // Store as a map
-      'sharedTimestamp': sharedTimestamp, // Store as Timestamp
+      'authorizedUserIds': authorizedUserIds,
+      'sharedTimestamp': sharedTimestamp, // Firestore handles Timestamp serialization
       'listNameInSharedCollection': listNameInSharedCollection,
     };
   }

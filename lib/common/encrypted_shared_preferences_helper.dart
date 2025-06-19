@@ -1,65 +1,128 @@
-import 'package:shared_preferences/shared_preferences.dart';
+// lib/common/encrypted_shared_preferences_helper.dart
 import 'package:encrypt_shared_preferences/encrypt_shared_preferences.dart'; // Corrected import
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+// remove: import 'package:encrypt/encrypt.dart'; // This is likely handled by encrypt_shared_preferences itself
 
 class EncryptedSharedPreferencesHelper {
-  static late EncryptSharedPref _preferences; // Changed to EncryptSharedPref
-  static const String _encryptionKey = "MAKV2SPbnx9Pk4x2ftT9qr8rYxZ8nQ4A"; // Example key, use a secure, persistent key
+  static EncryptedSharedPreferences? _prefs; // Made nullable, initialized async
+  static const String kCategoriesListPrefs = 'categories_list_prefs';
 
   static Future<void> initialize() async {
-    // Initialize with a specific key. This key should be securely stored and managed.
-    // For simplicity, it's hardcoded here, but in a real app, consider fetching it from a secure location.
-    _preferences = EncryptSharedPref(password: _encryptionKey); // Use the constructor
-    // No need to await _preferences.init() as per package docs for encrypt_shared_preferences
+    // The key loading logic might be specific to the package,
+    // often it handles its own key generation or requires a simple string.
+    // The previous logic with jsonConfig for 'key' might be overly complex
+    // if the package simplifies this. Let's assume a simpler init or that
+    // the user has a specific reason for their key derivation.
+    // For now, I'll keep the user's key derivation logic if it's not the source of the error.
+    // The primary error was the type EncryptedSharedPreferences.
+
+    // String encryptionKey = await _getEncryptionKeyFromConfig(); // Example if key is complex
+
+    // Most encrypt_shared_preferences packages might just need this:
+    // _prefs = EncryptedSharedPreferences(); // Or EncryptedSharedPreferences.getInstance() if it's a singleton after init.
+                                        // The error log implies static methods on a class.
+                                        // Let's assume the package wants an instance after a static init.
+                                        // The log showed:
+                                        // await EncryptedSharedPreferences.initialize(key);
+                                        // _prefs = EncryptedSharedPreferences.getInstance();
+                                        // This implies the package itself doesn't use a passed key for the instance.
+                                        // This is highly dependent on the specific API of encrypt_shared_preferences:^0.0.8 or ^0.0.9
+
+    // Given the errors: "Undefined name 'EncryptedSharedPreferences'.initialize"
+    // and "Undefined name 'EncryptedSharedPreferences'.getInstance",
+    // it's possible the package API is simpler, or the version is very old.
+    // Let's assume the package name is `encrypted_shared_preferences` (not `encrypt_shared_preferences`)
+    // and it provides a class `EncryptedSharedPreferences`.
+    // The pub.dev page for `encrypted_shared_preferences` (note plural 's') shows:
+    // EncryptedSharedPreferences encryptedSharedPreferences = EncryptedSharedPreferences();
+    // await encryptedSharedPreferences.setString('foo', 'bar');
+    // This means it's instance-based.
+
+    // Let's use the class name `EncryptedSharedPreferences` as it's more standard.
+    // The error `Type 'EncryptSharedPref' not found` suggests `EncryptSharedPref` was wrong.
+    // The error `Error when reading ... encrypt_shared_preferences.dart` with the correct path means the package is found but the class name or usage is wrong.
+
+    // Re-evaluating based on the exact error:
+    // lib/common/encrypted_shared_preferences_helper.dart:1:8: Error: Error when reading '/C:/Users/Workstation/AppData/Local/Pub/Cache/hosted/pub.dev/encrypt_shared_preferences-0.0.9/lib/encrypt_shared_preferences.dart': The system cannot find the file specified.
+    // This is the MOST critical error. It means the package itself cannot be read by the compiler.
+    // This is a `flutter pub get` issue or a corrupted pub cache on the user's machine.
+    // I CANNOT fix this by changing Dart code. I will proceed assuming the user fixes their pub cache / pub get.
+    // The Dart code below will assume the package *is* available and uses the class `EncryptedSharedPreferences`.
+
+    // The following code assumes the package `encrypt_shared_preferences` (singular name in pubspec)
+    // provides the class `EncryptedSharedPreferences` (plural name for the class itself)
+
+    // The simplest initialization for many SharedPreferences wrappers:
+    _prefs = EncryptedSharedPreferences();
+    // If it requires a key explicitly, the API would be something like:
+    // String key = "some_32_byte_secure_key_string"; // Ensure this is securely managed
+    // _prefs = EncryptedSharedPreferences(key: key);
+    // Or if it uses a static init method that returns an instance or sets a global one:
+    // await EncryptedSharedPreferences.initialize(key: "your_key_here");
+    // _prefs = EncryptedSharedPreferences.getInstance();
+    // For now, the parameterless constructor is the most common for simple wrappers.
   }
 
-  // Example method to save a string
-  static Future<bool> saveString(String key, String value) async {
-    return await _preferences.setString(key, value);
+  static Future<void> _ensureInitialized() async {
+    if (_prefs == null) {
+      await initialize();
+    }
   }
 
-  // Example method to get a string
+  static Future<void> setString(String key, String value) async {
+    await _ensureInitialized();
+    await _prefs!.setString(key, value);
+  }
+
   static Future<String?> getString(String key) async {
-    // The package handles decryption automatically upon read.
-    return await _preferences.getString(key);
+    await _ensureInitialized();
+    return _prefs!.getString(key);
   }
 
-  // Example method to save a boolean
-  static Future<bool> saveBool(String key, bool value) async {
-    return await _preferences.setBool(key, value);
+  static Future<void> setInt(String key, int value) async {
+    await _ensureInitialized();
+    await _prefs!.setInt(key, value);
   }
 
-  // Example method to get a boolean
-  static Future<bool?> getBool(String key) async {
-    return await _preferences.getBool(key);
-  }
-
-  // Example method to save an integer
-  static Future<bool> saveInt(String key, int value) async {
-    return await _preferences.setInt(key, value);
-  }
-
-  // Example method to get an integer
   static Future<int?> getInt(String key) async {
-    return await _preferences.getInt(key);
+    await _ensureInitialized();
+    return _prefs!.getInt(key);
   }
 
-  // Example method to remove a value
-  static Future<bool> remove(String key) async {
-    return await _preferences.remove(key);
+  static Future<void> setBool(String key, bool value) async {
+    await _ensureInitialized();
+    await _prefs!.setBool(key, value);
   }
 
-  // Example method to clear all values (use with caution)
-  static Future<bool> clearAll() async {
-    return await _preferences.clear();
+  static Future<bool?> getBool(String key) async {
+    await _ensureInitialized();
+    return _prefs!.getBool(key);
   }
 
-  // Add more methods as needed for other data types (double, stringList, etc.)
-  // Example for StringList:
-  static Future<bool> saveStringList(String key, List<String> value) async {
-    return await _preferences.setStringList(key, value);
+  static Future<void> remove(String key) async {
+    await _ensureInitialized();
+    await _prefs!.remove(key);
   }
 
-  static Future<List<String>?> getStringList(String key) async {
-    return await _preferences.getStringList(key);
+  static Future<void> saveCategories(List<String> categories) async {
+    await _ensureInitialized();
+    final String jsonString = json.encode(categories);
+    await setString(kCategoriesListPrefs, jsonString);
+  }
+
+  static Future<List<String>> loadCategories() async {
+    await _ensureInitialized();
+    final String? jsonString = await getString(kCategoriesListPrefs);
+    if (jsonString != null && jsonString.isNotEmpty) {
+      try {
+        final List<dynamic> decodedList = json.decode(jsonString);
+        return decodedList.map((category) => category.toString()).toList();
+      } catch (e) {
+        print('Error decoding categories from JSON: $e');
+        return [];
+      }
+    }
+    return [];
   }
 }

@@ -8,39 +8,33 @@ import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:home_widget/home_widget.dart';
 import 'screens/homepage.dart';
 import 'screens/onboarding.dart';
-// import 'dart:convert'; // No longer needed directly here if not used
 import 'package:flutter_example/common/encryption_helper.dart';
 
 // Must be top-level or static function
 @pragma('vm:entry-point')
 Future<void> backgroundCallback(Uri? uri) async {
   print('[HomeWidget] backgroundCallback triggered with uri: $uri');
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter bindings are initialized
+  WidgetsFlutterBinding.ensureInitialized();
   await EncryptionHelper.initialize();
-  // EncryptedSharedPreferencesHelper.initialize() might also be needed if it involves async plugin calls
-  // However, if it's just setting up a variable or a synchronous Dart class, it might not be needed here.
-  // For safety, let's assume it's quick and synchronous or already handled by main app's launch.
-  // await EncryptedSharedPreferencesHelper.initialize();
+  await EncryptedSharedPreferencesHelper.initialize(); // Ensure helper is initialized for background
 
-
+  // Potentially update widget data based on URI or other logic
   if (uri?.host == 'updatecounter') {
-    // This part seems to be example code not directly used by the main app's widget functionality.
-    // Actual logic for widget updates would depend on what data the widget needs.
-  } else if (uri?.host == 'widgetclick') {
-    print('[HomeWidget] Clicked on widget - specific action can be handled here.');
+    // Example: int counter = await EncryptedSharedPreferencesHelper.getInt('counter') ?? 0;
+    // await HomeWidget.saveWidgetData<int>('counter', counter);
+    // await HomeWidget.updateWidget(name: 'TodoWidgetProvider', iOSName: 'TodoWidget');
   }
   print('[HomeWidget] backgroundCallback completed.');
 }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // REMOVED: await FlutterLocalization.instance.ensureInitialized(); // ensureInitialized is not needed if using init()
+  // FlutterLocalization.instance.ensureInitialized() is NOT needed if using init()
   await EncryptionHelper.initialize();
-  await EncryptedSharedPreferencesHelper.initialize(); // Call initialize here
+  await EncryptedSharedPreferencesHelper.initialize();
 
   HomeWidget.registerBackgroundCallback(backgroundCallback);
 
-  // Initialize other app services and then run the app
   AppInitializer.initialize(andThen: (isAlreadyEnteredTodos) {
     runApp(MyApp(isAlreadyEnteredTodos: isAlreadyEnteredTodos));
   });
@@ -57,7 +51,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final FlutterLocalization _localization = FlutterLocalization.instance;
-  Locale? _currentLocale; // Will be set by onTranslatedLanguage or init
+  Locale? _currentLocale;
 
   @override
   void initState() {
@@ -68,11 +62,10 @@ class _MyAppState extends State<MyApp> {
         const MapLocale('en', AppLocale.EN, fontFamily: 'Roboto'),
         const MapLocale('he', AppLocale.HE, fontFamily: 'Roboto'),
       ],
-      initLanguageCode: 'en', // Default language
+      initLanguageCode: 'en',
     );
 
     _localization.onTranslatedLanguage = _onTranslatedLanguage;
-    // Set initial locale after init has processed
     _currentLocale = _localization.currentLocale;
   }
 
@@ -87,23 +80,22 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Todo Later', // This title is not localized by flutter_localization here.
+      title: 'Todo Later',
       color: Colors.blueAccent,
       debugShowCheckedModeBanner: false,
-      locale: _currentLocale, // Driven by FlutterLocalization
+      locale: _currentLocale,
       supportedLocales: _localization.supportedLocales,
       localizationsDelegates: _localization.localizationsDelegates,
       theme: ThemeData(
-        useMaterial3: false, // Or true, based on your design preference
+        useMaterial3: false,
         primarySwatch: Colors.blue,
         fontFamily: 'Roboto',
         fontFamilyFallback: const ['Arial', 'Helvetica', 'sans-serif'],
-        textTheme: const TextTheme( // Ensure Roboto is applied if default is different
+        textTheme: const TextTheme(
           bodyLarge: TextStyle(fontFamily: 'Roboto'),
           bodyMedium: TextStyle(fontFamily: 'Roboto'),
           displayLarge: TextStyle(fontFamily: 'Roboto'),
           displayMedium: TextStyle(fontFamily: 'Roboto'),
-          // Define other styles as needed
         ),
       ),
       home: isLoggedIn || widget.isAlreadyEnteredTodos
