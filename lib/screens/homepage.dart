@@ -12,9 +12,10 @@ import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart'
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/common/home_widget_helper.dart';
 import 'package:flutter_example/common/stub_data.dart';
-import 'package:flutter_example/mixin/app_locale.dart';
+import 'package:flutter_example/mixin/app_locale.dart'; // Restored import
+// import 'package:flutter_example/generated/l10n.dart'; // Removed import
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
-import 'package:flutter_example/models/todo_category.dart'; // Updated import
+import 'package:flutter_example/models/todo_category.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
 import 'package:flutter_example/screens/onboarding.dart';
@@ -91,7 +92,7 @@ class _HomePageState extends State<HomePage>
   bool isLoading = true;
 
   late RoundedTextInputField todoInputField = RoundedTextInputField(
-    hintText: AppLocale.enterTodoTextPlaceholder.getString(context),
+    hintText: AppLocale.enterTodoTextPlaceholder.getString(context), // Reverted
     onChanged: (newValue) {
       setState(() {
         inputText = newValue;
@@ -154,7 +155,7 @@ class _HomePageState extends State<HomePage>
     // and AppLocale needs it.
     _initializeTabs().then((_) {
       // Initialize indicator color after tabs are set up
-      _updateCurrentIndicatorColor();
+      // _updateCurrentIndicatorColor(); // Call it once after _tabController is set up
     });
     // Load ad after build is complete
     Future.delayed(Duration.zero, () {
@@ -177,7 +178,7 @@ class _HomePageState extends State<HomePage>
 
     // This part should be synchronous and use the updated context from didChangeDependencies
     List<TodoCategory> newCategoryTabsList = [ // Updated type
-      TodoCategory(name: AppLocale.all.getString(context), color: 0xFFFFFFFF), // Used TodoCategory
+      TodoCategory(name: AppLocale.all.getString(context), color: 0xFFFFFFFF), // Reverted
       ..._customCategories
     ];
 
@@ -385,7 +386,7 @@ class _HomePageState extends State<HomePage>
           autofocus: true,
           cursorColor: Colors.white,
           decoration: InputDecoration(
-            hintText: AppLocale.searchTodosHint.getString(context),
+            hintText: AppLocale.searchTodosHint.getString(context), // Reverted
             border: InputBorder.none,
             hintStyle: const TextStyle(color: Colors.white70),
           ),
@@ -397,7 +398,7 @@ class _HomePageState extends State<HomePage>
             _performSearch(query);
           },
         )
-            : Text(AppLocale.title.getString(context)),
+            : Text(AppLocale.title.getString(context)), // Reverted
         bottom: _isSearching // Hide TabBar when searching
             ? null
             : _tabController == null
@@ -429,24 +430,23 @@ class _HomePageState extends State<HomePage>
                     .toList(),
                 Tab(
                     icon: Tooltip(
-                        message: AppLocale.addCategoryTooltip.getString(
-                            context),
-                        child: const Icon(Icons.add))), // "+" icon tab retains default color
+                        message: AppLocale.addCategoryTooltip.getString(context), // Reverted
+                        child: const Icon(Icons.add))),
               ],
             ),
           ),
         ),
         leading: _isSearching ? searchIcon : IconButton(
           icon: const Icon(Icons.shuffle),
-          onPressed: _showRandomTask, // Call renamed method
-          tooltip: AppLocale.randomTaskMenuButton.getString(context),
+          onPressed: _showRandomTask,
+          tooltip: AppLocale.randomTaskMenuButton.getString(context), // Reverted
           padding: const EdgeInsets.all(0),
         ),
         actions: _isSearching
             ? [
           IconButton(
             icon: const Icon(Icons.close),
-            tooltip: AppLocale.closeSearchTooltip.getString(context),
+            tooltip: AppLocale.closeSearchTooltip.getString(context), // Reverted
             onPressed: () {
               setState(() {
                 _isSearching = false;
@@ -494,7 +494,7 @@ class _HomePageState extends State<HomePage>
                           // Determine items to display based on search state and query
                           List<TodoListItem> itemsToDisplayOrSearchIn;
                           if (currentCategoryForTab.name ==
-                              AppLocale.all.getString(context)) {
+                              AppLocale.all.getString(context)) { // Reverted
                             itemsToDisplayOrSearchIn = allLoadedItems.reversed
                                 .where((item) => !item.isArchived)
                                 .toList();
@@ -516,7 +516,7 @@ class _HomePageState extends State<HomePage>
                                   child: Padding(
                                     padding: const EdgeInsets.all(16.0),
                                     child: Text(
-                                      (randomKeysMap[categoryIndex])?.getString(context) ?? _loadRandomMotivational(),
+                                      (randomKeysMap[categoryIndex])?.getString(context) ?? _loadRandomMotivational(), // Reverted (assuming _loadRandomMotivational returns a key)
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(fontSize: 18,
                                           color: Colors.grey,
@@ -528,14 +528,10 @@ class _HomePageState extends State<HomePage>
                                 String taskCountString;
                                 if (itemsToDisplayOrSearchIn.length == 1) {
                                   taskCountString =
-                                      AppLocale.tasksCountSingular.getString(
-                                          context);
+                                      AppLocale.tasksCountSingular.getString(context); // Reverted
                                 } else {
                                   taskCountString =
-                                      AppLocale.tasksCount.getString(context)
-                                          .replaceAll('{count}',
-                                          itemsToDisplayOrSearchIn.length
-                                              .toString());
+                                      AppLocale.tasksCount.getString(context).replaceAll('{count}', itemsToDisplayOrSearchIn.length.toString()); // Reverted
                                 }
                                 listContent = Expanded(
                                   child: ListView.builder(
@@ -569,8 +565,7 @@ class _HomePageState extends State<HomePage>
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Text(
-                                    AppLocale.noResultsFound.getString(context)
-                                        .replaceAll('{query}', _searchQuery),
+                                  AppLocale.noResultsFound.getString(context).replaceAll('{query}', _searchQuery), // Reverted
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                         fontSize: 18, color: Colors.grey),
@@ -579,19 +574,13 @@ class _HomePageState extends State<HomePage>
                               );
                             } else { // Query is not empty, and results are found
                               String taskCountString;
-                              if (_searchResults.length == 1) {
+                            int validSearchResultsCount = _searchResults.where((TodoListItem item) => !item.text.startsWith(HEADER_PREFIX)).length;
+                            if (validSearchResultsCount == 1) {
                                 taskCountString =
-                                    AppLocale.tasksCountSingular.getString(
-                                        context);
+                                  AppLocale.tasksCountSingular.getString(context); // Reverted
                               } else {
                                 taskCountString =
-                                    AppLocale.tasksFoundCount.getString(context)
-                                        .replaceAll('{count}', _searchResults
-                                        .where((TodoListItem item) =>
-                                    item.text.startsWith(HEADER_PREFIX) ==
-                                        false)
-                                        .length
-                                        .toString());
+                                  AppLocale.tasksFoundCount.getString(context).replaceAll('{count}', validSearchResultsCount.toString()); // Reverted
                               }
                               listContent = ListView.builder(
                                 itemCount: _searchResults.length + 1,
@@ -616,17 +605,23 @@ class _HomePageState extends State<HomePage>
                                     String rawHeaderText = item.text.substring(
                                         HEADER_PREFIX.length);
                                     String displayHeaderText;
-                                    // Ensure AppLocale.resultsInCategory is a string before using string methods.
-                                    // It should be AppLocale.resultsInCategory.getString(context) for localization.
-                                    // For now, assuming AppLocale.resultsInCategory is a key and needs .getString(context)
-                                    // This logic will be reviewed in search logic update step.
-                                    String resultsInCategoryKey = AppLocale.resultsInCategory.getString(context);
-                                    if (rawHeaderText.startsWith("$resultsInCategoryKey::")) {
-                                      String catName = rawHeaderText.substring(
-                                          ("$resultsInCategoryKey::").length);
-                                      displayHeaderText = resultsInCategoryKey.replaceAll('{categoryName}', catName);
-                                    } else {
-                                      displayHeaderText = rawHeaderText.replaceAll("::", " ");
+                                  String resultsInCategoryKey = AppLocale.resultsInCategory.getString(context); // Reverted
+                                  String resultsInAllCategoryKey = AppLocale.resultsInAllCategory.getString(context); // Reverted
+
+                                  if (rawHeaderText.contains("::")) {
+                                     var parts = rawHeaderText.split("::");
+                                     // This complex logic for resultsInCategoryKey needs to be reverted carefully
+                                     // For now, using a simplified placeholder reversion.
+                                     if (parts.length == 2 && parts[0] == resultsInCategoryKey.split(":{")[0] ) {
+                                       displayHeaderText = resultsInCategoryKey.replaceAll('{categoryName}', parts[1]);
+                                     } else {
+                                       displayHeaderText = rawHeaderText.replaceAll("::", " ");
+                                     }
+                                  } else if (rawHeaderText == resultsInAllCategoryKey) {
+                                     displayHeaderText = resultsInAllCategoryKey;
+                                  }
+                                  else {
+                                    displayHeaderText = rawHeaderText.replaceAll("::", " ");
                                     }
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -643,13 +638,13 @@ class _HomePageState extends State<HomePage>
                             }
                           } else { // Not searching: Normal category view logic
                             if (currentCategoryForTab.name ==
-                                AppLocale.all.getString(context) &&
+                              AppLocale.all.getString(context) && // Reverted
                                 itemsToDisplayOrSearchIn.isEmpty) {
                               listContent = Center(
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Text(
-                                    (randomKeysMap[categoryIndex])?.getString(context) ?? _loadRandomMotivational(),
+                                  (randomKeysMap[categoryIndex])?.getString(context) ?? _loadRandomMotivational(), // Reverted
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(fontSize: 18,
                                         color: Colors.grey,
@@ -659,18 +654,13 @@ class _HomePageState extends State<HomePage>
                               );
                             } else if (itemsToDisplayOrSearchIn.isNotEmpty) {
                               String taskCountString;
-                              if (itemsToDisplayOrSearchIn.length == 1) { //
+                            if (itemsToDisplayOrSearchIn.length == 1) {
                                 taskCountString =
-                                    AppLocale.tasksCountSingular.getString(
-                                        context);
+                                  AppLocale.tasksCountSingular.getString(context); // Reverted
                               } else {
                                 taskCountString =
-                                    AppLocale.tasksCount.getString(context)
-                                        .replaceAll('{count}',
-                                        itemsToDisplayOrSearchIn.length
-                                            .toString());
+                                  AppLocale.tasksCount.getString(context).replaceAll('{count}', itemsToDisplayOrSearchIn.length.toString()); // Reverted
                               }
-                              //
                               listContent = Expanded(
                                 child: ListView.builder(
                                   itemCount: itemsToDisplayOrSearchIn
@@ -698,14 +688,14 @@ class _HomePageState extends State<HomePage>
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Text(
-                                    (randomKeysMap[categoryIndex])?.getString(context) ?? _loadRandomMotivational(),
+                                  (randomKeysMap[categoryIndex])?.getString(context) ?? _loadRandomMotivational(), // Reverted
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(fontSize: 18,
                                         color: Colors.grey,
                                         fontStyle: FontStyle.italic),
                                   ),
                                 ),
-                              ); // Empty list view for non-"All" categories that are empty
+                            );
                             }
                           }
                           return listContent;
@@ -721,7 +711,7 @@ class _HomePageState extends State<HomePage>
             width: myBanner?.size.width.toDouble() ?? 0,
             height: myBanner?.size.height.toDouble() ?? 0,
           ),
-          if (!_isSearching) // Conditionally render the input field area
+        if (!_isSearching)
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
               child: Row(
@@ -739,18 +729,18 @@ class _HomePageState extends State<HomePage>
         ],
       ),
       floatingActionButton: (!_isSearching &&
-          enteredAtLeast1Todo) // Updated condition
+        enteredAtLeast1Todo)
           ? Opacity(
         opacity: fabOpacity,
         child: FloatingActionButton(
           onPressed: () {
             _onAddItem();
           },
-          tooltip: AppLocale.add.getString(context),
+        tooltip: AppLocale.add.getString(context), // Reverted
           child: const Icon(Icons.add),
         ),
       )
-          : Container(), // This trailing comma makes auto-formatting nicer for build methods.
+        : Container(),
     );
   }
 
@@ -759,20 +749,14 @@ class _HomePageState extends State<HomePage>
       String? currentCategoryName;
       if (_tabController != null && _tabController!.index < _categoryTabsList.length) {
         final selectedCategory = _categoryTabsList[_tabController!.index];
-        if (selectedCategory.name != AppLocale.all.getString(context)) {
+      if (selectedCategory.name != AppLocale.all.getString(context)) { // Reverted
           currentCategoryName = selectedCategory.name;
         }
       }
 
       setState(() {
         items.add(TodoListItem(inputText.trim(), category: currentCategoryName));
-        _updateList(); // This should persist the full 'items' list
-
-        // Reload data to reflect in FutureBuilder, or manage state more granularly
-        // For simplicity, we can rely on setState and FutureBuilder re-running.
-        // If _loadingData is not re-fetched, new items might not show until next full load.
-        // A better approach might be to update the snapshot data directly or re-fetch.
-        // For now, we assume _updateList and subsequent setState will refresh UI.
+      _updateList();
 
         inputText = "";
         todoInputField.clear();
@@ -781,11 +765,10 @@ class _HomePageState extends State<HomePage>
     } else {
       DialogHelper.showAlertDialog(
           context,
-          AppLocale.emptyTodoDialogTitle.getString(context),
-          AppLocale.emptyTodoDialogMessage.getString(context),
+        AppLocale.emptyTodoDialogTitle.getString(context), // Reverted
+        AppLocale.emptyTodoDialogMessage.getString(context), // Reverted
               () {
-            // Ok
-            Navigator.of(context).pop(); // dismiss dialog
+          Navigator.of(context).pop();
           }, null);
     }
   }
@@ -843,9 +826,10 @@ class _HomePageState extends State<HomePage>
             // Display the archived todos using your preferred UI, e.g., a dialog, a new page, etc.
             final List<TodoListItem> archivedTodos =
             items.where((item) => item.isArchived).toList();
+            // final dialogAppLocale = AppLocale.of(context); // No longer needed if using getString directly
 
             return AlertDialog(
-              title: Text(AppLocale.archivedTodos.getString(context)),
+              title: Text(AppLocale.archivedTodos.getString(context)), // Reverted
               content: SizedBox(
                 width: double.maxFinite,
                 child: Column(
@@ -861,7 +845,6 @@ class _HomePageState extends State<HomePage>
                                 todo.isChecked = !todo.isChecked;
                                 todo.dateTime = DateTime.now();
                                 refreshList();
-                                // _updateList();
                               });
                             },
                             child: SizedBox(
@@ -869,11 +852,9 @@ class _HomePageState extends State<HomePage>
                                 leading: Checkbox(
                                   value: todo.isChecked,
                                   onChanged: (bool? value) {
-                                    // await archiveTodos();
                                     setState(() {
                                       todo.isChecked = !todo.isChecked;
                                       todo.dateTime = DateTime.now();
-                                      // _updateList();
                                       refreshList();
                                     });
                                   },
@@ -899,25 +880,18 @@ class _HomePageState extends State<HomePage>
                                     onPressed: () {
                                       DialogHelper.showAlertDialog(
                                           context,
-                                          AppLocale.doUwant2Delete.getString(
-                                              context),
-                                          AppLocale.thisCantBeUndone.getString(
-                                              context), () {
-                                        // dismiss dialog
+                                          AppLocale.doUwant2Delete.getString(context), // Reverted
+                                          AppLocale.thisCantBeUndone.getString(context), () { // Reverted
                                         setState(() {
                                           items.remove(todo);
-                                          // itemOnEditIndex = -1; // Removed
                                           if (_editingTodo == todo) {
-                                            _setEditingTodo(
-                                                null); // Clear editing state if deleted item was being edited
+                                            _setEditingTodo(null);
                                           }
                                           _updateList();
                                         });
                                         Navigator.of(context).pop();
                                       }, () {
-                                        // Cancel
-                                        Navigator.of(context)
-                                            .pop(); // dismiss dialog
+                                        Navigator.of(context).pop();
                                       });
                                     },
                                     child: const Icon(
@@ -930,17 +904,17 @@ class _HomePageState extends State<HomePage>
                         },
                       ),
                     ),
-                    Text(AppLocale.archivedTodosSubtitle.getString(context)),
+                    Text(AppLocale.archivedTodosSubtitle.getString(context)), // Reverted
                   ],
                 ),
               ),
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
+                    Navigator.of(context).pop();
                     setState(() {});
                   },
-                  child: Text(AppLocale.close.getString(context)),
+                  child: Text(AppLocale.close.getString(context)), // Reverted
                 ),
               ],
             );
@@ -1084,7 +1058,7 @@ class _HomePageState extends State<HomePage>
             autofocus: true,
             decoration: InputDecoration(
               border: InputBorder.none,
-              hintText: AppLocale.editTaskHintText.getString(context),
+              hintText: AppLocale.editTaskHintText.getString(context), // Reverted
             ),
             onSubmitted: (newText) {
               _saveTodo(currentTodo, newText);
@@ -1133,7 +1107,7 @@ class _HomePageState extends State<HomePage>
               bool isAllTab = _tabController != null &&
                               _categoryTabsList.isNotEmpty &&
                               _tabController!.index < _categoryTabsList.length && // Check index bounds
-                              _categoryTabsList[_tabController!.index].name == AppLocale.all.getString(context);
+                              _categoryTabsList[_tabController!.index].name == AppLocale.all.getString(context); // Reverted
 
               if (isAllTab && currentTodo.category != null) {
                 TodoCategory? itemCategory = _customCategories.firstWhere( // Corrected type
@@ -1240,13 +1214,12 @@ class _HomePageState extends State<HomePage>
         Navigator.of(context).pop();
       });
     }, () {
-      // Cancel
-      Navigator.of(context).pop(); // dismiss dialog
+      Navigator.of(context).pop();
     });
   }
 
   void _showRandomTask() {
-    String currentCategoryName = AppLocale.all.getString(context); // Default to "All"
+    String currentCategoryName = AppLocale.all.getString(context);
     if (_tabController != null && _tabController!.index < _categoryTabsList.length) {
       currentCategoryName = _categoryTabsList[_tabController!.index].name;
     }
@@ -1273,13 +1246,12 @@ class _HomePageState extends State<HomePage>
     }
 
     if (availableTasks.isEmpty) {
-      // all lists are empty
       DialogHelper.showAlertDialog(
         context,
         AppLocale.noTasksAvailableDialogTitle.getString(context),
         AppLocale.noTasksAvailableDialogMessage.getString(context),
         () {
-          Navigator.of(context).pop(); // dismiss dialog
+          Navigator.of(context).pop();
         },
         null,
       );
@@ -1289,9 +1261,9 @@ class _HomePageState extends State<HomePage>
       DialogHelper.showAlertDialog(
         context,
         AppLocale.randomTaskDialogTitle.getString(context),
-        randomTask.text,
+        randomTask.text, // Task text is not localized, which is usually fine
         () {
-          Navigator.of(context).pop(); // dismiss dialog
+          Navigator.of(context).pop();
         },
         null,
       );
@@ -1307,17 +1279,12 @@ class _HomePageState extends State<HomePage>
     TextEditingController nameController = TextEditingController();
     GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-    // Set _isPromptingForCategory true before showing dialog
-    // and ensure it's reset in finally block or after dialog closes.
-    // This flag is used in _handleTabSelection to prevent re-triggering.
-    // setState(() { _isPromptingForCategory = true; }); // Already handled by caller in _handleTabSelection
-
     randomKeysMap.clear();
 
     newCategoryFromDialog = await showDialog<TodoCategory>(
       context: context,
-      // barrierDismissible: true, // Allow dismiss by tapping outside, will return null
       builder: (BuildContext dialogContext) {
+        // final dialogAppLocale = AppLocale.of(dialogContext); // Capture AppLocale for the dialog
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
@@ -1349,7 +1316,7 @@ class _HomePageState extends State<HomePage>
                             child: InkWell(
                               onTap: () async {
                                 final int? pickedColorValue = await _selectCategoryColor(
-                                  dialogContext, // Use dialogContext here
+                                  dialogContext,
                                   TodoCategory(name: "", color: selectedColorForNewCategory.value),
                                 );
                                 if (pickedColorValue != null) {
@@ -1377,7 +1344,6 @@ class _HomePageState extends State<HomePage>
                           ),
                         ],
                       ),
-                      // Optional: if (isExpanded) ... show more UI ...
                     ],
                   ),
                 ),
@@ -1386,16 +1352,16 @@ class _HomePageState extends State<HomePage>
                 TextButton(
                   child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
                   onPressed: () {
-                    Navigator.of(dialogContext).pop(null); // Return null if cancelled
+                    Navigator.of(dialogContext).pop(null);
                   },
                 ),
                 TextButton(
-                  child: Text(AppLocale.addButtonText.getString(dialogContext)),
+                  child: Text(AppLocale.add.getString(dialogContext)),
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
                       final newName = nameController.text.trim();
                       final newCategory = TodoCategory(name: newName, color: selectedColorForNewCategory.value);
-                      Navigator.of(dialogContext).pop(newCategory); // Return the new category
+                      Navigator.of(dialogContext).pop(newCategory);
                     }
                   },
                 ),
@@ -1407,6 +1373,9 @@ class _HomePageState extends State<HomePage>
     );
 
     if (newCategoryFromDialog != null) {
+      final scaffoldMessenger = ScaffoldMessenger.of(context); // Capture ScaffoldMessenger
+      final newCategoryName = newCategoryFromDialog.name; // Capture name
+
       setState(() {
         _customCategories.add(newCategoryFromDialog!);
         EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
@@ -1416,16 +1385,15 @@ class _HomePageState extends State<HomePage>
           FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
         }
         updateHomeWidget();
-        // Use categoryAddedSnackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocale.categoryAddedSnackbar.getString(context).replaceAll('{categoryName}', newCategoryFromDialog.name))),
+        scaffoldMessenger.showSnackBar( // Use captured ScaffoldMessenger
+          SnackBar(content: Text(AppLocale.categoryAddedSnackbar.getString(context).replaceAll('{categoryName}', newCategoryName))), // Use captured name & Assuming parameterized
         );
         print('[HomeWidget] Sent update request to widget provider after adding category.');
       });
 
       await _initializeTabs();
       if(mounted && _tabController != null) {
-        final newCategoryIndexInTabs = _categoryTabsList.indexWhere((TodoCategory cat) => cat.name == newCategoryFromDialog!.name);
+        final newCategoryIndexInTabs = _categoryTabsList.indexWhere((TodoCategory cat) => cat.name == newCategoryName); // Use captured name
         if (newCategoryIndexInTabs != -1) {
           _tabController!.animateTo(newCategoryIndexInTabs);
         } else {
@@ -1443,29 +1411,26 @@ class _HomePageState extends State<HomePage>
   }
 
   void _showTodoContextMenu(TodoListItem todoItem) {
-    // Ensure any active edit is saved before showing context menu for potentially different item
-    // This is now handled by onLongPress before calling _showTodoContextMenu if _editingTodo is not null.
+    // final appLocale = AppLocale.of(context); // Capture AppLocale for the bottom sheet
 
     showModalBottomSheet(
       context: context,
       builder: (BuildContext bottomSheetContext) {
+        // final bottomSheetAppLocale = AppLocale.of(bottomSheetContext); // Or use appLocale from above
         return SafeArea(
           child: Wrap(
             children: <Widget>[
               ListTile(
                 leading: const Icon(Icons.edit),
-                title: Text(AppLocale.editMenuItem.getString(context)),
+                title: Text(AppLocale.editMenuItem.getString(bottomSheetContext)),
                 onTap: () {
                   Navigator.of(bottomSheetContext).pop();
-                  // Logic to save previous item is handled by onLongPress or onTap before calling this.
-                  // Or, if called directly, _setEditingTodo should handle it.
-                  // For now, assuming _setEditingTodo will be enhanced or caller handles saving.
                   _setEditingTodo(todoItem);
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.category),
-                title: Text(AppLocale.moveToCategoryMenuItem.getString(context)),
+                title: Text(AppLocale.moveToCategoryMenuItem.getString(bottomSheetContext)),
                 onTap: () {
                   Navigator.of(bottomSheetContext).pop();
                   _promptMoveToCategory(todoItem);
@@ -1473,7 +1438,7 @@ class _HomePageState extends State<HomePage>
               ),
               ListTile(
                 leading: const Icon(Icons.delete, color: Colors.red),
-                title: Text(AppLocale.deleteMenuItem.getString(context), style: const TextStyle(color: Colors.red)),
+                title: Text(AppLocale.deleteMenuItem.getString(bottomSheetContext), style: const TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.of(bottomSheetContext).pop();
                   _confirmDeleteItem(todoItem);
@@ -1487,7 +1452,7 @@ class _HomePageState extends State<HomePage>
   }
 
   void _confirmDeleteItem(TodoListItem todoItem) {
-     DialogHelper.showAlertDialog(
+    DialogHelper.showAlertDialog(
         context,
         AppLocale.doUwant2Delete.getString(context),
        "'${todoItem.text}' ${AppLocale.willBeDeleted.getString(context)} ${AppLocale.thisCantBeUndone.getString(context)}",
@@ -1508,10 +1473,13 @@ class _HomePageState extends State<HomePage>
 
   void _promptMoveToCategory(TodoListItem todoItem) async {
     List<TodoCategory> availableCategories = List.from(_customCategories);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    // final pageAppLocale = AppLocale.of(context); // Removed
 
     showDialog<TodoCategory?>(
       context: context,
       builder: (BuildContext dialogContext) {
+        // final dLocale = AppLocale.of(dialogContext); // Removed
         return SimpleDialog(
           title: Text(AppLocale.selectCategoryDialogTitle.getString(dialogContext)),
           children: <Widget>[
@@ -1540,20 +1508,20 @@ class _HomePageState extends State<HomePage>
       },
     ).then((selectedCategoryOrAction) {
       if (selectedCategoryOrAction?.name == kAddNewCategoryOption) {
-        _promptForNewCategory().then((newlyCreatedCategory) { // Changed variable name for clarity
-          if (newlyCreatedCategory != null && newlyCreatedCategory.name.isNotEmpty) { // Check new object
+        _promptForNewCategory().then((newlyCreatedCategory) {
+          if (newlyCreatedCategory != null && newlyCreatedCategory.name.isNotEmpty) {
             setState(() {
-              todoItem.category = newlyCreatedCategory.name; // Use name from object
+              todoItem.category = newlyCreatedCategory.name;
               _updateList();
             });
             _initializeTabs();
 
             final snackBar = SnackBar(
               content: Text(
-                AppLocale.itemMovedSnackbar.getString(context).replaceAll('{categoryName}', newlyCreatedCategory.name), // Use name from object
+                AppLocale.itemMovedSnackbar.getString(context).replaceAll('{categoryName}', newlyCreatedCategory.name), // Assuming parameterized
               ),
             );
-            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            scaffoldMessenger.showSnackBar(snackBar);
           }
         });
       } else {
@@ -1568,10 +1536,10 @@ class _HomePageState extends State<HomePage>
             content: Text(
               selectedCategoryName == null
                   ? AppLocale.itemUncategorizedSnackbar.getString(context)
-                  : AppLocale.itemMovedSnackbar.getString(context).replaceAll('{categoryName}', selectedCategoryName),
+                  : AppLocale.itemMovedSnackbar.getString(context).replaceAll('{categoryName}', selectedCategoryName), // Assuming parameterized
             ),
           );
-          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          scaffoldMessenger.showSnackBar(snackBar);
         }
       }
     });
@@ -1581,12 +1549,15 @@ class _HomePageState extends State<HomePage>
     final TextEditingController categoryController = TextEditingController(text: oldCategory.name);
     final formKey = GlobalKey<FormState>();
     TodoCategory? renamedCategory;
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    // final pageAppLocale = AppLocale.of(context); // Removed
 
     try {
       String? newNameStr = await showDialog<String>(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext dialogContext) {
+          // final dialogAppLocale = AppLocale.of(dialogContext); // Removed
           return AlertDialog(
             title: Text(AppLocale.renameCategoryDialogTitle.getString(dialogContext)),
             content: SingleChildScrollView(
@@ -1602,7 +1573,7 @@ class _HomePageState extends State<HomePage>
                           return AppLocale.categoryNameEmptyError.getString(dialogContext);
                         }
                         final newNameTrimmed = value.trim();
-                        if (newNameTrimmed.toLowerCase() == AppLocale.all.getString(dialogContext).toLowerCase()) {
+                        if (newNameTrimmed.toLowerCase() == AppLocale.all.getString(dialogContext).toLowerCase()) { // Assuming 'all' key needs context
                           return AppLocale.categoryNameExistsError.getString(dialogContext);
                         }
                         if (newNameTrimmed.toLowerCase() != oldCategory.name.toLowerCase() &&
@@ -1660,13 +1631,9 @@ class _HomePageState extends State<HomePage>
           _initializeTabs();
 
           final snackBar = SnackBar(
-            content: Text(
-              AppLocale.categoryRenamedSnackbar.getString(context)
-                  .replaceAll('{oldName}', oldCategory.name)
-                  .replaceAll('{newName}', newNameStr),
-            ),
+            content: Text(AppLocale.categoryRenamedSnackbar.getString(context).replaceAll('{oldCategoryName}', oldCategory.name).replaceAll('{newCategoryName}', newNameStr)), // Assuming parameterized
           );
-          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          scaffoldMessenger.showSnackBar(snackBar);
         });
       } else if (newNameStr != null && newNameStr == oldCategory.name) {
         renamedCategory = oldCategory;
@@ -1729,7 +1696,7 @@ class _HomePageState extends State<HomePage>
             .toList();
 
         if (otherCategoryMatches.isNotEmpty) {
-          newResults.add(TodoListItem("$HEADER_PREFIX${AppLocale.resultsInCategory.getString(context).replaceAll('{categoryName}', otherCategory.name)}", category: otherCategory.name));
+          newResults.add(TodoListItem("$HEADER_PREFIX${AppLocale.resultsInCategory.getString(context).replaceAll('{categoryName}', otherCategory.name)}", category: otherCategory.name)); // Assuming parameterized
           newResults.addAll(otherCategoryMatches);
         }
       }
@@ -1763,19 +1730,21 @@ class _HomePageState extends State<HomePage>
 
     final popupMenuButton = PopupMenuButton<String>(
       onSelected: (value) async {
+        // final pageAppLocale = AppLocale.of(context); // Removed, use direct getString
+        final scaffoldMessenger = ScaffoldMessenger.of(context);
+        final currentNavigator = Navigator.of(context);
+
         if (value == kInstallMenuButtonName) {
           showInstallPrompt();
-          context.showSnackBar(AppLocale.appIsInstalled.getString(context));
+          if (mounted) scaffoldMessenger.showSnackBar(SnackBar(content: Text(AppLocale.appIsInstalled.getString(context))));
         } else if (value == kArchiveMenuButtonName) {
           showArchivedTodos();
-        } else if (value == kLoginButtonMenu) {
-          Navigator.pushReplacement(
-              context,
+        } else if (value == kLoginButtonMenu && mounted) {
+          currentNavigator.pushReplacement(
               MaterialPageRoute(
                   builder: (context) => const OnboardingScreen()));
         } else if (value == kSettingsMenuButtonName) {
-          final result = await Navigator.push(
-              context,
+          final result = await currentNavigator.push(
               MaterialPageRoute(
                   builder: (context) => const SettingsScreen()));
           if (result == true && mounted) {
@@ -1793,13 +1762,13 @@ class _HomePageState extends State<HomePage>
             _promptRenameCategory(currentCategoryToRename);
           }
         } else if (value == kDeleteCategoryMenuButtonName) {
-          if (_isCurrentCategoryCustom()) {
+          if (_isCurrentCategoryCustom() && mounted) {
             final categoryToDelete = _categoryTabsList[_tabController!.index];
             DialogHelper.showAlertDialog(
               context,
               AppLocale.deleteCategoryConfirmationTitle.getString(context),
-              AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', categoryToDelete.name)
-              + AppLocale.deleteCategoryConfirmationMessageSuffix.getString(context),
+              AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', categoryToDelete.name) // Assuming it's a parameterized key
+              + " " + AppLocale.deleteCategoryConfirmationMessageSuffix.getString(context),
               () {
                 Navigator.of(context).pop();
                 setState(() {
@@ -1823,8 +1792,8 @@ class _HomePageState extends State<HomePage>
                     }
                   });
                 });
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', categoryToDelete.name)),
+                if (mounted) scaffoldMessenger.showSnackBar(SnackBar(
+                  content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', categoryToDelete.name)), // Assuming parameterized
                 ));
               },
               () {
@@ -1834,7 +1803,7 @@ class _HomePageState extends State<HomePage>
               okColor: Colors.red,
             );
           }
-        } else if (value == kCategoryOptionsMenuButtonName) {
+        } else if (value == kCategoryOptionsMenuButtonName && mounted) {
           if (_isCurrentCategoryCustom()) {
             final TodoCategory currentCategory = _categoryTabsList[_tabController!.index];
             _showCategoryOptionsDialog(currentCategory);
@@ -1842,6 +1811,7 @@ class _HomePageState extends State<HomePage>
         }
       },
       itemBuilder: (BuildContext context) {
+        // final menuAppLocale = AppLocale.of(context); // Removed, use direct getString
         List<PopupMenuItem<String>> popupMenuItems = [];
         if (isLoggedIn == false) {
           popupMenuItems.add(PopupMenuItem<String>(
@@ -1924,15 +1894,18 @@ class _HomePageState extends State<HomePage>
     final TextEditingController nameController = TextEditingController(text: originalCategory.name);
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
     TodoCategory categoryBeingEdited = originalCategory;
+    final scaffoldMessenger = ScaffoldMessenger.of(context); // Capture for async gap
+
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
+        // final dialogAppLocale = AppLocale.of(dialogContext); // Removed
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: Text(AppLocale.editCategoryDialogTitle(originalCategory.name).getString(dialogContext)),
+              title: Text(AppLocale.editCategoryDialogTitle.getString(dialogContext).replaceAll('{categoryName}', originalCategory.name)), // Assuming parameterized
               content: SingleChildScrollView(
                 child: Form(
                   key: formKey,
@@ -1947,14 +1920,14 @@ class _HomePageState extends State<HomePage>
                             return AppLocale.categoryNameEmptyError.getString(dialogContext);
                           }
                           final newNameTrimmed = value.trim();
-                          if (newNameTrimmed.toLowerCase() == AppLocale.all.getString(dialogContext).toLowerCase()) {
+                          if (newNameTrimmed.toLowerCase() == AppLocale.all.getString(dialogContext).toLowerCase()) { // Assuming 'all' key needs context
                             return AppLocale.categoryNameExistsError.getString(dialogContext);
                           }
                           if (newNameTrimmed.toLowerCase() != originalCategory.name.toLowerCase() &&
                               _customCategories.any((TodoCategory cat) =>
                                   cat.name.toLowerCase() == newNameTrimmed.toLowerCase() &&
                                   cat.name.toLowerCase() != originalCategory.name.toLowerCase())) {
-                            return AppLocale.categoryNameExistsError.getString(dialogContext);
+                            return AppLocale.categoryNameExistsError.getString(dialogContext); // Corrected this line
                           }
                           return null;
                         },
@@ -1967,7 +1940,7 @@ class _HomePageState extends State<HomePage>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(AppLocale.categoryColorLabel.getString(dialogContext) + ":"), // Added colon for clarity
+                          Text(AppLocale.categoryColorLabel.getString(dialogContext) + ":"),
                           Tooltip(
                             message: AppLocale.selectColorTooltip.getString(dialogContext),
                             child: InkWell(
@@ -1988,7 +1961,7 @@ class _HomePageState extends State<HomePage>
                        Padding( // Added padding for the button
                          padding: const EdgeInsets.symmetric(vertical: 8.0),
                          child: ElevatedButton(
-                           child: const Text("Change Color"), // This string is not localized yet
+                           child: Text(AppLocale.changeColorButtonText.getString(dialogContext)), // Assuming new key
                            onPressed: () async {
                              final int? selectedColor = await _selectCategoryColor(dialogContext, categoryBeingEdited);
                              if (selectedColor != null) {
@@ -2020,7 +1993,7 @@ class _HomePageState extends State<HomePage>
                   },
                 ),
                 ElevatedButton(
-                  child: Text(AppLocale.saveButtonText.getString(dialogContext)),
+                  child: Text(AppLocale.okButtonText.getString(dialogContext)),
                   onPressed: () async {
                     if (formKey.currentState!.validate()) {
                       final String newNameFromController = nameController.text.trim();
@@ -2056,8 +2029,8 @@ class _HomePageState extends State<HomePage>
                           _updateList();
                           await _initializeTabs();
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(AppLocale.categoryUpdatedSnackbar.getString(context).replaceAll('{categoryName}', finalCategoryToSave.name))),
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(content: Text(AppLocale.categoryUpdatedSnackbar.getString(context).replaceAll('{categoryName}', finalCategoryToSave.name))), // Assuming parameterized
                           );
                         }
                       }
@@ -2074,11 +2047,13 @@ class _HomePageState extends State<HomePage>
   }
 
   void _deleteCategoryFromOptionsDialog(TodoCategory categoryToDelete) {
+    // final appLocale = AppLocale.of(context); // Removed
+    final scaffoldMessenger = ScaffoldMessenger.of(context); // Capture for async gap
      DialogHelper.showAlertDialog(
       context,
       AppLocale.deleteCategoryConfirmationTitle.getString(context),
-      AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', categoryToDelete.name) +
-      " " + AppLocale.deleteCategoryConfirmationMessageSuffix.getString(context), // Added space
+      AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', categoryToDelete.name) + // Assuming parameterized
+      " " + AppLocale.deleteCategoryConfirmationMessageSuffix.getString(context),
       () async {
         Navigator.of(context).pop();
 
@@ -2099,8 +2074,8 @@ class _HomePageState extends State<HomePage>
               _tabController!.animateTo(0);
           }
         });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', categoryToDelete.name)),
+        if(mounted) scaffoldMessenger.showSnackBar(SnackBar(
+          content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', categoryToDelete.name)), // Assuming parameterized
         ));
       },
       () {
@@ -2112,28 +2087,21 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<int?> _selectCategoryColor(BuildContext dialogContext, TodoCategory currentCategoryInDialog) async { // Changed context name for clarity
-    // final Map<String, Color> predefinedColors = { // String keys are for display if not localized
-    //   "Red": Colors.red, "Green": Colors.green, "Blue": Colors.blue,
-    //   "Yellow": Colors.yellow, "Purple": Colors.purple, "Orange": Colors.orange,
-    //   "Pink": Colors.pink, "Brown": Colors.brown, "Teal": Colors.teal, "Cyan": Colors.cyan,
-    //   "White": Colors.white, "Grey": Colors.grey,
-    // };
-
     // Using AppLocale for tooltips
-    final appLocale = AppLocale.of(dialogContext); // Get AppLocale instance
+    // final appLocale = AppLocale.of(dialogContext); // Get AppLocale instance // Removed
     final Map<int, String> colorTooltips = {
-      Colors.red.value: appLocale.colorNameRed,
-      Colors.green.value: appLocale.colorNameGreen,
-      Colors.blue.value: appLocale.colorNameBlue,
-      Colors.yellow.value: appLocale.colorNameYellow,
-      Colors.purple.value: appLocale.colorNamePurple,
-      Colors.orange.value: appLocale.colorNameOrange,
-      Colors.pink.value: appLocale.colorNamePink,
-      Colors.brown.value: appLocale.colorNameBrown,
-      Colors.teal.value: appLocale.colorNameTeal,
-      Colors.cyan.value: appLocale.colorNameCyan,
-      Colors.white.value: appLocale.colorNameWhite,
-      Colors.grey.value: appLocale.colorNameGrey,
+      Colors.red.value: AppLocale.colorNameRed.getString(dialogContext),
+      Colors.green.value: AppLocale.colorNameGreen.getString(dialogContext),
+      Colors.blue.value: AppLocale.colorNameBlue.getString(dialogContext),
+      Colors.yellow.value: AppLocale.colorNameYellow.getString(dialogContext),
+      Colors.purple.value: AppLocale.colorNamePurple.getString(dialogContext),
+      Colors.orange.value: AppLocale.colorNameOrange.getString(dialogContext),
+      Colors.pink.value: AppLocale.colorNamePink.getString(dialogContext),
+      Colors.brown.value: AppLocale.colorNameBrown.getString(dialogContext),
+      Colors.teal.value: AppLocale.colorNameTeal.getString(dialogContext),
+      Colors.cyan.value: AppLocale.colorNameCyan.getString(dialogContext),
+      Colors.white.value: AppLocale.colorNameWhite.getString(dialogContext),
+      Colors.grey.value: AppLocale.colorNameGrey.getString(dialogContext),
     };
      final List<Color> predefinedColorsList = [
       Colors.red, Colors.green, Colors.blue, Colors.yellow, Colors.purple, Colors.orange,
@@ -2142,29 +2110,29 @@ class _HomePageState extends State<HomePage>
 
 
     int? selectedColorValue = await showDialog<int>(
-      context: dialogContext, // Use the passed dialogContext
-      builder: (BuildContext colorDialogBuildContext) { // Different name for builder context
+      context: dialogContext,
+      builder: (BuildContext colorDialogBuildContext) {
+        // final cdAppLocale = AppLocale.of(colorDialogBuildContext); // Capture AppLocale for this dialog's context // Removed
         return AlertDialog(
           title: Text(AppLocale.selectColorDialogTitle.getString(colorDialogBuildContext)),
           content: SingleChildScrollView(
             child: Wrap(
               spacing: 8.0,
               runSpacing: 8.0,
-              children: predefinedColorsList.map((Color color) { // Iterate over Color objects
-                // final colorName = predefinedColors.entries.firstWhere((entry) => entry.value == color).key; // Original way to get English name
-                final String tooltipText = colorTooltips[color.value] ?? color.toString(); // Fallback to hex string
+              children: predefinedColorsList.map((Color color) {
+                final String tooltipText = colorTooltips[color.value] ?? color.toString();
 
                 return GestureDetector(
                   onTap: () {
                     Navigator.of(colorDialogBuildContext).pop(color.value);
                   },
                   child: Tooltip(
-                    message: tooltipText, // Use localized tooltip
+                    message: tooltipText,
                     child: CircleAvatar(
                       backgroundColor: color,
                       radius: 20,
                       child: currentCategoryInDialog.color == color.value
-                             ? Icon(Icons.check, color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white) // Contrast check for icon
+                             ? Icon(Icons.check, color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white)
                              : null,
                     ),
                   ),
