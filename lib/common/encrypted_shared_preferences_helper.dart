@@ -2,6 +2,7 @@ import 'package:encrypt_shared_preferences/provider.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:encrypt/encrypt.dart';
+import 'package:keep_tasks/models/category.dart';
 
 class EncryptedSharedPreferencesHelper {
   static late EncryptedSharedPreferences _prefs;
@@ -52,18 +53,23 @@ class EncryptedSharedPreferencesHelper {
   }
 
   /// Save a list of categories to the encrypted shared preferences
-  static Future<void> saveCategories(List<String> categories) async {
-    final String jsonString = json.encode(categories);
+  static Future<void> saveCategories(List<Category> categories) async {
+    final List<Map<String, dynamic>> categoriesJson =
+        categories.map((category) => category.toJson()).toList();
+    final String jsonString = json.encode(categoriesJson);
     await setString(kCategoriesListPrefs, jsonString);
   }
 
   /// Load a list of categories from the encrypted shared preferences
-  static Future<List<String>> loadCategories() async {
+  static Future<List<Category>> loadCategories() async {
     final String? jsonString = await getString(kCategoriesListPrefs);
     if (jsonString != null && jsonString.isNotEmpty) {
       try {
         final List<dynamic> decodedList = json.decode(jsonString);
-        return decodedList.map((category) => category.toString()).toList();
+        return decodedList
+            .map((categoryJson) =>
+                Category.fromJson(categoryJson as Map<String, dynamic>))
+            .toList();
       } catch (e) {
         print('Error decoding categories from JSON: $e');
         return [];
