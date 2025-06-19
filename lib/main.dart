@@ -16,20 +16,16 @@ Future<void> backgroundCallback(Uri? uri) async {
   print('[HomeWidget] backgroundCallback triggered with uri: $uri');
   WidgetsFlutterBinding.ensureInitialized();
   await EncryptionHelper.initialize();
-  await EncryptedSharedPreferencesHelper.initialize(); // Ensure helper is initialized for background
+  await EncryptedSharedPreferencesHelper.initialize();
 
-  // Potentially update widget data based on URI or other logic
   if (uri?.host == 'updatecounter') {
-    // Example: int counter = await EncryptedSharedPreferencesHelper.getInt('counter') ?? 0;
-    // await HomeWidget.saveWidgetData<int>('counter', counter);
-    // await HomeWidget.updateWidget(name: 'TodoWidgetProvider', iOSName: 'TodoWidget');
+    // Actual widget update logic would go here if triggered by URI
   }
   print('[HomeWidget] backgroundCallback completed.');
 }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // FlutterLocalization.instance.ensureInitialized() is NOT needed if using init()
   await EncryptionHelper.initialize();
   await EncryptedSharedPreferencesHelper.initialize();
 

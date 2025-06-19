@@ -1,28 +1,31 @@
+// lib/models/todo_list_item.dart
 import 'package:flutter_example/common/encryption_helper.dart';
+import 'package:uuid/uuid.dart'; // For default ID if needed during construction
 
 class TodoListItem {
-  String? id; // Added ID field
+  String? id; // Should be populated from Firebase key or generated via UUID
   String text;
-
-  bool isChecked = false; //todo extract into the widget and out of the model!!!
-
-  DateTime dateTime = DateTime.now();
-  bool isArchived = false;
+  bool isChecked;
+  DateTime dateTime; // Represents creation date and last update time for checked status
+  bool isArchived;
   String? category;
 
-  TodoListItem(this.text, {this.id, this.category}); // Added id to constructor
+  TodoListItem(this.text, {String? id, this.category, DateTime? dateTime, bool? isChecked, bool? isArchived})
+      : this.id = id ?? Uuid().v4(), // Ensure ID if not provided
+        this.dateTime = dateTime ?? DateTime.now(),
+        this.isChecked = isChecked ?? false,
+        this.isArchived = isArchived ?? false;
 
   bool isEligibleForArchiving() {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    return isChecked && difference.inHours > 24;
-    // return isChecked && difference.inMinutes < 2; // todo change this, for debug only
+    // Example: Archive if checked and older than 1 day (or 24 hours)
+    return isChecked && difference.inDays > 0;
   }
-
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id, // Added id to toJson
+      'id': id, // Persist ID
       'text': text.startsWith('ENC:') ? text : 'ENC:' + EncryptionHelper.encryptText(text),
       'isChecked': isChecked,
       'dateTime': dateTime.toIso8601String(),
@@ -31,30 +34,27 @@ class TodoListItem {
     };
   }
 
-  // Factory constructor updated to optionally accept an ID,
-  // useful if the ID is the key in a map rather than part of the value.
   factory TodoListItem.fromJson(Map<String, dynamic> json, {String? idFromKey}) {
     String decryptedText;
-    String text = json['text'] as String;
-    if (text.startsWith('ENC:')) {
+    String jsonText = json['text'] as String? ?? ''; // Handle null text from DB
+    if (jsonText.startsWith('ENC:')) {
       try {
-        decryptedText = EncryptionHelper.decryptText(text.substring(4));
+        decryptedText = EncryptionHelper.decryptText(jsonText.substring(4));
       } catch (e) {
-        // If decryption fails, assume the text is not encrypted
-        decryptedText = text;
-        print("Failed to decrypt text: ${text.substring(4)}");
+        decryptedText = jsonText; // Fallback if decryption fails
+        print("Failed to decrypt text: ${jsonText.substring(4)}");
       }
     } else {
-      decryptedText = text;
+      decryptedText = jsonText;
     }
+
     return TodoListItem(
       decryptedText,
-      id: idFromKey ?? json['id'] as String?, // Use idFromKey if provided, else from json
+      id: idFromKey ?? json['id'] as String?, // Prioritize idFromKey (Firebase key)
+      isChecked: json['isChecked'] as bool? ?? false,
+      dateTime: json['dateTime'] != null ? DateTime.parse(json['dateTime'] as String) : DateTime.now(),
+      isArchived: json['isArchived'] as bool? ?? false,
       category: json['category'] as String?,
-    )
-      ..isChecked = json['isChecked'] as bool? ?? false
-      ..dateTime = DateTime.parse(json['dateTime'] as String? ?? DateTime.now().toIso8601String()) // Provide default for dateTime if missing
-      ..isArchived = json['isArchived'] as bool? ?? false;
+    );
   }
-
 }

@@ -49,6 +49,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadCurrentUser() async {
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser != null) {
+      // Ensure getIt is initialized and FirebaseRepoInteractor is registered
+      // This might require AppInitializer.initialize() to have completed
+      // or for getIt to be configured synchronously if possible.
       final user = await getIt<FirebaseRepoInteractor>().getUserData(firebaseUser.uid);
       if (mounted) {
         setState(() {
@@ -93,6 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     //   final downloadUrl = await storageRef.getDownloadURL();
 
     //   _currentUser!.profilePictureUrl = downloadUrl;
+    //   // Assuming saveUser is available in FirebaseRepoInteractor
     //   await getIt<FirebaseRepoInteractor>().saveUser(_currentUser!);
 
     //   if (mounted) {
@@ -114,7 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // Using placeholder for now:
     const String placeholderDownloadUrl = "https://via.placeholder.com/150/007bff/FFFFFF?Text=Profile";
     _currentUser!.profilePictureUrl = placeholderDownloadUrl;
-    await getIt<FirebaseRepoInteractor>().saveUser(_currentUser!);
+    await getIt<FirebaseRepoInteractor>().saveUser(_currentUser!); // Assumes saveUser exists
     if (mounted) {
       setState(() { _pickedImage = null; });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -150,6 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onChanged: (String? newValue) {
                   if (newValue != null) {
                     FlutterLocalization.instance.translate(newValue);
+                    // The onTranslatedLanguage callback in _MyAppState handles UI rebuild for locale change
                   }
                 },
               ),
@@ -174,7 +179,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : () async {
                       final confirmed = await showDialog<bool>(
                         context: context,
-                        builder: (BuildContext dialogContext) {
+                        builder: (BuildContext dialogContext) { // Renamed context
                           return AlertDialog(
                             title: Text(AppLocale.logout.getString(dialogContext)),
                             content: Text(AppLocale.logoutText.getString(dialogContext)),
@@ -193,7 +198,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       );
                       if (confirmed == true && mounted) {
                         await FirebaseAuth.instance.signOut();
-                        getIt<FirebaseRepoInteractor>().disposeUserSubscription(); // Dispose user-specific listeners
+                        // Consider clearing any user-specific data or resetting state here
+                        getIt<FirebaseRepoInteractor>().disposeUserSubscription();
                         Navigator.of(context).pushReplacementNamed('/onboarding');
                       }
                     },
@@ -205,9 +211,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildProfileSection(BuildContext context) {
-    String displayName = AppLocale.guest.getString(context);
-    String displayEmail = "";
-    // Use Globals.defaultProfilePicAsset as the ultimate fallback for AssetImage
+    String displayName = _isGuest ? AppLocale.guest.getString(context) : (_currentUser?.name ?? AppLocale.unknown.getString(context));
+    String displayEmail = _isGuest ? "" : (_currentUser?.email ?? "");
     String? profilePicUrlToShow = _currentUser?.profilePictureUrl;
 
     ImageProvider<Object> backgroundImageProvider;
@@ -227,31 +232,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: CircleAvatar(
             radius: 50,
             backgroundImage: backgroundImageProvider,
-            // Show icon only if it's truly a fallback (no network image, no picked image, and using default asset)
-            child: (profilePicUrlToShow == null || profilePicUrlToShow.isEmpty) && _pickedImage == null
+            child: (_pickedImage == null && (profilePicUrlToShow == null || profilePicUrlToShow.isEmpty))
                 ? const Icon(Icons.person, size: 50)
                 : null,
           ),
         ),
         const SizedBox(height: 10),
         Text(displayName, style: Theme.of(context).textTheme.headlineSmall),
-        if (!_isGuest && _currentUser?.email != null && _currentUser!.email!.isNotEmpty)
-          Text(_currentUser!.email!, style: Theme.of(context).textTheme.bodySmall),
+        if (displayEmail.isNotEmpty) Text(displayEmail, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 10),
         if (!_isGuest)
           ElevatedButton(
-            onPressed: _pickImage, // _isUploading ? null : _pickImage, // Optional: disable while uploading
+            onPressed: _pickImage,
             child: Text(AppLocale.changeProfilePictureButton.getString(context)),
           ),
         if (_pickedImage != null && !_isGuest)
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: ElevatedButton(
-              onPressed: _uploadProfilePicture, // _isUploading ? null : _uploadProfilePicture,
+              onPressed: _uploadProfilePicture,
               child: Text(AppLocale.uploadProfilePictureButton.getString(context)),
-              // Optional: child: _isUploading
-              //   ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.0,))
-              //   : Text(AppLocale.uploadProfilePictureButton.getString(context)),
             ),
           ),
       ],

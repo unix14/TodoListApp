@@ -3,31 +3,19 @@ import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
 
 class FirebaseRealtimeDatabaseRepository {
-  FirebaseRealtimeDatabaseRepository._internal(); // Private constructor for singleton
+  FirebaseRealtimeDatabaseRepository._internal();
   static final FirebaseRealtimeDatabaseRepository _instance = FirebaseRealtimeDatabaseRepository._internal();
-  // Public accessor for the instance - changed to 'instance' from 'I' for consistency with older versions if any existed
-  static FirebaseRealtimeDatabaseRepository get instance => _testInstance ?? _instance;
+  static FirebaseRealtimeDatabaseRepository get instance => _testInstance ?? _instance; // Allow test instance override
 
-
-  // Optional: For testing, allow replacing the instance
   static FirebaseRealtimeDatabaseRepository? _testInstance;
-  // static set testInstance(FirebaseRealtimeDatabaseRepository? instance) { // Setter for testInstance
-  //   _testInstance = instance;
-  // }
-  // Use this to get the current instance (real or test)
-  static FirebaseRealtimeDatabaseRepository get current { // Changed from I to current for clarity
-    return _testInstance ?? _instance;
+  static set testInstance(FirebaseRealtimeDatabaseRepository? i) { // Setter for test instance
+    _testInstance = i;
   }
-   // Method to set a test instance, if needed for testing.
-  static void setTestInstance(FirebaseRealtimeDatabaseRepository testInstance) { // Added explicit setter
-    _testInstance = testInstance;
-  }
-
 
   Future<bool> saveData(String fullPath, Map<String, dynamic>? dataToSave) async {
     DatabaseReference reference = FirebaseDatabase.instance.ref(fullPath);
     try {
-      if (dataToSave == null) { // Handle null dataToSave as a delete operation
+      if (dataToSave == null) {
         await reference.remove();
         print('Data deleted successfully at $fullPath');
       } else {
@@ -48,7 +36,6 @@ class FirebaseRealtimeDatabaseRepository {
       if (event.snapshot.value is Map) {
         return Map<String, dynamic>.from(event.snapshot.value as Map);
       } else {
-        // If it's not a map (e.g., a single value like a string or number directly under the nodeKey)
         return {'_value': event.snapshot.value};
       }
     }
@@ -68,49 +55,49 @@ class FirebaseRealtimeDatabaseRepository {
     return {};
   }
 
-  Future<void> deleteData(String fullPath) async {
+  Future<void> deleteData(String fullPath) async { // Changed to not have path: named param
     final reference = FirebaseDatabase.instance.ref(fullPath);
     try {
         await reference.remove();
         print('Data deleted successfully from $fullPath');
     } catch (error) {
         print('Failed to delete data at $fullPath: $error');
-        rethrow; // Re-throw to allow caller to handle
+        rethrow;
     }
   }
 
   String getNewKey({required String basePath}) {
-     if (basePath.isEmpty) {
-        throw ArgumentError("Base path cannot be empty when generating a new key.");
+    if (basePath.isEmpty) { // Added check for empty basePath
+        // It's often better to let Firebase generate a key at the root if basePath is truly not applicable
+        // but this depends on the desired DB structure.
+        // For now, allowing push at root. Consider if this is intended.
+        return FirebaseDatabase.instance.ref().push().key!;
     }
     return FirebaseDatabase.instance.ref(basePath).push().key!;
   }
 
-  // getDataStream now matches the interactor's expectation of full path and Map<String, dynamic>?
-  Stream<Map<String, dynamic>?> getDataStream({required String path}) {
-    DatabaseReference ref = FirebaseDatabase.instance.ref(path);
-    return ref.onValue.map((event) {
+  Stream<Map<String, dynamic>?> getStream(String fullPath) { // Return type nullable map
+    return FirebaseDatabase.instance.ref(fullPath).onValue.map((event) {
       if (event.snapshot.exists && event.snapshot.value != null) {
         if (event.snapshot.value is Map) {
-          return Map<String, dynamic>.from(event.snapshot.value as Map);
-        } else {
-          print("Warning: Data at stream path $path is not a Map: ${event.snapshot.value}");
-          return null;
+             return Map<String, dynamic>.from(event.snapshot.value as Map);
         }
+        // Handle non-map data if necessary, or return null/empty if structure is unexpected
+        print("Warning: Data at $fullPath is not a Map, returning null for stream.");
+        return null;
       }
-      return null;
+      return null; // Or {} if an empty map is preferred for no data
     });
   }
 
-    // Added updateData method as it's used by FirebaseRepoInteractor in target code
-  Future<void> updateData({required String path, required Map<String, dynamic> data}) async {
+  Future<void> updateData(String fullPath, Map<String, dynamic> dataToUpdate) async {
+    DatabaseReference reference = FirebaseDatabase.instance.ref(fullPath);
     try {
-      DatabaseReference ref = FirebaseDatabase.instance.ref(path);
-      await ref.update(data);
-      print("Data updated successfully at $path");
-    } catch (e) {
-      print("Error updating data in Firebase Realtime Database at $path: $e");
-      rethrow;
+        await reference.update(dataToUpdate);
+        print('Data updated successfully at $fullPath');
+    } catch (error) {
+        print('Failed to update data at $fullPath: $error. Data: $dataToUpdate');
+        rethrow;
     }
-  }
+}
 }
