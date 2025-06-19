@@ -1,1 +1,55 @@
-{}
+{
+  "addCategoryDialogTitle": "Add New Category",
+  "editCategoryDialogTitle": "Edit Category: {categoryName}",
+  "@editCategoryDialogTitle": {
+    "description": "Title for the edit category dialog",
+    "placeholders": {
+      "categoryName": {
+        "type": "String",
+        "example": "Work"
+      }
+    }
+  },
+  "categoryColorLabel": "Color",
+  "expandButtonText": "Expand",
+  "collapseButtonText": "Collapse",
+  "addButtonText": "Add",
+  "deleteCategoryButtonText": "Delete Category",
+  "saveButtonText": "Save",
+  "categoryOptionsMenuItem": "Category Options",
+  "selectColorTooltip": "Select color",
+  "categoryUpdatedSnackbar": "Category '{categoryName}' updated.",
+  "@categoryUpdatedSnackbar": {
+    "placeholders": {
+      "categoryName": {}
+    }
+  },
+  "categoryAddedSnackbar": "Category '{categoryName}' added.",
+  "@categoryAddedSnackbar": {
+    "placeholders": {
+      "categoryName": {}
+    }
+  },
+  "categoryDeletedSnackbar": "Category '{categoryName}' deleted.",
+  "@categoryDeletedSnackbar": {
+    "placeholders": {
+      "categoryName": {}
+    }
+  },
+  "selectColorDialogTitle": "Select Color",
+  "colorNameRed": "Red",
+  "colorNameGreen": "Green",
+  "colorNameBlue": "Blue",
+  "colorNameYellow": "Yellow",
+  "colorNamePurple": "Purple",
+  "colorNameOrange": "Orange",
+  "colorNamePink": "Pink",
+  "colorNameBrown": "Brown",
+  "colorNameTeal": "Teal",
+  "colorNameCyan": "Cyan",
+  "colorNameWhite": "White",
+  "colorNameGrey": "Grey",
+  "cancelButtonText": "Cancel",
+  "okButtonText": "OK",
+  "add": "Add"
+}
