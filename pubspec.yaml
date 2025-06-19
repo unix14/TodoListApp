@@ -88,6 +88,7 @@ flutter:
   assets:
     - assets/config/encryption_config.json
     - assets/icons/Icon-192.png
+    - assets/fonts/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

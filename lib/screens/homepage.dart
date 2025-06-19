@@ -18,13 +18,9 @@ import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
 import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
-// import 'package:flutter_example/screens/todo_search_screen.dart'; // Removed as file is deleted
 import 'package:flutter_example/widgets/rounded_text_input_field.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:home_widget/home_widget.dart';
-
-import 'onboarding.dart';
 
 const String kRenameCategoryMenuButtonName = 'rename_category';
 const String kDeleteCategoryMenuButtonName = 'delete_category';
@@ -98,6 +94,8 @@ class _HomePageState extends State<HomePage>
   BannerAd? myBanner;
   AdWidget? adWidget;
   late AdListener listener;
+
+  Widget searchIcon = const Icon(Icons.search,);
 
   //init ads here
   void initAds() {
@@ -393,10 +391,11 @@ class _HomePageState extends State<HomePage>
             ),
           ),
         ),
-        leading: _isSearching ? null : IconButton(
+        leading: _isSearching ? searchIcon : IconButton(
           icon: const Icon(Icons.shuffle,),
           onPressed: _showRandomTask, // Call renamed method
           tooltip: AppLocale.randomTaskMenuButton.getString(context),
+          padding: const EdgeInsets.all(0),
         ),
         actions: _isSearching
             ? [
@@ -413,8 +412,7 @@ class _HomePageState extends State<HomePage>
               // Potentially call _performSearch("") if you want to reset the list
             },
           ),
-        ]
-            : _buildDefaultAppBarActions(context),
+        ] : _buildDefaultAppBarActions(context),
       ),
       body: Column(
         children: [
@@ -1666,7 +1664,7 @@ class _HomePageState extends State<HomePage>
   List<Widget> _buildDefaultAppBarActions(BuildContext context) {
     // Existing search icon button, now calls the renamed method
     final searchUIToggleButton = IconButton(
-      icon: const Icon(Icons.search), // Keep original icon
+      icon: searchIcon, // Keep original icon
       onPressed: _toggleSearchUI, // Call renamed method
       tooltip: AppLocale.searchTodosTooltip.getString(context), // Keep original tooltip
     );
