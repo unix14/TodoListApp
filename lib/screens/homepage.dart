@@ -147,13 +147,24 @@ class _HomePageState extends State<HomePage>
     });
   }
   Future<void> _checkIncomingSharedSlug() async {
-    if (incomingSharedSlug != null) {
+    if (incomingSharedSlug != null && currentUser != null) {
       final data = await FirebaseRepoInteractor.instance.getSharedCategoryData(incomingSharedSlug!);
       if (data.isNotEmpty) {
         String name = data["name"] ?? "";
         if (!_customCategories.contains(name)) {
           _customCategories.add(name);
           await EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+        }
+        Map<String, dynamic> members = Map<String, dynamic>.from(data['members'] ?? {});
+        if (!members.containsKey(currentUser!.uid)) {
+          members[currentUser!.uid] = true;
+          await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+            incomingSharedSlug!,
+            {
+              ...data,
+              'members': members,
+            },
+          );
         }
       }
       incomingSharedSlug = null;
@@ -1592,15 +1603,25 @@ class _HomePageState extends State<HomePage>
           title: Text(AppLocale.shareCategory.getString(context)),
           content: TextField(controller: controller),
           actions: [
-            TextButton(onPressed: () async {
-              await FirebaseRepoInteractor.instance.saveSharedCategoryData(controller.text, {
-              'name': categoryName,
-              'owner': currentUser?.uid,
-              });
-              context.copyToClipboard(kShareBaseUrl + controller.text);
-              Navigator.of(context).pop();
-            }, child: Text(AppLocale.ok.getString(context))),
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(AppLocale.cancel.getString(context))),
+            TextButton(
+              onPressed: () async {
+                await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+                  controller.text,
+                  {
+                    'name': categoryName,
+                    'owner': currentUser?.uid,
+                    'members': {if (currentUser != null) currentUser!.uid: true},
+                  },
+                );
+                context.copyToClipboard(kShareBaseUrl + controller.text);
+                Navigator.of(context).pop();
+              },
+              child: Text(AppLocale.ok.getString(context)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(AppLocale.cancel.getString(context)),
+            ),
           ],
         );
       },
