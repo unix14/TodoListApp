@@ -1754,41 +1754,46 @@ class _HomePageState extends State<HomePage>
             DialogHelper.showAlertDialog(
               context,
               AppLocale.deleteCategoryConfirmationTitle.getString(context),
-              AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', currentCategoryName),
-              () { // onOkButton
-                Navigator.of(context).pop(); // Dismiss confirmation dialog
+              AppLocale.deleteCategoryConfirmationMessage
+                  .getString(context)
+                  .replaceAll('{categoryName}', currentCategoryName),
+              () {
+                Navigator.of(context).pop();
                 setState(() {
-                  _customCategories.removeWhere((cat) => cat.toLowerCase() == currentCategoryName.toLowerCase());
+                  _customCategories.removeWhere((cat) =>
+                      cat.toLowerCase() == currentCategoryName.toLowerCase());
                   for (var item in items) {
                     if (item.category == currentCategoryName) {
-                      item.category = null; // Move to "All"
+                      item.category = null;
                     }
                   }
-                  EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+                  EncryptedSharedPreferencesHelper.saveCategories(
+                      _customCategories);
                   updateHomeWidget();
-                    print('[HomeWidget] Sent update request to widget provider after deleting category.');
+                  print(
+                      '[HomeWidget] Sent update request to widget provider after deleting category.');
                   _updateList();
-                  // Re-initialize tabs and then switch to "All" tab.
                   _initializeTabs().then((_) {
                     if (mounted && _tabController != null) {
-                        _tabController!.index = 0;
+                      _tabController!.index = 0;
                     }
                   });
                 });
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(AppLocale.categoryDeletedSnackbar
+                      .getString(context)
+                      .replaceAll('{categoryName}', currentCategoryName)),
+                ));
+              },
+              () {
+                Navigator.of(context).pop();
+              },
+            );
+          }
         } else if (value == kShareCategoryMenuButtonName) {
           if (_isCurrentCategoryCustom()) {
             final currentCategoryName = _categories[_tabController!.index];
             _showShareDialog(currentCategoryName);
-          }
-        }
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', currentCategoryName)),
-                ));
-              },
-              () { // onCancelButton
-                Navigator.of(context).pop(); // Dismiss confirmation dialog
-              },
-            );
           }
         }
       },
