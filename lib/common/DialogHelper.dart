@@ -3,21 +3,30 @@ import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter_example/mixin/app_locale.dart';
 
 class DialogHelper {
-  static Future<bool?> showAlertDialog(BuildContext context, String title, String message, // Renamed 'text' to 'message' for clarity
+  static Future<bool?> showAlertDialog(
+      BuildContext context,
+      String title,
+      String message, // Renamed 'text' to 'message' for clarity
       VoidCallback? onOkButton, // This callback should ideally do Navigator.pop(context, true)
-      VoidCallback? onCancelButton // This callback should ideally do Navigator.pop(context, false)
+      VoidCallback? onCancelButton, // This callback should ideally do Navigator.pop(context, false
+        {
+          String? okBtnTxt,
+          String? cancelBtnTxt,
+          Color? okColor,
+          Color? cancelColor,
+        }
       ) async { // Added async and Future<bool?>
 
     // set up the button
     Widget okButton = TextButton(
-      child: Text(AppLocale.okButtonText.getString(context)),
+      child: Text(okBtnTxt ?? AppLocale.okButtonText.getString(context), style: TextStyle(color: okColor),),
       onPressed: onOkButton, // Caller's callback, expected to pop with true
     );
 
     Widget? cancelButtonWidget; // Nullable
     if (onCancelButton != null) {
       cancelButtonWidget = TextButton(
-        child: Text(AppLocale.cancelButtonText.getString(context)),
+        child: Text(cancelBtnTxt ?? AppLocale.cancelButtonText.getString(context), style: TextStyle(color: cancelColor,),),
         onPressed: onCancelButton, // Caller's callback, expected to pop with false
       );
     }

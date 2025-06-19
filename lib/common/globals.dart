@@ -12,3 +12,6 @@ MyUser.User? myCurrentUser; // MyUser
 var isLoggedIn = false;
 
 String currentLocaleStr = "en";
+
+
+String appName = "Todo Later";

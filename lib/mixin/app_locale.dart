@@ -19,10 +19,12 @@ mixin AppLocale {
   static const String categoryRenamedSnackbar = 'categoryRenamedSnackbar';
   static const String close = "close";
   static const String closeSearchTooltip = 'closeSearchTooltip';
+  static const String delete = "delete";
   static const String deleteAll = "deleteAll";
   static const String deleteAllSubtext = "deleteAllSubtext";
   static const String deleteAllSubtitle = "deleteAllSubtitle";
   static const String deleteCategoryConfirmationMessage = 'deleteCategoryConfirmationMessage';
+  static const String deleteCategoryConfirmationMessageSuffix = 'deleteCategoryConfirmationMessageSuffix';
   static const String deleteCategoryConfirmationTitle = 'deleteCategoryConfirmationTitle';
   static const String deleteCategoryMenuButton = 'deleteCategoryMenuButton';
   static const String deleteMenuItem = 'deleteMenuItem';
@@ -78,6 +80,7 @@ mixin AppLocale {
   static const String tasksCountSingular = 'tasksCountSingular';
   static const String tasksCountZero = 'tasksCountZero';
   static const String thisCantBeUndone = "thisCantBeUndone";
+  static const String willBeDeleted = "willBeDeleted";
   static const String timeDaysAgo = 'timeDaysAgo';
   static const String timeFewMinutesAgo = 'timeFewMinutesAgo';
   static const String timeFewSecondsAgo = 'timeFewSecondsAgo';
@@ -145,6 +148,7 @@ mixin AppLocale {
     AppLocale.settings: "Settings",
     AppLocale.archive: "Archive",
     AppLocale.installApp: "Install App",
+    AppLocale.delete: "Delete",
     AppLocale.deleteAll: "Delete All",
     AppLocale.appIsInstalled: "App is installed",
     AppLocale.deleteAllSubtitle: "Delete all TODOs in the account, this action will also clear the archive",
@@ -177,6 +181,7 @@ mixin AppLocale {
     AppLocale.deleteAllSubtext: "Deleting all Todos will result in an empty list and an empty archive list. Do you really want to delete everything?",
     AppLocale.doUwant2Delete: "Do you want to delete?",
     AppLocale.thisCantBeUndone: "This can't be undone",
+    AppLocale.willBeDeleted: "will be deleted, ",
     AppLocale.selectLanguage: "Select Language",
     AppLocale.randomTaskMenuButton: "Random Task",
     AppLocale.randomTaskDialogTitle: "Randomly Selected Task",
@@ -196,7 +201,8 @@ mixin AppLocale {
     AppLocale.categoryNameHintText: 'Category name',
     AppLocale.categoryRenamedSnackbar: "Category '{oldName}' renamed to '{newName}'",
     AppLocale.closeSearchTooltip: "Close Search",
-    AppLocale.deleteCategoryConfirmationMessage: "Are you sure you want to delete the category '{categoryName}'? All items in this category will be moved to 'All'.",
+    AppLocale.deleteCategoryConfirmationMessage: "Are you sure you want to delete the category '{categoryName}'?",
+    AppLocale.deleteCategoryConfirmationMessageSuffix: " All items in this category will be moved to 'All'.",
     AppLocale.deleteCategoryConfirmationTitle: "Delete Category?",
     AppLocale.deleteCategoryMenuButton: "Delete Current Category",
     AppLocale.deleteMenuItem: 'Delete',
@@ -280,6 +286,7 @@ mixin AppLocale {
     AppLocale.settings: "הגדרות",
     AppLocale.archive: "ארכיון",
     AppLocale.installApp: "התקנת אפליקציה",
+    AppLocale.delete: "מחק",
     AppLocale.deleteAll: "מחק הכל",
     AppLocale.appIsInstalled: "האפליקציה הותקנה בהצלחה",
     AppLocale.deleteAllSubtitle: "מחיקת כל הטודו בחשבון, פעולה זו תמחק גם את הארכיון",
@@ -312,6 +319,7 @@ mixin AppLocale {
     AppLocale.deleteAllSubtext: "מחיקת כל המשימות תגרום לרשימה שלכם להיות ריקה, ולארכיון להתרוקן. האם אתם בטוחים שזה מה שאתם רוצים לעשות?",
     AppLocale.doUwant2Delete: "האם למחוק?",
     AppLocale.thisCantBeUndone: "פעולה זו בלתי הפיכה",
+    AppLocale.willBeDeleted: "יימחק, ",
     AppLocale.selectLanguage: "בחר שפה",
     AppLocale.randomTaskMenuButton: "משימה אקראית",
     AppLocale.randomTaskDialogTitle: "משימה שנבחרה בצורה אקראית",
@@ -331,7 +339,8 @@ mixin AppLocale {
     AppLocale.categoryNameHintText: 'שם הקטגוריה',
     AppLocale.categoryRenamedSnackbar: "קטגוריה '{oldName}' שונתה ל '{newName}'",
     AppLocale.closeSearchTooltip: "סגור חיפוש",
-    AppLocale.deleteCategoryConfirmationMessage: "האם אתה בטוח שברצונך למחוק את הקטגוריה '{categoryName}'? כל הפריטים בקטגוריה זו יועברו ל'הכל'.",
+    AppLocale.deleteCategoryConfirmationMessage: "האם אתה בטוח שברצונך למחוק את הקטגוריה '{categoryName}'?",
+    AppLocale.deleteCategoryConfirmationMessageSuffix: " כל הפריטים בקטגוריה זו יועברו ל'הכל'.",
     AppLocale.deleteCategoryConfirmationTitle: "למחוק קטגוריה?",
     AppLocale.deleteCategoryMenuButton: "מחק קטגוריה נוכחית",
     AppLocale.deleteMenuItem: 'מחק',

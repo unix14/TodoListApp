@@ -604,13 +604,6 @@ class _HomePageState extends State<HomePage>
                             if (currentCategoryNameForTab ==
                                 AppLocale.all.getString(context) &&
                                 itemsToDisplayOrSearchIn.isEmpty) {
-                              final List<String> motivationalKeys = [
-                                AppLocale.motivationalSentence1,
-                                AppLocale.motivationalSentence2,
-                                AppLocale.motivationalSentence3,
-                                AppLocale.motivationalSentence4,
-                                AppLocale.motivationalSentence5,
-                              ];
                               final randomKey = motivationalKeys[Random()
                                   .nextInt(motivationalKeys.length)];
                               listContent = Center(
@@ -1351,7 +1344,8 @@ class _HomePageState extends State<HomePage>
      DialogHelper.showAlertDialog(
         context,
         AppLocale.doUwant2Delete.getString(context), // Assuming this key exists
-        AppLocale.thisCantBeUndone.getString(context), // Assuming this key exists
+       "'${todoItem.text}' "+ AppLocale.willBeDeleted.getString(context) +
+       AppLocale.thisCantBeUndone.getString(context), // Assuming this key exists
         () {
       Navigator.of(context).pop(); // dismiss confirmation dialog
       _setEditingTodo(null); // Exit edit mode if the item being deleted was in edit mode
@@ -1368,7 +1362,10 @@ class _HomePageState extends State<HomePage>
     }, () {
       // Cancel
       Navigator.of(context).pop(); // dismiss dialog
-    });
+    },
+       okBtnTxt: AppLocale.delete.getString(context),
+       okColor: Colors.red,
+     );
   }
 
   void _promptMoveToCategory(TodoListItem todoItem) async {
@@ -1714,7 +1711,8 @@ class _HomePageState extends State<HomePage>
             DialogHelper.showAlertDialog(
               context,
               AppLocale.deleteCategoryConfirmationTitle.getString(context),
-              AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', currentCategoryName),
+              AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', currentCategoryName)
+              + AppLocale.deleteCategoryConfirmationMessageSuffix.getString(context), // todo impl smart message here
               () { // onOkButton
                 Navigator.of(context).pop(); // Dismiss confirmation dialog
                 setState(() {
@@ -1742,6 +1740,8 @@ class _HomePageState extends State<HomePage>
               () { // onCancelButton
                 Navigator.of(context).pop(); // Dismiss confirmation dialog
               },
+              okBtnTxt: AppLocale.delete.getString(context),
+              okColor: Colors.red,
             );
           }
         }

@@ -83,6 +83,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     FlutterLocalization.instance.onTranslatedLanguage = _onTranslatedLanguage;
     _currentLocale = Locale(currentLocaleStr);
+    appName = AppLocale.todoLater.getString(context);
     super.initState();
   }
 
@@ -96,7 +97,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: AppLocale.todoLater.getString(context),
+      title: appName,
       color: Colors.blueAccent,
       debugShowCheckedModeBanner: false,
       locale: _currentLocale, // Set this dynamically

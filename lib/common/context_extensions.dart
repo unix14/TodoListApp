@@ -187,7 +187,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
     var user = await Authenticator.signIn(email, password);
 
     if(user != null) {
-      showSnackBar("You are now logged in, Welcome ${/*currentPage?.userName ??*/ user.email}");
+      showSnackBar("You are now logged in, Welcome ${/*currentPage?.userName ??*/ user.email}"); // todo translate
       AppInitializer.handleLoginSuccess(user);
       myCurrentUser = await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
 
@@ -198,7 +198,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
         Navigator.of(this).pushReplacement(MaterialPageRoute(builder: (context) => const HomePage()));
       });
     } else {
-      showAlertDialog("Login failed", "Please try again");
+      showAlertDialog("Login failed", "Please try again"); // todo translate
     }
 
     // AnalytixManager().logEvent('user_click', 'login_result', params: {
@@ -220,7 +220,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
     var user = await Authenticator.signUp(email, password);
 
     if(user != null) {
-      showSnackBar("You are now signed up, Welcome ${/*currentPage?.userName ??*/ user.email}");
+      showSnackBar("You are now signed up, Welcome ${/*currentPage?.userName ??*/ user.email}"); // todo translate
       AppInitializer.handleLoginSuccess(user);
 
       myCurrentUser = MyUser.User(
@@ -251,6 +251,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
       showAlertDialog("Signup failed", "Please try again");
     }
 
+    // todo add analytix
     // AnalytixManager().logEvent('user_click', 'signup_result', params: {
     //   'email': email,
     //   'isSignedUpSuccessfully': user != null,
@@ -268,7 +269,7 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
       await EncryptedSharedPreferencesHelper.setString(kCurrentLocaleSavedPrefs, currentLocaleStr);
 
 
-      showSnackBar("You are logged out");
+      showSnackBar("You are logged out"); // todo extract strings
       await Future.delayed(Duration.zero, () async {
         Navigator.of(this).popUntil((route) => route.isFirst);
         currentUser = null;
@@ -277,8 +278,11 @@ extension ContextExtension on BuildContext { // todo rename to auth extensions?
         // isAdmin = false;
       });
       await onLogout();
-    }, firstButtonText: AppLocale.ok.getString(this),
-    secondButtonText: AppLocale.cancel.getString(this));
+    },
+      firstButtonText: AppLocale.ok.getString(this),
+      secondButtonText: AppLocale.cancel.getString(this),
+      firstButtonColor: Colors.red,
+    );
   }
 
 

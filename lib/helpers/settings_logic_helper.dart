@@ -215,6 +215,8 @@ class SettingsLogicHelper {
         AppLocale.settingsAnonDeleteDialogMessage.getString(context),
         () => Navigator.of(context).pop(true),
         () => Navigator.of(context).pop(false),
+        okBtnTxt: AppLocale.deleteAll.getString(context),
+        okColor: Colors.red,
       );
 
       if (confirmAnon == true) {

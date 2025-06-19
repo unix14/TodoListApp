@@ -73,6 +73,9 @@ extension DialogExtensions on BuildContext {
         String? thirdButtonText,
         Function()? thirdButtonCallback,
         bool thirdButtonShouldClose = true,
+        Color? firstButtonColor,
+        Color? secondButtonColor,
+        Color? thirdButtonColor,
       }) {
     // AnalytixManager().logEvent('user_click', 'show_are_you_sure_dialog', params: {
     //   'title': title,
@@ -97,7 +100,11 @@ extension DialogExtensions on BuildContext {
           secondButtonText: actualSecondButtonText,
           thirdButtonText: thirdButtonText,
           thirdButtonCallback: thirdButtonCallback,
-          thirdButtonShouldClose: thirdButtonShouldClose,);
+          thirdButtonShouldClose: thirdButtonShouldClose,
+          firstButtonColor: firstButtonColor,
+          secondButtonColor: secondButtonColor,
+          thirdButtonColor: thirdButtonColor,
+        );
       },
     );
   }
@@ -114,6 +121,9 @@ extension DialogExtensions on BuildContext {
         String? thirdButtonText,
         Function()? thirdButtonCallback,
         bool thirdButtonShouldClose = true,
+        Color? firstButtonColor,
+        Color? secondButtonColor,
+        Color? thirdButtonColor,
       }) {
     // Use localized text if the default placeholder ("OK"/"Cancel") is passed,
     // otherwise use the text provided by the caller.
@@ -142,21 +152,21 @@ extension DialogExtensions on BuildContext {
                       }
                       thirdButtonCallback?.call();
                     },
-                    child: Text(thirdButtonText, style: const TextStyle(color: Colors.black),),
+                    child: Text(thirdButtonText, style: TextStyle(color: thirdButtonColor ?? Colors.black),),
                   ),
                 const Spacer(),
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text(actualSecondButtonText, style: const TextStyle(color: Colors.black),),
+                  child: Text(actualSecondButtonText, style: TextStyle(color: secondButtonColor ?? Colors.black),),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                     callback();
                   },
-                  child: Text(actualFirstButtonText, style: const TextStyle(color: Colors.black),),
+                  child: Text(actualFirstButtonText, style: TextStyle(color: firstButtonColor ?? Colors.black),),
                 ),
               ],
             ),
