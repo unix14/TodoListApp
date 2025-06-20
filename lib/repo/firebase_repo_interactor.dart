@@ -9,31 +9,29 @@ import 'package:uuid/uuid.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Required for Timestamp
 
 class FirebaseRepoInteractor {
-  // Use .instance for the singleton, and allow testInstance to be set for testing.
   final FirebaseRealtimeDatabaseRepository _firebaseRepo = FirebaseRealtimeDatabaseRepository.instance;
   final FirebaseAuthLib.FirebaseAuth _firebaseAuth = FirebaseAuthLib.FirebaseAuth.instance;
-  StreamSubscription? _userSubscription;
+  StreamSubscription? _userSubscription; // To manage user data stream if implemented
 
   FirebaseRepoInteractor._privateConstructor();
   static final FirebaseRepoInteractor _instance = FirebaseRepoInteractor._privateConstructor();
-  // Provide 'instance' as the public accessor. 'I' could be an internal alias if preferred.
   static FirebaseRepoInteractor get instance => _instance;
 
-  // For testing - this allows injecting a mock/test instance.
-  // static FirebaseRepoInteractor? _testInstance; // This was in FirebaseRealtimeDatabaseRepository
-  // static void setTestInstance(FirebaseRepoInteractor testInstance) {
-  //   _testInstance = testInstance;
-  // }
-  // static FirebaseRepoInteractor get I => _testInstance ?? _instance;
+  // For testing purposes, allow injecting a mock.
+  static FirebaseRealtimeDatabaseRepository? _testDbInstance;
+  static void setTestDbInstance(FirebaseRealtimeDatabaseRepository dbInstance) {
+    _testDbInstance = dbInstance;
+  }
+  FirebaseRealtimeDatabaseRepository get _db => _testDbInstance ?? FirebaseRealtimeDatabaseRepository.instance;
 
 
   Future<AppUser.User?> getUserData(String userId) async {
     final path = '$kDBPathUsers/$userId';
-    final data = await _firebaseRepo.getDataFromFullPath(path);
+    final data = await _db.getDataFromFullPath(path);
     if (data.isNotEmpty) {
       AppUser.User user = AppUser.User.fromJson(data, idFromKey: userId);
 
-      final allSharedListsData = await _firebaseRepo.getDataFromFullPath(kDBPathSharedListConfigs);
+      final allSharedListsData = await _db.getDataFromFullPath(kDBPathSharedListConfigs);
       if (allSharedListsData.isNotEmpty) {
         user.sharedListsConfigs.clear();
         allSharedListsData.forEach((listId, listData) {
@@ -58,44 +56,33 @@ class FirebaseRepoInteractor {
   }
 
   Future<void> saveUser(AppUser.User user) async {
-    if (user.id == null) throw Exception("User ID cannot be null to save user data.");
+    if (user.id == null || user.id!.isEmpty) {
+      throw Exception("User ID cannot be null or empty to save user data.");
+    }
     final path = '$kDBPathUsers/${user.id}';
-    await _firebaseRepo.saveData(path, user.toJson());
+    await _db.saveData(path, AppUser.User.toJson(user));
   }
 
-  Future<List<TodoListItem>> getTodosForCategory(String userId, String categoryId) async {
+  // Assumes User model has todoListItems (flat list) and TodoListItem has a category field
+  Future<List<TodoListItem>> getTodoListItemsForCategory(String userId, String categoryNameOrId) async {
     final user = await getUserData(userId);
-    if (user != null) {
-        // This part of the logic for User model from Turn 91 (Subtask 50)
-        // assumes todosByCategories. This User model (from this subtask) uses todoListItems.
-        // This needs to be reconciled. For now, I'll assume the User model provided in THIS subtask
-        // which has user.todoListItems directly.
-        // If categoryId is "All" or matches user's default, return user.todoListItems.
-        // Otherwise, it must be a sharedListId.
+    if (user == null) return [];
 
-        // If the User model changes to todosByCategories, this logic needs to adapt:
-        // if (user.todosByCategories.containsKey(categoryId)) {
-        //     return user.todosByCategories[categoryId]!;
-        // }
+    // Check if categoryNameOrId refers to a shared list
+    final sharedConfig = user.sharedListsConfigs.firstWhere(
+        (config) => config.id == categoryNameOrId || config.originalCategoryName == categoryNameOrId, // Check by ID or original name
+        orElse: () => SharedListConfig(id: 'error', originalCategoryName: '', shortLinkPath: '', adminUserId: '', authorizedUserIds: {}, sharedTimestamp: Timestamp.now(), listNameInSharedCollection: '')
+    );
 
-        // Assuming current User model with flat todoListItems and categoryId is either "All" (for personal) or a sharedListId
-        if (categoryId == "All") { // Or some other identifier for the main personal list
-             return user.todoListItems.where((todo) => todo.category == null || todo.category == "All").toList(); // Example filter
-        }
-        // Fallback to check if categoryId is a sharedListId
-        final sharedConfig = user.sharedListsConfigs.firstWhere(
-            (config) => config.id == categoryId,
-            orElse: () => SharedListConfig(id: 'error', originalCategoryName: '', shortLinkPath: '', adminUserId: '', authorizedUserIds: {}, sharedTimestamp: Timestamp.now(), listNameInSharedCollection: '')
-        );
-        if (sharedConfig.id != 'error') {
-              return getTodosForSharedList(sharedConfig.id);
-        }
+    if (sharedConfig.id != 'error') { // It's a shared list ID
+        return getTodosForSharedList(sharedConfig.id);
+    } else { // It's a personal category name
+        return user.todoListItems.where((todo) => todo.category == categoryNameOrId).toList();
     }
-    return [];
   }
 
   Future<SharedListConfig?> getSharedListConfigByPath(String shortLinkPath) async {
-    final allConfigsData = await _firebaseRepo.getDataFromFullPath(kDBPathSharedListConfigs);
+    final allConfigsData = await _db.getDataFromFullPath(kDBPathSharedListConfigs);
     if (allConfigsData.isNotEmpty) {
       for (var entry in allConfigsData.entries) {
         final configId = entry.key;
@@ -110,7 +97,7 @@ class FirebaseRepoInteractor {
 
   Future<SharedListConfig?> getSharedListConfigById(String configId) async {
     final path = '$kDBPathSharedListConfigs/$configId';
-    final data = await _firebaseRepo.getDataFromFullPath(path);
+    final data = await _db.getDataFromFullPath(path);
     if (data.isNotEmpty) {
       return SharedListConfig.fromJson(data, configId);
     }
@@ -118,62 +105,75 @@ class FirebaseRepoInteractor {
   }
 
   Future<SharedListConfig> createOrUpdateSharedList({
-    required String categoryId,
-    required String categoryName,
+    required String categoryIdOrName, // For new shares, this is original category name. For existing, it's sharedListConfig.id
+    required String listDisplayName, // User-facing name for the list
     required String adminUserId,
     String? desiredShortLinkPath,
     SharedListConfig? existingConfig,
   }) async {
     String shortLink = desiredShortLinkPath?.trim() ?? '';
     if (shortLink.isEmpty) {
-      shortLink = categoryName.toLowerCase().replaceAll(RegExp(r'\s+'), '-').replaceAll(RegExp(r'[^a-zA-Z0-9-]'), '');
+      shortLink = listDisplayName.toLowerCase().replaceAll(RegExp(r'\s+'), '-').replaceAll(RegExp(r'[^a-zA-Z0-9-]'), '');
       if (shortLink.length > 20) shortLink = shortLink.substring(0, 20);
       if (shortLink.isEmpty) shortLink = Uuid().v4().substring(0, 8);
     }
+
+    // Sanitize shortLinkPath
+    String sanitizedShortLinkPath = shortLink
+        .replaceAll('.', '_') // Replace dot with underscore
+        .replaceAll('#', '_') // Replace hash with underscore
+        .replaceAll('\$', '_') // Replace dollar with underscore
+        .replaceAll('[', '_') // Replace open bracket with underscore
+        .replaceAll(']', '_'); // Replace close bracket with underscore
+
+    if (sanitizedShortLinkPath.isEmpty) {
+        // Generate a random fallback if sanitization results in an empty string
+        sanitizedShortLinkPath = Uuid().v4().substring(0, 8);
+    }
+    shortLink = sanitizedShortLinkPath; // Use the sanitized version
 
     SharedListConfig configToSave;
     bool isNewShare = existingConfig == null;
 
     if (isNewShare) {
       SharedListConfig? existingByPath;
-      String originalShortLink = shortLink;
+      String originalShortLink = shortLink; // Already sanitized
       int attempt = 1;
       do {
-        existingByPath = await getSharedListConfigByPath(shortLink);
+        existingByPath = await getSharedListConfigByPath(shortLink); // Use sanitized shortLink for checking
         if (existingByPath != null) {
-          shortLink = "$originalShortLink-${attempt++}";
+          shortLink = "$originalShortLink-${attempt++}"; // Append to sanitized original
         }
       } while (existingByPath != null && attempt < 10);
        if (existingByPath != null) {
-        shortLink = "$originalShortLink-${Uuid().v4().substring(0,4)}";
+        shortLink = "$originalShortLink-${Uuid().v4().substring(0,4)}"; // Append to sanitized original
       }
 
-      final newConfigId = _firebaseRepo.getNewKey(basePath: kDBPathSharedListConfigs) ?? Uuid().v4();
+      final newConfigId = _db.getNewKey(basePath: kDBPathSharedListConfigs);
+      if (newConfigId == null || newConfigId.isEmpty) throw Exception("Could not generate new key for shared list config.");
+
       configToSave = SharedListConfig(
         id: newConfigId,
-        originalCategoryName: categoryId,
+        originalCategoryName: categoryIdOrName, // For new share, categoryIdOrName is the original category name
         shortLinkPath: shortLink,
         adminUserId: adminUserId,
         authorizedUserIds: {adminUserId: true},
         sharedTimestamp: Timestamp.now(),
-        listNameInSharedCollection: categoryName,
+        listNameInSharedCollection: listDisplayName,
       );
 
       final adminUser = await getUserData(adminUserId);
-      // This part assumes user.todoListItems and items have a .category field or are filtered appropriately
-      // For the User model in *this* subtask, it's user.todoListItems.
-      // The categoryId for a new share IS the original category name.
       if (adminUser != null) {
-        final personalTodos = adminUser.todoListItems.where((todo) => todo.category == categoryId).toList();
+        // Using categoryIdOrName as the source category name for personal todos
+        final personalTodos = adminUser.todoListItems.where((todo) => todo.category == categoryIdOrName).toList();
         if (personalTodos.isNotEmpty) {
             final sharedTodosPath = '$kDBPathSharedTodos/${configToSave.id}/todos';
             Map<String, dynamic> todosToMigrateJson = {};
             for (var todo in personalTodos) {
-                // Ensure todo.id is not null; TodoListItem constructor now assigns one if null.
-                todosToMigrateJson[todo.id!] = todo.toJson();
+                todosToMigrateJson[todo.id!] = todo.toJson(); // Assumes todo.id is not null
             }
             if (todosToMigrateJson.isNotEmpty) {
-                await _firebaseRepo.saveData(sharedTodosPath, todosToMigrateJson);
+                await _db.saveData(sharedTodosPath, todosToMigrateJson);
             }
         }
       }
@@ -186,12 +186,12 @@ class FirebaseRepoInteractor {
         }
         configToSave.shortLinkPath = desiredShortLinkPath.trim();
       }
-      configToSave.listNameInSharedCollection = categoryName;
+      configToSave.listNameInSharedCollection = listDisplayName;
       configToSave.sharedTimestamp = Timestamp.now();
     }
 
     final String configPath = '$kDBPathSharedListConfigs/${configToSave.id}';
-    await _firebaseRepo.saveData(configPath, configToSave.toJson());
+    await _db.saveData(configPath, configToSave.toJson());
 
     final user = await getUserData(adminUserId);
     if (user != null) {
@@ -210,7 +210,7 @@ class FirebaseRepoInteractor {
   Future<bool> updateSharedListConfig(SharedListConfig config) async {
     try {
       final path = '$kDBPathSharedListConfigs/${config.id}';
-      await _firebaseRepo.saveData(path, config.toJson());
+      await _db.saveData(path, config.toJson());
 
       List<String> userIdsToUpdate = config.authorizedUserIds.keys.toList();
       if (!userIdsToUpdate.contains(config.adminUserId)) {
@@ -238,7 +238,7 @@ class FirebaseRepoInteractor {
 
   Future<List<TodoListItem>> getTodosForSharedList(String sharedListId) async {
     final path = '$kDBPathSharedTodos/$sharedListId/todos';
-    final data = await _firebaseRepo.getDataFromFullPath(path);
+    final data = await _db.getDataFromFullPath(path);
     if (data.isNotEmpty) {
       return data.entries.map((entry) {
         return TodoListItem.fromJson(entry.value as Map<String, dynamic>, idFromKey: entry.key);
@@ -249,7 +249,7 @@ class FirebaseRepoInteractor {
 
   Stream<List<TodoListItem>> getTodosStreamForSharedList(String sharedListId) {
     final String path = '$kDBPathSharedTodos/$sharedListId/todos';
-    return _firebaseRepo.getStream(path).map((data) { // Changed from getDataStream
+    return _db.getStream(path).map((data) {
       if (data != null && data.isNotEmpty) {
         return data.entries.map((entry) {
           return TodoListItem.fromJson(entry.value as Map<String, dynamic>, idFromKey: entry.key);
@@ -260,20 +260,20 @@ class FirebaseRepoInteractor {
   }
 
   Future<void> addTodoToSharedList(String sharedListId, TodoListItem todo) async {
-    if (todo.id == null) todo.id = Uuid().v4();
+    if (todo.id == null || todo.id!.isEmpty) todo.id = Uuid().v4();
     final path = '$kDBPathSharedTodos/$sharedListId/todos/${todo.id}';
-    await _firebaseRepo.saveData(path, todo.toJson());
+    await _db.saveData(path, todo.toJson());
   }
 
   Future<void> updateTodoInSharedList(String sharedListId, TodoListItem todo) async {
-    if (todo.id == null) throw Exception("Todo ID cannot be null for update.");
+    if (todo.id == null || todo.id!.isEmpty) throw Exception("Todo ID cannot be null for update.");
     final path = '$kDBPathSharedTodos/$sharedListId/todos/${todo.id}';
-    await _firebaseRepo.updateData(path, todo.toJson()); // Use updateData
+    await _db.updateData(path, todo.toJson());
   }
 
   Future<void> deleteTodoFromSharedList(String sharedListId, String todoId) async {
     final path = '$kDBPathSharedTodos/$sharedListId/todos/$todoId';
-    await _firebaseRepo.deleteData(path); // Use deleteData
+    await _db.deleteData(path);
   }
 
   Future<AppUser.User?> joinSharedList(String shortLinkPath) async {

@@ -31,7 +31,8 @@ Future<void> main() async {
 
   HomeWidget.registerBackgroundCallback(backgroundCallback);
 
-  AppInitializer.initialize(andThen: (isAlreadyEnteredTodos) {
+  // AppInitializer.initialize is now Future<void>
+  await AppInitializer.initialize(andThen: (isAlreadyEnteredTodos) {
     runApp(MyApp(isAlreadyEnteredTodos: isAlreadyEnteredTodos));
   });
 }

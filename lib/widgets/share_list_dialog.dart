@@ -7,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/models/user.dart' as AppUser;
 import 'package:flutter_example/common/DialogHelper.dart';
-// No need for flutter_localization import if AppLocale.getString(context) is used throughout.
+import 'package:flutter_localization/flutter_localization.dart'; // Keep for FlutterLocalization.instance if used, or for getString extension.
 
 // Helper extension for nullable firstWhere, if not available globally
 extension _FirstWhereOrNullExtension<E> on Iterable<E> {
@@ -37,7 +37,7 @@ class ShareListDialog extends StatefulWidget {
 
 class _ShareListDialogState extends State<ShareListDialog> {
   late TextEditingController _shortLinkController;
-  String _currentShareLinkDisplay = "";
+  String _currentShareLinkDisplay = ""; // Will be localized in build or didChangeDependencies
   bool _isLoading = false;
   bool _isLoadingParticipants = false;
   List<AppUser.User> _authorizedUserDetails = [];
@@ -50,35 +50,28 @@ class _ShareListDialogState extends State<ShareListDialog> {
     super.initState();
     _shortLinkController = TextEditingController();
     _liveConfig = widget.existingConfig;
-    // Call _initializeDialogState ensuring context is available if needed for localization
-    // If getString(context) is used in _initializeDialogState, it needs to be called after first build or from didChangeDependencies
-    // For now, assuming AppLocale.notSharedYet doesn't require context immediately or it's handled.
-    // A safer way is to pass context or call it from where context is surely available.
-    // For this case, we'll call it directly, assuming AppLocale.notSharedYet is a const string or
-    // that this initState context can resolve it (which might be true for simple string access).
-    _initializeDialogState();
+    _initializeDialogStateNonLocalized();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // If _initializeDialogState needs context for localization and wasn't fully effective in initState:
-    // _initializeDialogState(); // Or a more specific part that needs context.
-    // However, if AppLocale.notSharedYet.getString(context) is the only part, it might need this:
-    if (_liveConfig == null && _currentShareLinkDisplay != AppLocale.notSharedYet.getString(context)) {
+    // Localize initial display string now that context is available
+    if (_liveConfig == null && _currentShareLinkDisplay == "Not shared yet. Create a link to share.") { // Check against non-localized placeholder
         setState(() {
              _currentShareLinkDisplay = AppLocale.notSharedYet.getString(context);
         });
+    } else if (_liveConfig != null && _currentShareLinkDisplay.isEmpty) {
+        // This might happen if initState's _getFullShareUrl was called before context was ready for AppLocale.loading
+        // Or if it was just not set.
+        _currentShareLinkDisplay = _getFullShareUrl(_liveConfig!.shortLinkPath);
     }
   }
 
-
-  void _initializeDialogState() {
-    // No direct context use here for localization, assuming AppLocale keys are fine as static strings
-    // or that context passed to getString later will be valid.
+  void _initializeDialogStateNonLocalized() {
     if (_liveConfig != null) {
       _shortLinkController.text = _liveConfig!.shortLinkPath;
-      _currentShareLinkDisplay = _getFullShareUrl(_liveConfig!.shortLinkPath);
+      _currentShareLinkDisplay = _getFullShareUrl(_liveConfig!.shortLinkPath); // This is URL, not localized
       if (_liveConfig!.authorizedUserIds.isNotEmpty) {
         _fetchParticipantsDetails(_liveConfig!);
       }
@@ -86,13 +79,8 @@ class _ShareListDialogState extends State<ShareListDialog> {
       String defaultPath = widget.categoryName.toLowerCase().replaceAll(' ', '-').replaceAll(RegExp(r'[^a-zA-Z0-9-]'), '');
       if (defaultPath.isEmpty) defaultPath = "shared-list";
       _shortLinkController.text = defaultPath;
-      // _currentShareLinkDisplay = AppLocale.notSharedYet; // This should be localized when displayed
-      // Set it raw here, or ensure context is available if using .getString(context)
-      // For safety, will set it with .getString(context) in build or where context is available
-      // If called from initState, context might not be fully ready for localization calls.
-      // For now, let's assume it's set in build or updated in didChangeDependencies if needed.
-      // Let's initialize it to a non-localized string then update in didChangeDependencies if needed for getString(context)
-      _currentShareLinkDisplay = "Loading link state..."; // Placeholder
+      // Use a non-localized placeholder, will be updated in didChangeDependencies
+      _currentShareLinkDisplay = "Not shared yet. Create a link to share.";
     }
   }
 
@@ -105,9 +93,10 @@ class _ShareListDialogState extends State<ShareListDialog> {
 
     setState(() => _isLoadingParticipants = true);
     try {
-      // Ensure user.id is used correctly if AppUser.User has an `id` field for UID.
       final users = await FirebaseRepoInteractor.instance.getUsersDetails(config.authorizedUserIds.keys.toList());
-      if (mounted) _authorizedUserDetails = users;
+      if (mounted) {
+        setState(() => _authorizedUserDetails = users);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.fetchParticipantsError.getString(context).replaceAll('{errorDetails}', e.toString()))));
@@ -157,8 +146,8 @@ class _ShareListDialogState extends State<ShareListDialog> {
       final String idForInteractor = _liveConfig?.id ?? widget.categoryId;
 
       final resultingConfig = await FirebaseRepoInteractor.instance.createOrUpdateSharedList(
-        categoryId: idForInteractor,
-        categoryName: widget.categoryName,
+        categoryIdOrName: idForInteractor, // Changed from categoryId
+        listDisplayName: widget.categoryName, // Changed from categoryName
         adminUserId: currentUserUid,
         desiredShortLinkPath: desiredPath,
         existingConfig: _liveConfig,
@@ -170,7 +159,7 @@ class _ShareListDialogState extends State<ShareListDialog> {
           _shortLinkController.text = _liveConfig!.shortLinkPath;
           _currentShareLinkDisplay = _getFullShareUrl(_liveConfig!.shortLinkPath);
         });
-        _fetchParticipantsDetails(_liveConfig!);
+        if (_liveConfig != null) _fetchParticipantsDetails(_liveConfig!);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocale.shareSettingsUpdated.getString(context))),
@@ -197,72 +186,49 @@ class _ShareListDialogState extends State<ShareListDialog> {
     final AppUser.User? userToRemoveDetails = _authorizedUserDetails.firstWhereOrNull((u) => u.id == userIdToRemove);
     final String userNameToRemove = userToRemoveDetails?.name ?? AppLocale.unknownUser.getString(context);
 
-    // Using DialogHelper with named parameters as it was defined
-    bool? confirmed = await DialogHelper.showAlertDialog(
+    // Using DialogHelper with VoidCallbacks
+    DialogHelper.showAlertDialog(
         context: context,
         title: AppLocale.removeUserConfirmationTitle.getString(context),
-        content: AppLocale.removeUserConfirmationMessage.getString(context).replaceAll('{userName}', userNameToRemove),
-        confirmButtonText: AppLocale.okButtonText.getString(context),
-        cancelButtonText: AppLocale.cancelButtonText.getString(context),
-        // The DialogHelper in Turn 89 was changed to take VoidCallbacks, not return bool directly.
-        // This part needs to align with the actual DialogHelper implementation.
-        // Assuming DialogHelper.showAlertDialog is updated to return Future<bool?>
-        // or the logic here changes to use its VoidCallbacks.
-        // For now, I will assume the DialogHelper was intended to be:
-        // static Future<bool?> showAlertDialog(...) { return showDialog<bool>(...); }
-        // And the onOkButton/onCancelButton in DialogHelper's definition would pop with true/false.
-        // This is a slight mismatch with the DialogHelper provided in Turn 89, which expects VoidCallbacks.
-        // Let's adjust to use the VoidCallback pattern for DialogHelper:
-    );
-    // This needs to be rewritten if DialogHelper doesn't return bool.
-    // For now, assuming the showAlertDialog was meant to work with the boolean return:
-    // The following is a placeholder for the actual confirmation logic flow
-    // which would depend on how DialogHelper is implemented (Future<bool?> or VoidCallbacks)
-    // For this pass, I will assume the DialogHelper will be called and confirmation handled externally
-    // This part of the code should be:
-    // DialogHelper.showAlertDialog(
-    //   context,
-    //   AppLocale.removeUserConfirmationTitle.getString(context),
-    //   AppLocale.removeUserConfirmationMessage.getString(context).replaceAll('{userName}', userNameToRemove),
-    //   () { /* on OK */ _proceedToRemoveUser(userIdToRemove, userNameToRemove); Navigator.of(context, rootNavigator: true).pop(); },
-    //   () { /* on Cancel */ Navigator.of(context, rootNavigator: true).pop(); }
-    // );
-    // For now, I will keep the boolean confirmed logic and assume DialogHelper is adapted or this is simplified.
+        text: AppLocale.removeUserConfirmationMessage.getString(context).replaceAll('{userName}', userNameToRemove),
+        onOkButton: () async { // OK action
+            Navigator.of(context, rootNavigator: true).pop(); // Close the confirmation dialog first
+            if (!mounted) return;
+            setState(() => _isLoadingParticipants = true);
 
-    if (confirmed == true) { // This line will need adjustment based on DialogHelper's actual return.
-      if (!mounted) return;
-      setState(() => _isLoadingParticipants = true);
+            _liveConfig!.authorizedUserIds.remove(userIdToRemove);
 
-      _liveConfig!.authorizedUserIds.remove(userIdToRemove);
-
-      bool success = await FirebaseRepoInteractor.instance.updateSharedListConfig(_liveConfig!);
-      if (mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocale.userRemovedSuccess.getString(context).replaceAll('{userName}', userNameToRemove))),
-          );
-          _authorizedUserDetails.removeWhere((user) => user.id == userIdToRemove);
-        } else {
-          _liveConfig!.authorizedUserIds[userIdToRemove] = true;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocale.userRemovedError.getString(context).replaceAll('{userName}', userNameToRemove))),
-          );
+            bool success = await FirebaseRepoInteractor.instance.updateSharedListConfig(_liveConfig!);
+            if (mounted) {
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(AppLocale.userRemovedSuccess.getString(context).replaceAll('{userName}', userNameToRemove))),
+                );
+                setState(() { // Update UI immediately
+                  _authorizedUserDetails.removeWhere((user) => user.id == userIdToRemove);
+                });
+              } else {
+                _liveConfig!.authorizedUserIds[userIdToRemove] = true;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(AppLocale.userRemovedError.getString(context).replaceAll('{userName}', userNameToRemove))),
+                );
+              }
+              setState(() => _isLoadingParticipants = false);
+            }
+        },
+        onCancelButton: () { // Cancel action
+            Navigator.of(context, rootNavigator: true).pop();
         }
-        setState(() => _isLoadingParticipants = false);
-      }
-    }
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Ensure _currentShareLinkDisplay is localized if it was set to a placeholder
-    if (_currentShareLinkDisplay == "Loading link state..." && _liveConfig == null && mounted) {
-         _currentShareLinkDisplay = AppLocale.notSharedYet.getString(context);
-    }
-
     String displayLink = (_isLoading && _liveConfig == null)
         ? AppLocale.loading.getString(context)
-        : _currentShareLinkDisplay;
+        : (_currentShareLinkDisplay.isEmpty || _currentShareLinkDisplay == "Loading link state..."
+            ? AppLocale.notSharedYet.getString(context) // Ensure localization if it was a placeholder
+            : _currentShareLinkDisplay);
 
     bool isCurrentUserAdmin = _liveConfig?.adminUserId == FirebaseAuth.instance.currentUser?.uid || _liveConfig == null;
 
@@ -318,7 +284,6 @@ class _ShareListDialogState extends State<ShareListDialog> {
                     : Column(
                         children: _authorizedUserDetails.map((user) {
                           bool isThisUserTheAdmin = user.id == _liveConfig?.adminUserId;
-                          // Ensure user.id is not null before using it in a key or for comparison
                           final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? "";
                           return ListTile(
                             leading: CircleAvatar(

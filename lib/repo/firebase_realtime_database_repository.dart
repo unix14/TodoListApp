@@ -55,7 +55,7 @@ class FirebaseRealtimeDatabaseRepository {
     return {};
   }
 
-  Future<void> deleteData(String fullPath) async { // Changed to not have path: named param
+  Future<void> deleteData(String fullPath) async {
     final reference = FirebaseDatabase.instance.ref(fullPath);
     try {
         await reference.remove();
@@ -67,26 +67,25 @@ class FirebaseRealtimeDatabaseRepository {
   }
 
   String getNewKey({required String basePath}) {
-    if (basePath.isEmpty) { // Added check for empty basePath
-        // It's often better to let Firebase generate a key at the root if basePath is truly not applicable
-        // but this depends on the desired DB structure.
-        // For now, allowing push at root. Consider if this is intended.
+    if (basePath.isEmpty) {
+        // If basePath is empty, push to the root of the database.
+        // This is generally not recommended for structured data, but allowed by Firebase.
+        // Consider if a default path or an error is more appropriate for your app's logic.
         return FirebaseDatabase.instance.ref().push().key!;
     }
     return FirebaseDatabase.instance.ref(basePath).push().key!;
   }
 
-  Stream<Map<String, dynamic>?> getStream(String fullPath) { // Return type nullable map
+  Stream<Map<String, dynamic>?> getStream(String fullPath) {
     return FirebaseDatabase.instance.ref(fullPath).onValue.map((event) {
       if (event.snapshot.exists && event.snapshot.value != null) {
         if (event.snapshot.value is Map) {
              return Map<String, dynamic>.from(event.snapshot.value as Map);
         }
-        // Handle non-map data if necessary, or return null/empty if structure is unexpected
         print("Warning: Data at $fullPath is not a Map, returning null for stream.");
         return null;
       }
-      return null; // Or {} if an empty map is preferred for no data
+      return null;
     });
   }
 

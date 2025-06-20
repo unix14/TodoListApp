@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:firebase_storage/firebase_storage.dart'; // Not fully implemented
 import 'package:flutter/material.dart';
-// import 'package:flutter_example/common/common_styles.dart'; // Not used
 import 'package:flutter_example/common/globals.dart';
 import 'package:flutter_example/managers/app_initializer.dart'; // For getIt
 import 'package:flutter_example/mixin/app_locale.dart';
@@ -49,9 +48,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadCurrentUser() async {
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser != null) {
-      // Ensure getIt is initialized and FirebaseRepoInteractor is registered
-      // This might require AppInitializer.initialize() to have completed
-      // or for getIt to be configured synchronously if possible.
+      // Assuming getIt is available and FirebaseRepoInteractor is registered
+      // If getIt is not used, FirebaseRepoInteractor.instance should be used.
+      // Based on app_initializer.dart, getIt IS used.
       final user = await getIt<FirebaseRepoInteractor>().getUserData(firebaseUser.uid);
       if (mounted) {
         setState(() {
@@ -71,13 +70,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _pickImage() async {
     if (_isGuest || !mounted) return;
-    // Placeholder for image picking logic (e.g., using image_picker)
-    // final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
-    // if (image != null) {
-    //   if (mounted) setState(() => _pickedImage = File(image.path));
-    // } else {
-    //   // User canceled the picker
-    // }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocale.imagePickingNotImplemented.getString(context))),
     );
@@ -86,39 +78,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _uploadProfilePicture() async {
     if (_pickedImage == null || _currentUser == null || FirebaseAuth.instance.currentUser == null || !mounted) return;
 
-    // setState(() => _isUploading = true); // Start loading indicator
+    // setState(() => _isUploading = true);
 
-    // Placeholder for upload logic (e.g., to Firebase Storage)
-    // final userId = FirebaseAuth.instance.currentUser!.uid;
-    // final storageRef = FirebaseStorage.instance.ref().child('profile_pictures/$userId/profile_pic.jpg');
-    // try {
-    //   await storageRef.putFile(_pickedImage!);
-    //   final downloadUrl = await storageRef.getDownloadURL();
-
-    //   _currentUser!.profilePictureUrl = downloadUrl;
-    //   // Assuming saveUser is available in FirebaseRepoInteractor
-    //   await getIt<FirebaseRepoInteractor>().saveUser(_currentUser!);
-
-    //   if (mounted) {
-    //     setState(() { _pickedImage = null; }); // Clear picked image
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text(AppLocale.profilePictureUpdated.getString(context))),
-    //     );
-    //   }
-    // } catch (e) {
-    //    if (mounted) {
-    //      ScaffoldMessenger.of(context).showSnackBar(
-    //        SnackBar(content: Text(AppLocale.errorUploadingProfilePicture.getString(context).replaceAll('{errorDetails}', e.toString()))),
-    //      );
-    //    }
-    // } finally {
-    //    if (mounted) setState(() => _isUploading = false); // Stop loading indicator
-    // }
-
-    // Using placeholder for now:
     const String placeholderDownloadUrl = "https://via.placeholder.com/150/007bff/FFFFFF?Text=Profile";
     _currentUser!.profilePictureUrl = placeholderDownloadUrl;
-    await getIt<FirebaseRepoInteractor>().saveUser(_currentUser!); // Assumes saveUser exists
+    // Use getIt or FirebaseRepoInteractor.instance based on app setup.
+    await getIt<FirebaseRepoInteractor>().saveUser(_currentUser!);
     if (mounted) {
       setState(() { _pickedImage = null; });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -154,7 +119,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onChanged: (String? newValue) {
                   if (newValue != null) {
                     FlutterLocalization.instance.translate(newValue);
-                    // The onTranslatedLanguage callback in _MyAppState handles UI rebuild for locale change
                   }
                 },
               ),
@@ -179,7 +143,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : () async {
                       final confirmed = await showDialog<bool>(
                         context: context,
-                        builder: (BuildContext dialogContext) { // Renamed context
+                        builder: (BuildContext dialogContext) {
                           return AlertDialog(
                             title: Text(AppLocale.logout.getString(dialogContext)),
                             content: Text(AppLocale.logoutText.getString(dialogContext)),
@@ -198,7 +162,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       );
                       if (confirmed == true && mounted) {
                         await FirebaseAuth.instance.signOut();
-                        // Consider clearing any user-specific data or resetting state here
                         getIt<FirebaseRepoInteractor>().disposeUserSubscription();
                         Navigator.of(context).pushReplacementNamed('/onboarding');
                       }
