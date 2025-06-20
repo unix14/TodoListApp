@@ -31,7 +31,7 @@ class FirebaseRepoInteractor {
   }
 
   Future<bool> saveSharedCategoryData(String slug, Map<String, dynamic> data) async {
-    return await _firebaseRepo.saveData('sharedLists/\$slug', data);
+    return await _firebaseRepo.saveData('sharedLists/$slug', data);
   }
 
   Future<bool> sharedCategorySlugExists(String slug) async {
@@ -46,7 +46,7 @@ class FirebaseRepoInteractor {
     int counter = 0;
     while (await sharedCategorySlugExists(slug)) {
       counter++;
-      slug = '\$baseSlug-${DateTime.now().millisecondsSinceEpoch.toRadixString(36).substring(0,4)}';
+      slug = '$baseSlug-${DateTime.now().millisecondsSinceEpoch.toRadixString(36).substring(0,4)}';
       if (counter > 5) break;
     }
     return slug;
