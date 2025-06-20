@@ -1326,8 +1326,12 @@ class _HomePageState extends State<HomePage>
                                 }
                               },
                               child: CircleAvatar(
-                                backgroundColor: selectedColorForNewCategory,
-                                radius: 14,
+                                radius: 18, // Outer radius for border
+                                backgroundColor: Theme.of(dialogContext).dividerColor, // Border color
+                                child: CircleAvatar(
+                                  radius: 16, // Inner radius for actual color
+                                  backgroundColor: selectedColorForNewCategory,
+                                ),
                               ),
                             ),
                           ),
@@ -1952,7 +1956,14 @@ class _HomePageState extends State<HomePage>
                                   });
                                 }
                               },
-                              child: CircleAvatar(backgroundColor: Color(categoryBeingEdited.color), radius: 14),
+                              child: CircleAvatar(
+                                radius: 18, // Outer radius for border
+                                backgroundColor: Theme.of(dialogContext).dividerColor, // Border color
+                                child: CircleAvatar(
+                                  radius: 16, // Inner radius for actual color
+                                  backgroundColor: Color(categoryBeingEdited.color),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -1961,7 +1972,7 @@ class _HomePageState extends State<HomePage>
                        Padding( // Added padding for the button
                          padding: const EdgeInsets.symmetric(vertical: 8.0),
                          child: ElevatedButton(
-                           child: Text(AppLocale.changeColorButtonText.getString(dialogContext)), // Assuming new key
+                           child: Text(AppLocale.changeColorButtonText.getString(dialogContext)),
                            onPressed: () async {
                              final int? selectedColor = await _selectCategoryColor(dialogContext, categoryBeingEdited);
                              if (selectedColor != null) {

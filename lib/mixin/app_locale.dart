@@ -133,7 +133,8 @@ mixin AppLocale {
   static const String expandButtonText = 'expand_button_text';
   static const String collapseButtonText = 'collapse_button_text';
   static const String categoryUpdatedSnackbar = 'category_updated_snackbar';
-  // categoryAddedSnackbar and categoryDeletedSnackbar already exist
+  static const String categoryAddedSnackbar = 'category_added_snackbar'; // Added
+  // categoryDeletedSnackbar already exists
   static const String selectColorDialogTitle = 'select_color_dialog_title';
   static const String changeColorButtonText = 'change_color_button_text';
 
@@ -381,6 +382,7 @@ mixin AppLocale {
     AppLocale.colorNameCyan: 'Cyan',
     AppLocale.colorNameWhite: 'White',
     AppLocale.colorNameGrey: 'Grey',
+    AppLocale.categoryAddedSnackbar: 'Category {categoryName} added.', // Added
   };
 
   static const Map<String, dynamic> HE = {
@@ -570,5 +572,6 @@ mixin AppLocale {
     AppLocale.colorNameCyan: 'ציאן',
     AppLocale.colorNameWhite: 'לבן',
     AppLocale.colorNameGrey: 'אפור',
+    AppLocale.categoryAddedSnackbar: 'קטגוריה {categoryName} נוספה.', // Added
   };
 }
