@@ -158,13 +158,20 @@ class _HomePageState extends State<HomePage>
         Map<String, dynamic> members = Map<String, dynamic>.from(data['members'] ?? {});
         if (!members.containsKey(currentUser!.uid)) {
           members[currentUser!.uid] = true;
-          await FirebaseRepoInteractor.instance.saveSharedCategoryData(
-            incomingSharedSlug!,
-            {
-              ...data,
-              'members': members,
-            },
-          );
+          try {
+            await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+              incomingSharedSlug!,
+              {
+                ...data,
+                'members': members,
+              },
+            );
+          } catch (e) {
+            if (mounted) {
+              context.showSnackBar(
+                  AppLocale.shareFailed.getString(context));
+            }
+          }
         }
       }
       incomingSharedSlug = null;
@@ -1605,16 +1612,22 @@ class _HomePageState extends State<HomePage>
           actions: [
             TextButton(
               onPressed: () async {
-                await FirebaseRepoInteractor.instance.saveSharedCategoryData(
-                  controller.text,
-                  {
-                    'name': categoryName,
-                    'owner': currentUser?.uid,
-                    'members': {if (currentUser != null) currentUser!.uid: true},
-                  },
-                );
-                context.copyToClipboard(kShareBaseUrl + controller.text);
-                Navigator.of(context).pop();
+                try {
+                  await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+                    controller.text,
+                    {
+                      'name': categoryName,
+                      'owner': currentUser?.uid,
+                      'members':
+                          {if (currentUser != null) currentUser!.uid: true},
+                    },
+                  );
+                  context.copyToClipboard(kShareBaseUrl + controller.text);
+                  Navigator.of(context).pop();
+                } catch (e) {
+                  context.showSnackBar(
+                      AppLocale.shareFailed.getString(context));
+                }
               },
               child: Text(AppLocale.ok.getString(context)),
             ),

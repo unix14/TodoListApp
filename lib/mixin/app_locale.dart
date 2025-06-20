@@ -141,6 +141,7 @@ mixin AppLocale {
   static const String shareCategory = "shareCategory";
   static const String profilePicture = "profilePicture";
   static const String profilePictureUpdated = "profilePictureUpdated";
+  static const String shareFailed = "shareFailed";
 
   static const Map<String, dynamic> EN = {
     AppLocale.title: 'Todo List',
@@ -213,6 +214,7 @@ mixin AppLocale {
     AppLocale.shareCategory: "Share Category",
     AppLocale.profilePicture: "Profile Picture",
     AppLocale.profilePictureUpdated: "Profile picture updated" ,
+    AppLocale.shareFailed: "Could not share list", 
     AppLocale.motivationalSentence1: "Let's get something done!",
     AppLocale.motivationalSentence2: "What's on your mind today?",
     AppLocale.motivationalSentence3: "Time to be productive!",
@@ -351,6 +353,7 @@ mixin AppLocale {
     AppLocale.shareCategory: "שתף קטגוריה",
     AppLocale.profilePicture: "תמונת פרופיל",
     AppLocale.profilePictureUpdated: "התמונה עודכנה",
+    AppLocale.shareFailed: "לא ניתן לשתף את הרשימה",
     AppLocale.motivationalSentence1: "דברים גדולים לעולם לא מגיעים מאזורי נוחות. בוא נתמודד עם משימה!",
     AppLocale.motivationalSentence2: "הסוד להתקדם הוא להתחיל. מה הדבר הראשון?",
     AppLocale.motivationalSentence3: "רשימה ריקה היא בד ציור ריק. צייר את יצירת המופת שלך בפרודוקטיביות!",
