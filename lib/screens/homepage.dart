@@ -1668,49 +1668,43 @@ class _HomePageState extends State<HomePage>
               const SizedBox(height: 8),
               if (members.isNotEmpty)
                 Text(AppLocale.sharedWith.getString(context)),
-              if (members.isNotEmpty)
-                SizedBox(
-                  height: 48,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      for (var uid in members.keys.take(2))
-                        FutureBuilder<MyUser.User?>(
-                          future: FirebaseRepoInteractor.instance.getUserData(uid),
-                          builder: (context, snapshot) {
-                            Widget avatar;
-                            if (snapshot.hasData && snapshot.data!.imageURL != null && snapshot.data!.imageURL!.isNotEmpty) {
-                              try {
-                                avatar = CircleAvatar(
-                                  radius: 16,
-                                  backgroundImage: MemoryImage(base64Decode(snapshot.data!.imageURL!)),
-                                );
-                              } catch (_) {
-                                avatar = const CircleAvatar(radius: 16, child: Icon(Icons.person));
+                if (members.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Wrap(
+                      spacing: 4.0,
+                      children: [
+                        for (var uid in members.keys.take(2))
+                          FutureBuilder<MyUser.User?>(
+                            future: FirebaseRepoInteractor.instance.getUserData(uid),
+                            builder: (context, snapshot) {
+                              Widget avatar;
+                              if (snapshot.hasData && snapshot.data!.imageURL != null && snapshot.data!.imageURL!.isNotEmpty) {
+                                try {
+                                  avatar = CircleAvatar(
+                                    radius: 16,
+                                    backgroundImage: MemoryImage(base64Decode(snapshot.data!.imageURL!)),
+                                  );
+                                } catch (_) {
+                                  avatar = const CircleAvatar(radius: 16, child: Icon(Icons.person));
+                                }
+                              } else {
+                                final initials = (snapshot.data?.name ?? '').isNotEmpty
+                                    ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+                                    : '';
+                                avatar = CircleAvatar(radius: 16, child: Text(initials));
                               }
-                            } else {
-                              final initials = (snapshot.data?.name ?? '').isNotEmpty
-                                  ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
-                                  : '';
-                              avatar = CircleAvatar(radius: 16, child: Text(initials));
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                              child: avatar,
-                            );
-                          },
-                        ),
-                      if (members.keys.length > 2)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-                          child: CircleAvatar(
+                              return avatar;
+                            },
+                          ),
+                        if (members.keys.length > 2)
+                          CircleAvatar(
                             radius: 16,
                             child: Text('+${members.keys.length - 2}'),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
               if (currentUser != null && currentUser!.uid == data['owner'])
                 Column(
                   children: members.keys
