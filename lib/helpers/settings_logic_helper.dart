@@ -328,4 +328,54 @@ class SettingsLogicHelper {
     }
   }
 
+  Future<void> updateUserName(BuildContext context) async {
+    if (currentUser == null || currentUser!.isAnonymous) return;
+    final controller = TextEditingController(text: myCurrentUser?.name ?? '');
+    final formKey = GlobalKey<FormState>();
+    final newName = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(AppLocale.changeNameTitle.getString(dialogContext)),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: controller,
+              decoration: InputDecoration(hintText: AppLocale.name.getString(dialogContext)),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return AppLocale.nameEmptyError.getString(dialogContext);
+                }
+                return null;
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
+            ),
+            TextButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  Navigator.of(dialogContext).pop(controller.text.trim());
+                }
+              },
+              child: Text(AppLocale.okButtonText.getString(dialogContext)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newName != null && newName != myCurrentUser?.name) {
+      myCurrentUser?.name = newName;
+      await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocale.nameUpdated.getString(context))),
+      );
+    }
+  }
+
 }

@@ -141,6 +141,9 @@ mixin AppLocale {
   static const String shareCategory = "shareCategory";
   static const String profilePicture = "profilePicture";
   static const String profilePictureUpdated = "profilePictureUpdated";
+  static const String changeNameTitle = "changeNameTitle";
+  static const String nameUpdated = "nameUpdated";
+  static const String nameEmptyError = "nameEmptyError";
   static const String copyLink = 'copyLink';
   static const String sharedWith = 'sharedWith';
   static const String createdOn = 'createdOn';
@@ -217,6 +220,9 @@ mixin AppLocale {
     AppLocale.shareCategory: "Share Category",
     AppLocale.profilePicture: "Profile Picture",
     AppLocale.profilePictureUpdated: "Profile picture updated" ,
+    AppLocale.changeNameTitle: "Change Name",
+    AppLocale.nameUpdated: "Name updated",
+    AppLocale.nameEmptyError: "Name cannot be empty",
     AppLocale.shareFailed: "Could not share list",
     AppLocale.copiedToClipboard: "Copied to clipboard",
     AppLocale.copyLink: "Copy link",
@@ -360,6 +366,9 @@ mixin AppLocale {
     AppLocale.shareCategory: "שתף קטגוריה",
     AppLocale.profilePicture: "תמונת פרופיל",
     AppLocale.profilePictureUpdated: "התמונה עודכנה",
+    AppLocale.changeNameTitle: "שנה שם",
+    AppLocale.nameUpdated: "השם עודכן",
+    AppLocale.nameEmptyError: "השם לא יכול להיות ריק",
     AppLocale.shareFailed: "לא ניתן לשתף את הרשימה",
     AppLocale.copiedToClipboard: "הועתק ללוח",
     AppLocale.copyLink: "העתק קישור",
