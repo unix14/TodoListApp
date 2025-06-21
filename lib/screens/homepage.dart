@@ -1725,13 +1725,20 @@ class _HomePageState extends State<HomePage>
                                   icon: const Icon(Icons.remove_circle),
                                   onPressed: () async {
                                     members.remove(uid);
-                                    await FirebaseRepoInteractor.instance.saveSharedCategoryData(
-                                      slug,
-                                      {
-                                        ...data,
-                                        'members': members,
-                                      },
-                                    );
+                                    try {
+                                      await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+                                        slug,
+                                        {
+                                          ...data,
+                                          'members': members,
+                                        },
+                                      );
+                                    } catch (e) {
+                                      if (mounted) {
+                                        context.showSnackBar(AppLocale.shareFailed.getString(context));
+                                      }
+                                      return;
+                                    }
                                     Navigator.of(dialogContext).pop();
                                     _showShareDialog(categoryName);
                                   },
