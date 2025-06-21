@@ -1667,42 +1667,42 @@ class _HomePageState extends State<HomePage>
                   height: 48,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
-                    children: members.keys.take(2).map((uid) {
-                      return FutureBuilder<MyUser.User?>(
-                        future: FirebaseRepoInteractor.instance.getUserData(uid),
-                        builder: (context, snapshot) {
-                          Widget avatar;
-                          if (snapshot.hasData && snapshot.data!.imageURL != null && snapshot.data!.imageURL!.isNotEmpty) {
-                            try {
-                              avatar = CircleAvatar(
-                                radius: 16,
-                                backgroundImage: MemoryImage(base64Decode(snapshot.data!.imageURL!)),
-                              );
-                            } catch (_) {
-                              avatar = const CircleAvatar(radius: 16, child: Icon(Icons.person));
+                    children: [
+                      for (var uid in members.keys.take(2))
+                        FutureBuilder<MyUser.User?>(
+                          future: FirebaseRepoInteractor.instance.getUserData(uid),
+                          builder: (context, snapshot) {
+                            Widget avatar;
+                            if (snapshot.hasData && snapshot.data!.imageURL != null && snapshot.data!.imageURL!.isNotEmpty) {
+                              try {
+                                avatar = CircleAvatar(
+                                  radius: 16,
+                                  backgroundImage: MemoryImage(base64Decode(snapshot.data!.imageURL!)),
+                                );
+                              } catch (_) {
+                                avatar = const CircleAvatar(radius: 16, child: Icon(Icons.person));
+                              }
+                            } else {
+                              final initials = (snapshot.data?.name ?? '').isNotEmpty
+                                  ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+                                  : '';
+                              avatar = CircleAvatar(radius: 16, child: Text(initials));
                             }
-                          } else {
-                            final initials = (snapshot.data?.name ?? '').isNotEmpty
-                                ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
-                                : '';
-                            avatar = CircleAvatar(radius: 16, child: Text(initials));
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                            child: avatar,
-                          );
-                        },
-                      );
-                    }).toList()
-                      ..addAll(members.keys.length > 2 ? [
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                              child: avatar,
+                            );
+                          },
+                        ),
+                      if (members.keys.length > 2)
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
                           child: CircleAvatar(
                             radius: 16,
                             child: Text('+${members.keys.length - 2}'),
                           ),
-                        )
-                      ] : []),
+                        ),
+                    ],
                   ),
                 ),
               if (currentUser != null && currentUser!.uid == data['owner'])
@@ -1765,8 +1765,8 @@ class _HomePageState extends State<HomePage>
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
           child: Row(
             children: [
-              ...uids.take(2).map((uid) {
-                return FutureBuilder<MyUser.User?>(
+              for (var uid in uids.take(2))
+                FutureBuilder<MyUser.User?>(
                   future: FirebaseRepoInteractor.instance.getUserData(uid),
                   builder: (context, snapshot) {
                     Widget avatar;
@@ -1790,8 +1790,7 @@ class _HomePageState extends State<HomePage>
                       child: avatar,
                     );
                   },
-                );
-              }),
+                ),
               if (uids.length > 2)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2.0),
@@ -2113,3 +2112,4 @@ class _HomePageState extends State<HomePage>
 
 // Define a constant for the "Add New Category" option to avoid magic strings
 const String kAddNewCategoryOption = 'add_new_category_option_val'; // Made it more unique
+

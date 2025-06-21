@@ -82,7 +82,12 @@ class EncryptedSharedPreferencesHelper {
     if (jsonString != null && jsonString.isNotEmpty) {
       try {
         final List<dynamic> decodedList = json.decode(jsonString);
-        return decodedList.map((category) => category.toString()).toList();
+        return decodedList.map((category) {
+          if (category is Map && category.containsKey('name')) {
+            return category['name'].toString();
+          }
+          return category.toString();
+        }).toList();
       } catch (e) {
         print('Error decoding categories from JSON: $e');
         return [];
