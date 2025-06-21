@@ -16,6 +16,7 @@ import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:flutter_example/models/user.dart' as MyUser;
 import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
 // import 'package:flutter_example/screens/todo_search_screen.dart'; // Removed as file is deleted
@@ -50,6 +51,7 @@ class _HomePageState extends State<HomePage>
   TabController? _tabController;
   List<String> _categories = []; // Will be initialized in didChangeDependencies
   List<String> _customCategories = [];
+  Map<String, String> _sharedCategorySlugs = {};
   bool _isPromptingForCategory = false;
 
   // Search state
@@ -155,6 +157,8 @@ class _HomePageState extends State<HomePage>
           _customCategories.add(name);
           await EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
         }
+        _sharedCategorySlugs[name] = incomingSharedSlug!;
+        await EncryptedSharedPreferencesHelper.saveSharedSlugs(_sharedCategorySlugs);
         Map<String, dynamic> members = Map<String, dynamic>.from(data['members'] ?? {});
         if (!members.containsKey(currentUser!.uid)) {
           members[currentUser!.uid] = true;
@@ -189,6 +193,7 @@ class _HomePageState extends State<HomePage>
 
     // Perform async operation
     _customCategories = await EncryptedSharedPreferencesHelper.loadCategories();
+    _sharedCategorySlugs = await EncryptedSharedPreferencesHelper.loadSharedSlugs();
 
     // This part should be synchronous and use the updated context from didChangeDependencies
     List<String> newCategories = [
@@ -711,7 +716,12 @@ class _HomePageState extends State<HomePage>
                               ); // Empty list view for non-"All" categories that are empty
                             }
                           }
-                          return listContent;
+                          return Column(
+                            children: [
+                              _buildMembersRow(currentCategoryNameForTab),
+                              Expanded(child: listContent),
+                            ],
+                          );
                         }
                       },
                     );
@@ -1601,41 +1611,197 @@ class _HomePageState extends State<HomePage>
   }
 
   void _showShareDialog(String categoryName) async {
-    String slug = await FirebaseRepoInteractor.instance.generateUniqueSlug(categoryName);
-    TextEditingController controller = TextEditingController(text: slug);
+    String slug;
+    if (_sharedCategorySlugs.containsKey(categoryName)) {
+      slug = _sharedCategorySlugs[categoryName]!;
+    } else {
+      slug = await FirebaseRepoInteractor.instance.generateUniqueSlug(categoryName);
+      try {
+        await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+          slug,
+          {
+            'name': categoryName,
+            'owner': currentUser?.uid,
+            'created': DateTime.now().toIso8601String(),
+            'members': {if (currentUser != null) currentUser!.uid: true},
+          },
+        );
+        _sharedCategorySlugs[categoryName] = slug;
+        await EncryptedSharedPreferencesHelper.saveSharedSlugs(_sharedCategorySlugs);
+      } catch (e) {
+        context.showSnackBar(AppLocale.shareFailed.getString(context));
+        return;
+      }
+    }
+
+    final data = await FirebaseRepoInteractor.instance.getSharedCategoryData(slug);
+    Map<String, dynamic> members = Map<String, dynamic>.from(data['members'] ?? {});
+    String created = data['created'] ?? '';
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: Text(AppLocale.shareCategory.getString(context)),
-          content: TextField(controller: controller),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${AppLocale.createdOn.getString(context).replaceAll('{date}', created.split('T').first)}'),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: Text(kShareBaseUrl + slug)),
+                  IconButton(
+                    icon: const Icon(Icons.copy),
+                    tooltip: AppLocale.copyLink.getString(context),
+                    onPressed: () => context.copyToClipboard(kShareBaseUrl + slug),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (members.isNotEmpty)
+                Text(AppLocale.sharedWith.getString(context)),
+              if (members.isNotEmpty)
+                SizedBox(
+                  height: 48,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: members.keys.take(2).map((uid) {
+                      return FutureBuilder<MyUser.User?>(
+                        future: FirebaseRepoInteractor.instance.getUserData(uid),
+                        builder: (context, snapshot) {
+                          Widget avatar;
+                          if (snapshot.hasData && snapshot.data!.imageURL != null && snapshot.data!.imageURL!.isNotEmpty) {
+                            try {
+                              avatar = CircleAvatar(
+                                radius: 16,
+                                backgroundImage: MemoryImage(base64Decode(snapshot.data!.imageURL!)),
+                              );
+                            } catch (_) {
+                              avatar = const CircleAvatar(radius: 16, child: Icon(Icons.person));
+                            }
+                          } else {
+                            final initials = (snapshot.data?.name ?? '').isNotEmpty
+                                ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+                                : '';
+                            avatar = CircleAvatar(radius: 16, child: Text(initials));
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: avatar,
+                          );
+                        },
+                      );
+                    }).toList()
+                      ..addAll(members.keys.length > 2 ? [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                          child: CircleAvatar(
+                            radius: 16,
+                            child: Text('+${members.keys.length - 2}'),
+                          ),
+                        )
+                      ] : []),
+                  ),
+                ),
+              if (currentUser != null && currentUser!.uid == data['owner'])
+                Column(
+                  children: members.keys
+                      .where((uid) => uid != currentUser!.uid)
+                      .map((uid) => FutureBuilder<MyUser.User?>(
+                            future: FirebaseRepoInteractor.instance.getUserData(uid),
+                            builder: (context, snap) {
+                              final name = snap.data?.name ?? uid;
+                              return ListTile(
+                                title: Text(name),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.remove_circle),
+                                  onPressed: () async {
+                                    members.remove(uid);
+                                    await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+                                      slug,
+                                      {
+                                        ...data,
+                                        'members': members,
+                                      },
+                                    );
+                                    Navigator.of(context).pop();
+                                    _showShareDialog(categoryName);
+                                  },
+                                ),
+                              );
+                            },
+                          ))
+                      .toList(),
+                ),
+            ],
+          ),
           actions: [
             TextButton(
-              onPressed: () async {
-                try {
-                  await FirebaseRepoInteractor.instance.saveSharedCategoryData(
-                    controller.text,
-                    {
-                      'name': categoryName,
-                      'owner': currentUser?.uid,
-                      'members':
-                          {if (currentUser != null) currentUser!.uid: true},
-                    },
-                  );
-                  context.copyToClipboard(kShareBaseUrl + controller.text);
-                  Navigator.of(context).pop();
-                } catch (e) {
-                  context.showSnackBar(
-                      AppLocale.shareFailed.getString(context));
-                }
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: Text(AppLocale.ok.getString(context)),
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(AppLocale.cancel.getString(context)),
-            ),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMembersRow(String categoryName) {
+    final slug = _sharedCategorySlugs[categoryName];
+    if (slug == null) return const SizedBox.shrink();
+    return FutureBuilder<Map<String, dynamic>>(
+      future: FirebaseRepoInteractor.instance.getSharedCategoryData(slug),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final membersMap = Map<String, dynamic>.from(snapshot.data!['members'] ?? {});
+        membersMap.remove(currentUser?.uid);
+        final uids = membersMap.keys.toList();
+        if (uids.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          child: Row(
+            children: [
+              ...uids.take(2).map((uid) {
+                return FutureBuilder<MyUser.User?>(
+                  future: FirebaseRepoInteractor.instance.getUserData(uid),
+                  builder: (context, snapshot) {
+                    Widget avatar;
+                    if (snapshot.hasData && snapshot.data!.imageURL != null && snapshot.data!.imageURL!.isNotEmpty) {
+                      try {
+                        avatar = CircleAvatar(
+                          radius: 12,
+                          backgroundImage: MemoryImage(base64Decode(snapshot.data!.imageURL!)),
+                        );
+                      } catch (_) {
+                        avatar = const CircleAvatar(radius: 12, child: Icon(Icons.person, size: 12));
+                      }
+                    } else {
+                      final initials = (snapshot.data?.name ?? '').isNotEmpty
+                          ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+                          : '';
+                      avatar = CircleAvatar(radius: 12, child: Text(initials, style: const TextStyle(fontSize: 10)));
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                      child: avatar,
+                    );
+                  },
+                );
+              }),
+              if (uids.length > 2)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                  child: CircleAvatar(
+                    radius: 12,
+                    child: Text('+${uids.length - 2}', style: const TextStyle(fontSize: 10)),
+                  ),
+                ),
+            ],
+          ),
         );
       },
     );

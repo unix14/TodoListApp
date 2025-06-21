@@ -6,6 +6,7 @@ import 'package:encrypt/encrypt.dart';
 class EncryptedSharedPreferencesHelper {
   static late EncryptedSharedPreferences _prefs;
   static const String kCategoriesListPrefs = 'categories_list_prefs';
+  static const String kSharedSlugsPrefs = 'shared_slugs_prefs';
 
   /// Initialize the EncryptedSharedPreferences with the given key
   static Future<void> initialize() async {
@@ -55,6 +56,24 @@ class EncryptedSharedPreferencesHelper {
   static Future<void> saveCategories(List<String> categories) async {
     final String jsonString = json.encode(categories);
     await setString(kCategoriesListPrefs, jsonString);
+  }
+
+  static Future<void> saveSharedSlugs(Map<String, String> slugs) async {
+    await setString(kSharedSlugsPrefs, json.encode(slugs));
+  }
+
+  static Future<Map<String, String>> loadSharedSlugs() async {
+    final String? jsonString = await getString(kSharedSlugsPrefs);
+    if (jsonString != null && jsonString.isNotEmpty) {
+      try {
+        final Map<String, dynamic> decoded = json.decode(jsonString);
+        return decoded.map((key, value) => MapEntry(key, value.toString()));
+      } catch (e) {
+        print('Error decoding shared slugs from JSON: $e');
+        return {};
+      }
+    }
+    return {};
   }
 
   /// Load a list of categories from the encrypted shared preferences

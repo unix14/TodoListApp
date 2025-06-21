@@ -141,6 +141,9 @@ mixin AppLocale {
   static const String shareCategory = "shareCategory";
   static const String profilePicture = "profilePicture";
   static const String profilePictureUpdated = "profilePictureUpdated";
+  static const String copyLink = 'copyLink';
+  static const String sharedWith = 'sharedWith';
+  static const String createdOn = 'createdOn';
   static const String shareFailed = "shareFailed";
 
   static const Map<String, dynamic> EN = {
@@ -216,6 +219,9 @@ mixin AppLocale {
     AppLocale.profilePictureUpdated: "Profile picture updated" ,
     AppLocale.shareFailed: "Could not share list",
     AppLocale.copiedToClipboard: "Copied to clipboard",
+    AppLocale.copyLink: "Copy link",
+    AppLocale.sharedWith: "Shared with",
+    AppLocale.createdOn: "Created on {date}",
     AppLocale.motivationalSentence1: "Let's get something done!",
     AppLocale.motivationalSentence2: "What's on your mind today?",
     AppLocale.motivationalSentence3: "Time to be productive!",
@@ -356,6 +362,9 @@ mixin AppLocale {
     AppLocale.profilePictureUpdated: "התמונה עודכנה",
     AppLocale.shareFailed: "לא ניתן לשתף את הרשימה",
     AppLocale.copiedToClipboard: "הועתק ללוח",
+    AppLocale.copyLink: "העתק קישור",
+    AppLocale.sharedWith: "שותף עם",
+    AppLocale.createdOn: "נוצר ב {date}",
     AppLocale.motivationalSentence1: "דברים גדולים לעולם לא מגיעים מאזורי נוחות. בוא נתמודד עם משימה!",
     AppLocale.motivationalSentence2: "הסוד להתקדם הוא להתחיל. מה הדבר הראשון?",
     AppLocale.motivationalSentence3: "רשימה ריקה היא בד ציור ריק. צייר את יצירת המופת שלך בפרודוקטיביות!",
