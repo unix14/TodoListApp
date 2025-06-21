@@ -1267,7 +1267,13 @@ class _HomePageState extends State<HomePage>
                   children: <Widget>[
                     TextFormField(
                       controller: categoryController,
-                      decoration: InputDecoration(hintText: AppLocale.categoryNameHintText.getString(dialogContext)),
+                      cursorColor: Theme.of(context).colorScheme.primary,
+                      decoration: InputDecoration(
+                        hintText: AppLocale.categoryNameHintText.getString(dialogContext),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+                        ),
+                      ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return AppLocale.categoryNameEmptyError.getString(dialogContext);
@@ -1610,7 +1616,7 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  void _showShareDialog(String categoryName) async {
+  Future<void> _showShareDialog(String categoryName) async {
     String slug;
     if (_sharedCategorySlugs.containsKey(categoryName)) {
       slug = _sharedCategorySlugs[categoryName]!;
@@ -1638,9 +1644,9 @@ class _HomePageState extends State<HomePage>
     Map<String, dynamic> members = Map<String, dynamic>.from(data['members'] ?? {});
     String created = data['created'] ?? '';
 
-    showDialog(
+    await showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: Text(AppLocale.shareCategory.getString(context)),
           content: Column(
@@ -1726,7 +1732,7 @@ class _HomePageState extends State<HomePage>
                                         'members': members,
                                       },
                                     );
-                                    Navigator.of(context).pop();
+                                    Navigator.of(dialogContext).pop();
                                     _showShareDialog(categoryName);
                                   },
                                 ),
