@@ -58,6 +58,10 @@ Future<void> main() async {
   } catch (e) {
     
   }
+  var segments = Uri.base.pathSegments;
+  if(segments.length >= 2 && segments[0] == "lists") {
+    incomingSharedSlug = segments[1];
+  }
 
   // Original AppInitializer logic
   AppInitializer.initialize(andThen: (isAlreadyEnteredTodos) {

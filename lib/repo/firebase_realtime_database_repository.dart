@@ -27,7 +27,7 @@ class FirebaseRealtimeDatabaseRepository {
   }
 
   Future<Map<String, dynamic>> getData(String path, String referencePath) async {
-    final reference = FirebaseDatabase.instance.ref(referencePath).ref.child(path);
+    final reference = FirebaseDatabase.instance.ref('$referencePath/$path');
     final event = await reference.once();
     if (event.snapshot.value is Map) {
       final data = event.snapshot.value as Map;

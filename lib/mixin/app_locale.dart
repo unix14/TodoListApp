@@ -138,6 +138,16 @@ mixin AppLocale {
   static const String editTodoHint = 'editTodoHint';
   static const String emptyTodoTitle = 'emptyTodoTitle';
   static const String emptyTodoMessage = 'emptyTodoMessage';
+  static const String shareCategory = "shareCategory";
+  static const String profilePicture = "profilePicture";
+  static const String profilePictureUpdated = "profilePictureUpdated";
+  static const String changeNameTitle = "changeNameTitle";
+  static const String nameUpdated = "nameUpdated";
+  static const String nameEmptyError = "nameEmptyError";
+  static const String copyLink = 'copyLink';
+  static const String sharedWith = 'sharedWith';
+  static const String createdOn = 'createdOn';
+  static const String shareFailed = "shareFailed";
 
   static const Map<String, dynamic> EN = {
     AppLocale.title: 'Todo List',
@@ -207,6 +217,17 @@ mixin AppLocale {
     AppLocale.enterSearchQueryPrompt: "Type to start searching.",
     AppLocale.itemMovedSnackbar: 'Item moved to {categoryName}',
     // AppLocale.itemUncategorizedSnackbar: 'Item moved to All', // Already included above
+    AppLocale.shareCategory: "Share Category",
+    AppLocale.profilePicture: "Profile Picture",
+    AppLocale.profilePictureUpdated: "Profile picture updated" ,
+    AppLocale.changeNameTitle: "Change Name",
+    AppLocale.nameUpdated: "Name updated",
+    AppLocale.nameEmptyError: "Name cannot be empty",
+    AppLocale.shareFailed: "Could not share list",
+    AppLocale.copiedToClipboard: "Copied to clipboard",
+    AppLocale.copyLink: "Copy link",
+    AppLocale.sharedWith: "Shared with",
+    AppLocale.createdOn: "Created on {date}",
     AppLocale.motivationalSentence1: "Let's get something done!",
     AppLocale.motivationalSentence2: "What's on your mind today?",
     AppLocale.motivationalSentence3: "Time to be productive!",
@@ -342,6 +363,17 @@ mixin AppLocale {
     AppLocale.enterSearchQueryPrompt: "הקלד כדי להתחיל בחיפוש.",
     // AppLocale.itemMovedSnackbar: 'הפריט הועבר לקטגוריה {categoryName}', // Already included above
     AppLocale.itemUncategorizedSnackbar: 'הפריט הועבר להכל',
+    AppLocale.shareCategory: "שתף קטגוריה",
+    AppLocale.profilePicture: "תמונת פרופיל",
+    AppLocale.profilePictureUpdated: "התמונה עודכנה",
+    AppLocale.changeNameTitle: "שנה שם",
+    AppLocale.nameUpdated: "השם עודכן",
+    AppLocale.nameEmptyError: "השם לא יכול להיות ריק",
+    AppLocale.shareFailed: "לא ניתן לשתף את הרשימה",
+    AppLocale.copiedToClipboard: "הועתק ללוח",
+    AppLocale.copyLink: "העתק קישור",
+    AppLocale.sharedWith: "שותף עם",
+    AppLocale.createdOn: "נוצר ב {date}",
     AppLocale.motivationalSentence1: "דברים גדולים לעולם לא מגיעים מאזורי נוחות. בוא נתמודד עם משימה!",
     AppLocale.motivationalSentence2: "הסוד להתקדם הוא להתחיל. מה הדבר הראשון?",
     AppLocale.motivationalSentence3: "רשימה ריקה היא בד ציור ריק. צייר את יצירת המופת שלך בפרודוקטיביות!",

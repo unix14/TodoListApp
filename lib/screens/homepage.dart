@@ -16,6 +16,7 @@ import 'package:flutter_example/mixin/app_locale.dart';
 import 'package:flutter_example/mixin/pwa_installer_mixin.dart';
 import 'package:flutter_example/models/todo_list_item.dart';
 import 'package:flutter_example/repo/firebase_repo_interactor.dart';
+import 'package:flutter_example/models/user.dart' as MyUser;
 import 'package:flutter_example/screens/onboarding.dart';
 import 'package:flutter_example/screens/settings.dart';
 // import 'package:flutter_example/screens/todo_search_screen.dart'; // Removed as file is deleted
@@ -28,6 +29,7 @@ import 'onboarding.dart';
 
 const String kRenameCategoryMenuButtonName = 'rename_category';
 const String kDeleteCategoryMenuButtonName = 'delete_category';
+const String kShareCategoryMenuButtonName = 'share_category';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -49,6 +51,7 @@ class _HomePageState extends State<HomePage>
   TabController? _tabController;
   List<String> _categories = []; // Will be initialized in didChangeDependencies
   List<String> _customCategories = [];
+  Map<String, String> _sharedCategorySlugs = {};
   bool _isPromptingForCategory = false;
 
   // Search state
@@ -140,9 +143,43 @@ class _HomePageState extends State<HomePage>
     // and AppLocale needs it.
     _initializeTabs();
     // Load ad after build is complete
+    _checkIncomingSharedSlug();
     Future.delayed(Duration.zero, () {
       myBanner?.load();
     });
+  }
+  Future<void> _checkIncomingSharedSlug() async {
+    if (incomingSharedSlug != null && currentUser != null) {
+      final data = await FirebaseRepoInteractor.instance.getSharedCategoryData(incomingSharedSlug!);
+      if (data.isNotEmpty) {
+        String name = data["name"] ?? "";
+        if (!_customCategories.contains(name)) {
+          _customCategories.add(name);
+          await EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+        }
+        _sharedCategorySlugs[name] = incomingSharedSlug!;
+        await EncryptedSharedPreferencesHelper.saveSharedSlugs(_sharedCategorySlugs);
+        Map<String, dynamic> members = Map<String, dynamic>.from(data['members'] ?? {});
+        if (!members.containsKey(currentUser!.uid)) {
+          members[currentUser!.uid] = true;
+          try {
+            await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+              incomingSharedSlug!,
+              {
+                ...data,
+                'members': members,
+              },
+            );
+          } catch (e) {
+            if (mounted) {
+              context.showSnackBar(
+                  AppLocale.shareFailed.getString(context));
+            }
+          }
+        }
+      }
+      incomingSharedSlug = null;
+    }
   }
 
   Future<void> _initializeTabs() async {
@@ -156,6 +193,7 @@ class _HomePageState extends State<HomePage>
 
     // Perform async operation
     _customCategories = await EncryptedSharedPreferencesHelper.loadCategories();
+    _sharedCategorySlugs = await EncryptedSharedPreferencesHelper.loadSharedSlugs();
 
     // This part should be synchronous and use the updated context from didChangeDependencies
     List<String> newCategories = [
@@ -678,7 +716,12 @@ class _HomePageState extends State<HomePage>
                               ); // Empty list view for non-"All" categories that are empty
                             }
                           }
-                          return listContent;
+                          return Column(
+                            children: [
+                              _buildMembersRow(currentCategoryNameForTab),
+                              Expanded(child: listContent),
+                            ],
+                          );
                         }
                       },
                     );
@@ -1224,7 +1267,13 @@ class _HomePageState extends State<HomePage>
                   children: <Widget>[
                     TextFormField(
                       controller: categoryController,
-                      decoration: InputDecoration(hintText: AppLocale.categoryNameHintText.getString(dialogContext)),
+                      cursorColor: Theme.of(context).colorScheme.primary,
+                      decoration: InputDecoration(
+                        hintText: AppLocale.categoryNameHintText.getString(dialogContext),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+                        ),
+                      ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return AppLocale.categoryNameEmptyError.getString(dialogContext);
@@ -1567,6 +1616,202 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  Future<void> _showShareDialog(String categoryName) async {
+    String slug;
+    if (_sharedCategorySlugs.containsKey(categoryName)) {
+      slug = _sharedCategorySlugs[categoryName]!;
+    } else {
+      slug = await FirebaseRepoInteractor.instance.generateUniqueSlug(categoryName);
+      try {
+        await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+          slug,
+          {
+            'name': categoryName,
+            'owner': currentUser?.uid,
+            'created': DateTime.now().toIso8601String(),
+            'members': {if (currentUser != null) currentUser!.uid: true},
+          },
+        );
+        _sharedCategorySlugs[categoryName] = slug;
+        await EncryptedSharedPreferencesHelper.saveSharedSlugs(_sharedCategorySlugs);
+      } catch (e) {
+        context.showSnackBar(AppLocale.shareFailed.getString(context));
+        return;
+      }
+    }
+
+    final data = await FirebaseRepoInteractor.instance.getSharedCategoryData(slug);
+    Map<String, dynamic> members = Map<String, dynamic>.from(data['members'] ?? {});
+    String created = data['created'] ?? '';
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(AppLocale.shareCategory.getString(context)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${AppLocale.createdOn.getString(context).replaceAll('{date}', created.split('T').first)}'),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: Text(kShareBaseUrl + slug)),
+                  IconButton(
+                    icon: const Icon(Icons.copy),
+                    tooltip: AppLocale.copyLink.getString(context),
+                    onPressed: () => context.copyToClipboard(kShareBaseUrl + slug),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (members.isNotEmpty)
+                Text(AppLocale.sharedWith.getString(context)),
+              if (members.isNotEmpty)
+                SizedBox(
+                  height: 48,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      for (var uid in members.keys.take(2))
+                        FutureBuilder<MyUser.User?>(
+                          future: FirebaseRepoInteractor.instance.getUserData(uid),
+                          builder: (context, snapshot) {
+                            Widget avatar;
+                            if (snapshot.hasData && snapshot.data!.imageURL != null && snapshot.data!.imageURL!.isNotEmpty) {
+                              try {
+                                avatar = CircleAvatar(
+                                  radius: 16,
+                                  backgroundImage: MemoryImage(base64Decode(snapshot.data!.imageURL!)),
+                                );
+                              } catch (_) {
+                                avatar = const CircleAvatar(radius: 16, child: Icon(Icons.person));
+                              }
+                            } else {
+                              final initials = (snapshot.data?.name ?? '').isNotEmpty
+                                  ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+                                  : '';
+                              avatar = CircleAvatar(radius: 16, child: Text(initials));
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                              child: avatar,
+                            );
+                          },
+                        ),
+                      if (members.keys.length > 2)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                          child: CircleAvatar(
+                            radius: 16,
+                            child: Text('+${members.keys.length - 2}'),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              if (currentUser != null && currentUser!.uid == data['owner'])
+                Column(
+                  children: members.keys
+                      .where((uid) => uid != currentUser!.uid)
+                      .map((uid) => FutureBuilder<MyUser.User?>(
+                            future: FirebaseRepoInteractor.instance.getUserData(uid),
+                            builder: (context, snap) {
+                              final name = snap.data?.name ?? uid;
+                              return ListTile(
+                                title: Text(name),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.remove_circle),
+                                  onPressed: () async {
+                                    members.remove(uid);
+                                    await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+                                      slug,
+                                      {
+                                        ...data,
+                                        'members': members,
+                                      },
+                                    );
+                                    Navigator.of(dialogContext).pop();
+                                    _showShareDialog(categoryName);
+                                  },
+                                ),
+                              );
+                            },
+                          ))
+                      .toList(),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(AppLocale.ok.getString(context)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMembersRow(String categoryName) {
+    final slug = _sharedCategorySlugs[categoryName];
+    if (slug == null) return const SizedBox.shrink();
+    return FutureBuilder<Map<String, dynamic>>(
+      future: FirebaseRepoInteractor.instance.getSharedCategoryData(slug),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final membersMap = Map<String, dynamic>.from(snapshot.data!['members'] ?? {});
+        membersMap.remove(currentUser?.uid);
+        final uids = membersMap.keys.toList();
+        if (uids.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          child: Row(
+            children: [
+              for (var uid in uids.take(2))
+                FutureBuilder<MyUser.User?>(
+                  future: FirebaseRepoInteractor.instance.getUserData(uid),
+                  builder: (context, snapshot) {
+                    Widget avatar;
+                    if (snapshot.hasData && snapshot.data!.imageURL != null && snapshot.data!.imageURL!.isNotEmpty) {
+                      try {
+                        avatar = CircleAvatar(
+                          radius: 12,
+                          backgroundImage: MemoryImage(base64Decode(snapshot.data!.imageURL!)),
+                        );
+                      } catch (_) {
+                        avatar = const CircleAvatar(radius: 12, child: Icon(Icons.person, size: 12));
+                      }
+                    } else {
+                      final initials = (snapshot.data?.name ?? '').isNotEmpty
+                          ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+                          : '';
+                      avatar = CircleAvatar(radius: 12, child: Text(initials, style: const TextStyle(fontSize: 10)));
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                      child: avatar,
+                    );
+                  },
+                ),
+              if (uids.length > 2)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                  child: CircleAvatar(
+                    radius: 12,
+                    child: Text('+${uids.length - 2}', style: const TextStyle(fontSize: 10)),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // Renamed existing method to avoid conflict
   void _toggleSearchUI() {
     setState(() {
@@ -1664,195 +1909,213 @@ class _HomePageState extends State<HomePage>
   }
 
   List<Widget> _buildDefaultAppBarActions(BuildContext context) {
-    // Existing search icon button, now calls the renamed method
-    final searchUIToggleButton = IconButton(
-      icon: const Icon(Icons.search), // Keep original icon
-      onPressed: _toggleSearchUI, // Call renamed method
-      tooltip: AppLocale.searchTodosTooltip.getString(context), // Keep original tooltip
+    final searchButton = IconButton(
+      icon: const Icon(Icons.search),
+      onPressed: _toggleSearchUI,
+      tooltip: AppLocale.searchTodosTooltip.getString(context),
     );
 
-    final popupMenuButton = PopupMenuButton<String>(
+    final menuButton = PopupMenuButton<String>(
       onSelected: (value) async {
-        // Make async
-        if (value == kInstallMenuButtonName) {
-          showInstallPrompt();
-          context.showSnackBar(AppLocale.appIsInstalled.getString(context));
-        } else if (value == kArchiveMenuButtonName) {
-          showArchivedTodos();
-        } else if (value == kLoginButtonMenu) {
-          Navigator.pushReplacement(
+        switch (value) {
+          case kInstallMenuButtonName:
+            showInstallPrompt();
+            context.showSnackBar(AppLocale.appIsInstalled.getString(context));
+            break;
+          case kArchiveMenuButtonName:
+            showArchivedTodos();
+            break;
+          case kLoginButtonMenu:
+            Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                  builder: (context) => const OnboardingScreen()));
-        } else if (value == kSettingsMenuButtonName) {
-          final result = await Navigator.push( // await the result
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const SettingsScreen()));
-          if (result == true && mounted) { // Check if mounted before setState
-            // First, trigger item loading
-            setState(() {
-              _loadingData = loadList(); // Re-trigger FutureBuilder
-            });
-
-            // Then, re-initialize tabs which will also call setState internally
-            await _initializeTabs();
-
-            // Optionally, ensure the first tab ("All") is selected if controller exists
-            if (mounted && _tabController != null && _tabController!.length > 0) {
-                _tabController!.animateTo(0); // Go to "All" tab
-            }
-          }
-        } else if (value == kRenameCategoryMenuButtonName) {
-          if (_isCurrentCategoryCustom()) {
-            final currentCategoryName = _categories[_tabController!.index];
-            _promptRenameCategory(currentCategoryName);
-          }
-        } else if (value == kDeleteCategoryMenuButtonName) {
-          if (_isCurrentCategoryCustom()) {
-            final currentCategoryName = _categories[_tabController!.index];
-            DialogHelper.showAlertDialog(
-              context,
-              AppLocale.deleteCategoryConfirmationTitle.getString(context),
-              AppLocale.deleteCategoryConfirmationMessage.getString(context).replaceAll('{categoryName}', currentCategoryName),
-              () { // onOkButton
-                Navigator.of(context).pop(); // Dismiss confirmation dialog
-                setState(() {
-                  _customCategories.removeWhere((cat) => cat.toLowerCase() == currentCategoryName.toLowerCase());
-                  for (var item in items) {
-                    if (item.category == currentCategoryName) {
-                      item.category = null; // Move to "All"
-                    }
-                  }
-                  EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
-                  updateHomeWidget();
-                    print('[HomeWidget] Sent update request to widget provider after deleting category.');
-                  _updateList();
-                  // Re-initialize tabs and then switch to "All" tab.
-                  _initializeTabs().then((_) {
-                    if (mounted && _tabController != null) {
-                        _tabController!.index = 0;
-                    }
-                  });
-                });
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(AppLocale.categoryDeletedSnackbar.getString(context).replaceAll('{categoryName}', currentCategoryName)),
-                ));
-              },
-              () { // onCancelButton
-                Navigator.of(context).pop(); // Dismiss confirmation dialog
-              },
+              MaterialPageRoute(builder: (context) => const OnboardingScreen()),
             );
-          }
+            break;
+          case kSettingsMenuButtonName:
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsScreen()),
+            );
+            if (result == true && mounted) {
+              setState(() {
+                _loadingData = loadList();
+              });
+              await _initializeTabs();
+              if (mounted && _tabController != null && _tabController!.length > 0) {
+                _tabController!.animateTo(0);
+              }
+            }
+            break;
+          case kRenameCategoryMenuButtonName:
+            if (_isCurrentCategoryCustom()) {
+              final currentCategoryName = _categories[_tabController!.index];
+              _promptRenameCategory(currentCategoryName);
+            }
+            break;
+          case kDeleteCategoryMenuButtonName:
+            if (_isCurrentCategoryCustom()) {
+              final currentCategoryName = _categories[_tabController!.index];
+              DialogHelper.showAlertDialog(
+                context,
+                AppLocale.deleteCategoryConfirmationTitle.getString(context),
+                AppLocale.deleteCategoryConfirmationMessage
+                    .getString(context)
+                    .replaceAll('{categoryName}', currentCategoryName),
+                () {
+                  Navigator.of(context).pop();
+                  setState(() {
+                    _customCategories.removeWhere(
+                        (cat) => cat.toLowerCase() == currentCategoryName.toLowerCase());
+                    for (var item in items) {
+                      if (item.category == currentCategoryName) {
+                        item.category = null;
+                      }
+                    }
+                    EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+                    updateHomeWidget();
+                    print('[HomeWidget] Sent update request to widget provider after deleting category.');
+                    _updateList();
+                    _initializeTabs().then((_) {
+                      if (mounted && _tabController != null) {
+                        _tabController!.index = 0;
+                      }
+                    });
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        AppLocale.categoryDeletedSnackbar
+                            .getString(context)
+                            .replaceAll('{categoryName}', currentCategoryName),
+                      ),
+                    ),
+                  );
+                },
+                () {
+                  Navigator.of(context).pop();
+                },
+              );
+            }
+            break;
+          case kShareCategoryMenuButtonName:
+            if (_isCurrentCategoryCustom()) {
+              final currentCategoryName = _categories[_tabController!.index];
+              _showShareDialog(currentCategoryName);
+            }
+            break;
         }
       },
       itemBuilder: (BuildContext context) {
-        List<PopupMenuItem<String>> popupMenuItems = [];
-        //Check if should show Login Button
-        if (isLoggedIn == false) {
-          popupMenuItems.add(PopupMenuItem<String>(
-            value: kLoginButtonMenu,
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.supervised_user_circle,
-                  color: Colors.blue,
-                ),
-                const SizedBox(width: 8.0),
-                Text(AppLocale.login.getString(context)),
-              ],
-            ),
-          ));
-        }
-        //Check if should show Install App prompt button
-        if (isInstallable()) {
-          popupMenuItems.add(PopupMenuItem<String>(
-            value: kInstallMenuButtonName,
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.install_mobile,
-                  color: Colors.blue,
-                ),
-                const SizedBox(width: 8.0),
-                Text(AppLocale.installApp.getString(context)),
-              ],
-            ),
-          ));
-        }
-        //Check if should show Archive Button
-        if (items.any((item) => item.isArchived)) {
-          popupMenuItems.add(PopupMenuItem<String>(
-            value: kArchiveMenuButtonName,
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.archive,
-                  color: Colors.blue,
-                ),
-                const SizedBox(width: 8.0),
-                Text(AppLocale.archive.getString(context)),
-              ],
-            ),
-          ));
-        }
+        final itemsList = <PopupMenuEntry<String>>[];
 
-        // Add "Rename Current Category" button if a custom category is selected
-        if (_isCurrentCategoryCustom()) {
-          popupMenuItems.add(PopupMenuItem<String>(
-            value: kRenameCategoryMenuButtonName,
-            child: Row(
-              children: [
-                const Icon(Icons.edit, color: Colors.blue), // Or another appropriate icon
-                const SizedBox(width: 8.0),
-                Text(AppLocale.renameCategoryMenuButton.getString(context)),
-              ],
-            ),
-          ));
-          // Add "Delete Current Category" button if a custom category is selected
-          popupMenuItems.add(PopupMenuItem<String>(
-            value: kDeleteCategoryMenuButtonName,
-            child: Row(
-              children: [
-                const Icon(Icons.delete_outline, color: Colors.red), // Or another appropriate icon
-                const SizedBox(width: 8.0),
-                Text(AppLocale.deleteCategoryMenuButton.getString(context), style: const TextStyle(color: Colors.red)),
-              ],
-            ),
-          ));
-        }
-
-        // Settings button is typically last or near last
-        popupMenuItems.add(PopupMenuItem<String>(
-          value: kSettingsMenuButtonName,
-          child: Row(
-            children: [
-              const Icon(
-                Icons.settings_outlined,
-                color: Colors.blue,
+        if (!isLoggedIn) {
+          itemsList.add(
+            PopupMenuItem<String>(
+              value: kLoginButtonMenu,
+              child: Row(
+                children: [
+                  const Icon(Icons.supervised_user_circle, color: Colors.blue),
+                  const SizedBox(width: 8.0),
+                  Text(AppLocale.login.getString(context)),
+                ],
               ),
-              const SizedBox(width: 8.0),
-              Text(AppLocale.settings.getString(context)),
-            ],
+            ),
+          );
+        }
+
+        if (isInstallable()) {
+          itemsList.add(
+            PopupMenuItem<String>(
+              value: kInstallMenuButtonName,
+              child: Row(
+                children: [
+                  const Icon(Icons.install_mobile, color: Colors.blue),
+                  const SizedBox(width: 8.0),
+                  Text(AppLocale.installApp.getString(context)),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (items.any((item) => item.isArchived)) {
+          itemsList.add(
+            PopupMenuItem<String>(
+              value: kArchiveMenuButtonName,
+              child: Row(
+                children: [
+                  const Icon(Icons.archive, color: Colors.blue),
+                  const SizedBox(width: 8.0),
+                  Text(AppLocale.archive.getString(context)),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (_isCurrentCategoryCustom()) {
+          itemsList.add(
+            PopupMenuItem<String>(
+              value: kRenameCategoryMenuButtonName,
+              child: Row(
+                children: [
+                  const Icon(Icons.edit, color: Colors.blue),
+                  const SizedBox(width: 8.0),
+                  Text(AppLocale.renameCategoryMenuButton.getString(context)),
+                ],
+              ),
+            ),
+          );
+          itemsList.add(
+            PopupMenuItem<String>(
+              value: kDeleteCategoryMenuButtonName,
+              child: Row(
+                children: [
+                  const Icon(Icons.delete_outline, color: Colors.red),
+                  const SizedBox(width: 8.0),
+                  Text(
+                    AppLocale.deleteCategoryMenuButton.getString(context),
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+          );
+          itemsList.add(
+            PopupMenuItem<String>(
+              value: kShareCategoryMenuButtonName,
+              child: Row(
+                children: [
+                  const Icon(Icons.share, color: Colors.blue),
+                  const SizedBox(width: 8.0),
+                  Text(AppLocale.shareCategory.getString(context)),
+                ],
+              ),
+            ),
+          );
+        }
+
+        itemsList.add(
+          PopupMenuItem<String>(
+            value: kSettingsMenuButtonName,
+            child: Row(
+              children: [
+                const Icon(Icons.settings_outlined, color: Colors.blue),
+                const SizedBox(width: 8.0),
+                Text(AppLocale.settings.getString(context)),
+              ],
+            ),
           ),
-        ));
-        return popupMenuItems;
+        );
+
+        return itemsList;
       },
     );
-    return [searchUIToggleButton, popupMenuButton];
 
-    // Add the new search button to the list of actions.
-    // Standard practice is to add new actions to the left (for LTR) or right (for RTL) of existing ones.
-    // Let's add the new search button before the existing one.
-    // if (isRtl) {
-    //   // Order for RTL: [popup, existingSearch, newSearch] will appear as newSearch, existingSearch, popup
-    //   return [popupMenuButton, searchUIToggleButton];
-    // } else {
-    //   // Order for LTR: [newSearch, existingSearch, popup]
-    //   return [searchUIToggleButton, popupMenuButton];
-    // }
+    return [searchButton, menuButton];
   }
 }
 
 // Define a constant for the "Add New Category" option to avoid magic strings
 const String kAddNewCategoryOption = 'add_new_category_option_val'; // Made it more unique
+

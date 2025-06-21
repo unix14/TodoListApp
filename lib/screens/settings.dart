@@ -66,7 +66,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   @override
   Widget build(BuildContext context) {
     var email = myCurrentUser?.email ?? AppLocale.guest.getString(context);
-    // var name = myCurrentUser?.name ?? AppLocale.unknown.getString(context); // todo bring back
+    var name = myCurrentUser?.name ?? AppLocale.unknown.getString(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocale.settings.getString(context)),
@@ -86,13 +86,21 @@ class _SettingsScreenState extends State<SettingsScreen>
               context.copyToClipboard(email);
             },
           ),
-          // ListTile(
-          //   title: Text(AppLocale.name.getString(context)),
-          //   subtitle: Text(name),
-          //   onTap: () {
-          //     // todo when clicked show different name input dialog and change it in firebase
-          //   },
-          // ),
+          if(currentUser != null && currentUser!.isAnonymous == false)
+            ListTile(
+              title: Text(AppLocale.name.getString(context)),
+              subtitle: Text(name),
+              onTap: () {
+                _settingsHelper.updateUserName(context);
+              },
+            ),
+          if(currentUser != null && currentUser!.isAnonymous == false)
+            ListTile(
+              title: Text(AppLocale.profilePicture.getString(context)),
+              onTap: () {
+                _settingsHelper.updateProfilePicture(context);
+              },
+            ),
           simpleDivider,
           ListTile(
             title: Text(AppLocale.lang.getString(context)),
