@@ -150,16 +150,23 @@ class _HomePageState extends State<HomePage>
   }
   Future<void> _checkIncomingSharedSlug() async {
     if (incomingSharedSlug != null && currentUser != null) {
-      final data = await FirebaseRepoInteractor.instance.getSharedCategoryData(incomingSharedSlug!);
+      final data = await FirebaseRepoInteractor.instance
+          .getSharedCategoryData(incomingSharedSlug!);
       if (data.isNotEmpty) {
-        String name = data["name"] ?? "";
+        String name = data['name'] ?? '';
+        bool added = false;
         if (!_customCategories.contains(name)) {
           _customCategories.add(name);
-          await EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+          await EncryptedSharedPreferencesHelper.saveCategories(
+              _customCategories);
+          added = true;
         }
         _sharedCategorySlugs[name] = incomingSharedSlug!;
-        await EncryptedSharedPreferencesHelper.saveSharedSlugs(_sharedCategorySlugs);
-        Map<String, dynamic> members = Map<String, dynamic>.from(data['members'] ?? {});
+        await EncryptedSharedPreferencesHelper.saveSharedSlugs(
+            _sharedCategorySlugs);
+
+        Map<String, dynamic> members =
+            Map<String, dynamic>.from(data['members'] ?? {});
         if (!members.containsKey(currentUser!.uid)) {
           members[currentUser!.uid] = true;
           try {
@@ -176,6 +183,11 @@ class _HomePageState extends State<HomePage>
                   AppLocale.shareFailed.getString(context));
             }
           }
+        }
+
+        if (added && mounted) {
+          await _initializeTabs();
+          setState(() {});
         }
       }
       incomingSharedSlug = null;
