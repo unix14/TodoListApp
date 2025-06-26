@@ -151,6 +151,8 @@ mixin AppLocale {
   static const String colorNameCyan = 'color_name_cyan';
   static const String colorNameWhite = 'color_name_white';
   static const String colorNameGrey = 'color_name_grey';
+  static const String colorNameDarkGrey = 'color_name_dark_grey';
+  static const String colorNameLightBlue = 'color_name_light_blue';
 
   // Settings Screen - Import/Export & Delete Account
   static const String settingsExportDataTitle = 'settingsExportDataTitle';
@@ -383,6 +385,8 @@ mixin AppLocale {
     AppLocale.colorNameWhite: 'White',
     AppLocale.colorNameGrey: 'Grey',
     AppLocale.categoryAddedSnackbar: 'Category {categoryName} added.', // Added
+    AppLocale.colorNameDarkGrey: 'Dark Grey',
+    AppLocale.colorNameLightBlue: 'Light Blue',
   };
 
   static const Map<String, dynamic> HE = {
@@ -573,5 +577,7 @@ mixin AppLocale {
     AppLocale.colorNameWhite: 'לבן',
     AppLocale.colorNameGrey: 'אפור',
     AppLocale.categoryAddedSnackbar: 'קטגוריה {categoryName} נוספה.', // Added
+    AppLocale.colorNameDarkGrey: 'אפור כהה',
+    AppLocale.colorNameLightBlue: 'תכלת',
   };
 }

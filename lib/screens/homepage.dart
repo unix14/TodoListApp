@@ -413,16 +413,24 @@ class _HomePageState extends State<HomePage>
               controller: _tabController,
               isScrollable: true,
               tabAlignment: TabAlignment.start,
-              indicatorColor: _currentIndicatorColor, // Use state variable for indicator color
+              indicatorColor: _currentIndicatorColor,
+              indicatorWeight: 4.0, // Added indicatorWeight
               tabs: [
                 ..._categoryTabsList
-                    .map((TodoCategory category) {
+                    .asMap().entries // Use asMap to get index for comparison
+                    .map((entry) {
+                      int idx = entry.key;
+                      TodoCategory category = entry.value;
                       String tabText = category.name.substring(0, min(category.name.length, MAX_CHARS_IN_TAB_BAR)) +
                                      (category.name.length > MAX_CHARS_IN_TAB_BAR ? "..." : "");
+                      final bool isSelected = (_tabController != null && _tabController.index == idx);
                       return Tab(
                         child: Text(
                           tabText,
-                          style: TextStyle(color: _getTabTextColorHelper(category)), // Updated call site
+                          style: TextStyle(
+                            color: _getTabTextColorHelper(category),
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, // Added fontWeight
+                          ),
                         ),
                       );
                     }
@@ -1140,14 +1148,17 @@ class _HomePageState extends State<HomePage>
                       child: Chip(
                         label: Text(
                           currentTodo.category!,
-                          style: TextStyle(fontSize: 11, color: textColor), // Adjusted fontSize
+                          style: TextStyle(fontSize: 10, color: textColor),
                         ),
                         backgroundColor: chipColor,
-                        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 0.0), // Adjusted padding
+                        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 0.0),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        labelPadding: EdgeInsets.zero, // Use chip's padding
+                        labelPadding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
-                        elevation: 1.0, // Set elevation
+                        elevation: 3.0, // Changed
+                        shape: RoundedRectangleBorder( // Added
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
                         // shape: StadiumBorder(side: BorderSide(color: Colors.grey.shade400, width: 0.5)), // Optional border
                       ),
                     ),
@@ -1275,7 +1286,7 @@ class _HomePageState extends State<HomePage>
 
     // Local state for the dialog itself
     Color selectedColorForNewCategory = const Color(0xFFFFFFFF); // Default to white
-    bool isExpanded = false;
+    // bool isExpanded = false; // REMOVED
     TextEditingController nameController = TextEditingController();
     GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
@@ -1284,7 +1295,6 @@ class _HomePageState extends State<HomePage>
     newCategoryFromDialog = await showDialog<TodoCategory>(
       context: context,
       builder: (BuildContext dialogContext) {
-        // final dialogAppLocale = AppLocale.of(dialogContext); // Capture AppLocale for the dialog
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
@@ -1292,62 +1302,57 @@ class _HomePageState extends State<HomePage>
               content: SingleChildScrollView(
                 child: Form(
                   key: formKey,
-                  child: Column(
+                  child: Column( // This Column's children are now the new Row
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      TextFormField(
-                        controller: nameController,
-                        decoration: InputDecoration(hintText: AppLocale.categoryNameHintText.getString(dialogContext)),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return AppLocale.categoryNameEmptyError.getString(dialogContext);
-                          }
-                          if (_customCategories.any((TodoCategory cat) => cat.name.toLowerCase() == value.trim().toLowerCase())) {
-                            return AppLocale.categoryNameExistsError.getString(dialogContext);
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Tooltip(
-                            message: AppLocale.selectColorTooltip.getString(dialogContext),
-                            child: InkWell(
-                              onTap: () async {
-                                final int? pickedColorValue = await _selectCategoryColor(
-                                  dialogContext,
-                                  TodoCategory(name: "", color: selectedColorForNewCategory.value),
-                                );
-                                if (pickedColorValue != null) {
-                                  setStateDialog(() {
-                                    selectedColorForNewCategory = Color(pickedColorValue);
-                                  });
-                                }
-                              },
+                          InkWell(
+                            onTap: () async {
+                              final int? pickedColorValue = await _selectCategoryColor(
+                                dialogContext,
+                                TodoCategory(name: "", color: selectedColorForNewCategory.value),
+                              );
+                              if (pickedColorValue != null) {
+                                setStateDialog(() {
+                                  selectedColorForNewCategory = Color(pickedColorValue);
+                                });
+                              }
+                            },
+                            child: Tooltip(
+                              message: AppLocale.selectColorTooltip.getString(dialogContext),
                               child: CircleAvatar(
-                                radius: 18, // Outer radius for border
-                                backgroundColor: Theme.of(dialogContext).dividerColor, // Border color
+                                radius: 18,
+                                backgroundColor: Theme.of(dialogContext).dividerColor,
                                 child: CircleAvatar(
-                                  radius: 16, // Inner radius for actual color
+                                  radius: 16,
                                   backgroundColor: selectedColorForNewCategory,
                                 ),
                               ),
-                            ),
+                            )
                           ),
-                          const SizedBox(width: 8),
-                          Text(AppLocale.categoryColorLabel.getString(dialogContext)),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () {
-                              setStateDialog(() {
-                                isExpanded = !isExpanded;
-                              });
-                            },
-                            child: Text(isExpanded ? AppLocale.collapseButtonText.getString(dialogContext) : AppLocale.expandButtonText.getString(dialogContext)),
+                          const SizedBox(width: 12), // Increased spacing
+                          Expanded(
+                            child: TextFormField(
+                              controller: nameController,
+                              decoration: InputDecoration(
+                                hintText: AppLocale.categoryNameHintText.getString(dialogContext),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return AppLocale.categoryNameEmptyError.getString(dialogContext);
+                                }
+                                if (_customCategories.any((TodoCategory cat) => cat.name.toLowerCase() == value.trim().toLowerCase())) {
+                                  return AppLocale.categoryNameExistsError.getString(dialogContext);
+                                }
+                                return null;
+                              },
+                            ),
                           ),
                         ],
                       ),
+                      // The SizedBox(height: 16) and the old Row containing color stuff and expand/collapse button are removed.
                     ],
                   ),
                 ),
@@ -1909,7 +1914,7 @@ class _HomePageState extends State<HomePage>
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: Text(AppLocale.editCategoryDialogTitle.getString(dialogContext).replaceAll('{categoryName}', originalCategory.name)), // Assuming parameterized
+              title: Text(AppLocale.editCategoryDialogTitleSimple.getString(dialogContext)),
               content: SingleChildScrollView(
                 child: Form(
                   key: formKey,
@@ -1969,20 +1974,7 @@ class _HomePageState extends State<HomePage>
                         ],
                       ),
                       // Keep "Change Color" button or remove if CircleAvatar tap is enough
-                       Padding( // Added padding for the button
-                         padding: const EdgeInsets.symmetric(vertical: 8.0),
-                         child: ElevatedButton(
-                           child: Text(AppLocale.changeColorButtonText.getString(dialogContext)),
-                           onPressed: () async {
-                             final int? selectedColor = await _selectCategoryColor(dialogContext, categoryBeingEdited);
-                             if (selectedColor != null) {
-                               setStateDialog(() {
-                                 categoryBeingEdited = categoryBeingEdited.copyWith(color: selectedColor);
-                               });
-                             }
-                           },
-                         ),
-                       ),
+                       // The Padding widget containing the "Change Color" ElevatedButton has been removed.
                       const SizedBox(height: 20),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -2113,10 +2105,13 @@ class _HomePageState extends State<HomePage>
       Colors.cyan.value: AppLocale.colorNameCyan.getString(dialogContext),
       Colors.white.value: AppLocale.colorNameWhite.getString(dialogContext),
       Colors.grey.value: AppLocale.colorNameGrey.getString(dialogContext),
+      Colors.grey[700]!.value: AppLocale.colorNameDarkGrey.getString(dialogContext), // New
+      Colors.lightBlue[200]!.value: AppLocale.colorNameLightBlue.getString(dialogContext), // New
     };
      final List<Color> predefinedColorsList = [
       Colors.red, Colors.green, Colors.blue, Colors.yellow, Colors.purple, Colors.orange,
       Colors.pink, Colors.brown, Colors.teal, Colors.cyan, Colors.white, Colors.grey,
+      Colors.grey[700]!, Colors.lightBlue[200]!, // New
     ];
 
 
