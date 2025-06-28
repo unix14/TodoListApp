@@ -11,6 +11,9 @@ mixin AppLocale {
   static const String archivedTodosSubtitle = "archivedTodosSubtitle";
   static const String areUsure = "areUsure";
   static const String cancel = "cancel";
+  static const String clearArchivedTodos = "clearArchivedTodos";
+  static const String archivedAllPossibleTodos = "archivedAllPossibleTodos";
+  static const String archivedAllPossibleTodosPlural = "archivedAllPossibleTodosPlural";
   static const String cancelButtonText = 'cancelButtonText';
   static const String categoryDeletedSnackbar = 'categoryDeletedSnackbar';
   static const String categoryNameEmptyError = 'categoryNameEmptyError';
@@ -228,6 +231,9 @@ mixin AppLocale {
     AppLocale.ok: "OK",
     AppLocale.signup: "Signup",
     AppLocale.cancel: "Cancel",
+    AppLocale.clearArchivedTodos: "Archive completed tasks",
+    AppLocale.archivedAllPossibleTodos: "One task have been archived successfully",
+    AppLocale.archivedAllPossibleTodosPlural: "'{count}' task(s) have been archived successfully",
     AppLocale.todoExample1: "Get clean clothes",
     AppLocale.todoExample2: "Buy gas",
     AppLocale.todoExample3: "Buy milk",
@@ -361,7 +367,7 @@ mixin AppLocale {
 
     // New translations for category features (English):
     AppLocale.categoryOptionsMenuItem: 'Category Options',
-    AppLocale.editCategoryDialogTitle: 'Edit Category: {categoryName}',
+    AppLocale.editCategoryDialogTitle: 'Edit Category',
     AppLocale.categoryColorLabel: 'Color',
     AppLocale.selectColorTooltip: 'Select color',
     AppLocale.deleteCategoryButtonText: 'Delete Category',
@@ -420,6 +426,9 @@ mixin AppLocale {
     AppLocale.ok: "אוקיי",
     AppLocale.signup: "הרשמה",
     AppLocale.cancel: "ביטול",
+    AppLocale.clearArchivedTodos: "ניקוי משימות שבוצעו",
+    AppLocale.archivedAllPossibleTodos: "משימה אחת הועברה לארכיון",
+    AppLocale.archivedAllPossibleTodosPlural: "'{count}' משימות הועברו לארכיון",
     AppLocale.todoExample1: "להוציא כביסה מהמייבש",
     AppLocale.todoExample2: "לתדלק את האוטו",
     AppLocale.todoExample3: "לקנות חלב",
@@ -553,7 +562,7 @@ mixin AppLocale {
 
     // New translations for category features (Hebrew):
     AppLocale.categoryOptionsMenuItem: 'אפשרויות קטגוריה',
-    AppLocale.editCategoryDialogTitle: 'ערוך קטגוריה: {categoryName}',
+    AppLocale.editCategoryDialogTitle: 'ערוך קטגוריה',
     AppLocale.categoryColorLabel: 'צבע',
     AppLocale.selectColorTooltip: 'בחר צבע',
     AppLocale.deleteCategoryButtonText: 'מחק קטגוריה',
