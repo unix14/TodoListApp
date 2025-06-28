@@ -1967,6 +1967,9 @@ class _HomePageState extends State<HomePage>
     debugPrint("Performing search for: $query. Found ${_searchResults.length} results.");
   }
 
+  /// Default actions for the app bar.
+  ///
+  /// Returns a search button and a popup menu with various actions.
   List<Widget> _buildDefaultAppBarActions(BuildContext context) {
     final searchButton = IconButton(
       icon: const Icon(Icons.search),
