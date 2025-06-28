@@ -41,7 +41,10 @@ class FirebaseRepoInteractor {
 
   Future<String> generateUniqueSlug(String categoryName) async {
     String baseSlug = categoryName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
-    baseSlug = baseSlug.replaceAll(RegExp(r'-+'), '-').replaceAll(RegExp(r'^-|-\$'), '');
+    baseSlug = baseSlug.replaceAll(RegExp(r'-+'), '-').replaceAll(RegExp(r'^-|-$'), '');
+    if (baseSlug.isEmpty) {
+      baseSlug = DateTime.now().millisecondsSinceEpoch.toRadixString(36).substring(0,4);
+    }
     String slug = baseSlug;
     int counter = 0;
     while (await sharedCategorySlugExists(slug)) {
