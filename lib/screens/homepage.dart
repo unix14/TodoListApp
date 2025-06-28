@@ -242,6 +242,7 @@ class _HomePageState extends State<HomePage>
                 _tabController!.index = index;
               }
             });
+            await _loadSharedItemsOnce(name, incomingSharedSlug!);
           }
         }
       } else {
@@ -355,6 +356,21 @@ class _HomePageState extends State<HomePage>
       }
     });
     _sharedListSubscriptions[categoryName] = sub;
+  }
+
+  Future<void> _loadSharedItemsOnce(String categoryName, String slug) async {
+    final itemsData =
+        await FirebaseRepoInteractor.instance.getSharedCategoryItems(slug);
+    if (itemsData.isNotEmpty) {
+      for (var item in itemsData) {
+        item.category = categoryName;
+      }
+      setState(() {
+        items.removeWhere((i) => i.category == categoryName);
+        items.addAll(itemsData);
+      });
+      _updateList(fromRemote: true);
+    }
   }
 
   void _cancelSharedListeners() {
