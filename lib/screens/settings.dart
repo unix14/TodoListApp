@@ -83,16 +83,20 @@ class _SettingsScreenState extends State<SettingsScreen>
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundImage: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
-                      ? MemoryImage(base64Decode(myCurrentUser!.imageURL!))
-                      : null,
-                  child: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
-                      ? null
-                      : (name.trim().isNotEmpty
-                          ? Text(name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase())
-                          : const Icon(Icons.person)),
+                Tooltip(
+                  message:
+                      '${name.isNotEmpty ? name : AppLocale.anonymous.getString(context)}\n${email.isNotEmpty ? email : ''}',
+                  child: CircleAvatar(
+                    radius: 30,
+                    backgroundImage: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
+                        ? MemoryImage(base64Decode(myCurrentUser!.imageURL!))
+                        : null,
+                    child: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
+                        ? null
+                        : (name.trim().isNotEmpty
+                            ? Text(name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase())
+                            : const Icon(Icons.person)),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

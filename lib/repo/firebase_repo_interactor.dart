@@ -54,4 +54,20 @@ class FirebaseRepoInteractor {
     }
     return slug;
   }
+
+  Future<bool> saveSharedCategoryItems(String slug, List<TodoListItem> items) async {
+    final map = <String, dynamic>{};
+    for (int i = 0; i < items.length; i++) {
+      map[i.toString()] = items[i].toJson();
+    }
+    return await _firebaseRepo.saveData('sharedLists/$slug/items', map);
+  }
+
+  Future<List<TodoListItem>> getSharedCategoryItems(String slug) async {
+    final data = await _firebaseRepo.getData('items', 'sharedLists/$slug');
+    return data.values
+        .where((e) => e is Map)
+        .map((e) => TodoListItem.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
 }

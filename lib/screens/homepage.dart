@@ -52,6 +52,7 @@ class _HomePageState extends State<HomePage>
   List<String> _categories = []; // Will be initialized in didChangeDependencies
   List<String> _customCategories = [];
   Map<String, String> _sharedCategorySlugs = {};
+  bool _incomingSlugHandled = false;
   bool _isPromptingForCategory = false;
 
   // Search state
@@ -149,6 +150,7 @@ class _HomePageState extends State<HomePage>
     });
   }
   Future<void> _checkIncomingSharedSlug() async {
+    if (_incomingSlugHandled) return;
     if (incomingSharedSlug != null && currentUser != null) {
       final data = await FirebaseRepoInteractor.instance
           .getSharedCategoryData(incomingSharedSlug!);
@@ -170,7 +172,7 @@ class _HomePageState extends State<HomePage>
                 content: Text(
                   AppLocale.invitationMessage
                       .getString(dialogContext)
-                      .replaceAll('{user}', owner?.name ?? '')
+                      .replaceAll('{user}', (owner?.name?.isNotEmpty ?? false) ? owner!.name! : AppLocale.anonymous.getString(dialogContext))
                       .replaceAll('{email}', owner?.email ?? ''),
                 ),
                 actions: [
@@ -234,6 +236,9 @@ class _HomePageState extends State<HomePage>
         }
       }
       incomingSharedSlug = null;
+      _incomingSlugHandled = true;
+    } else {
+      _incomingSlugHandled = true;
     }
   }
 
@@ -879,6 +884,10 @@ class _HomePageState extends State<HomePage>
       if (didSuccess == true) {
         print("success save to DB");
       }
+      for (var entry in _sharedCategorySlugs.entries) {
+        final catItems = items.where((i) => i.category == entry.key).toList();
+        await FirebaseRepoInteractor.instance.saveSharedCategoryItems(entry.value, catItems);
+      }
     }
 
     updateHomeWidget();
@@ -1085,7 +1094,26 @@ class _HomePageState extends State<HomePage>
             }
           }
 
-          return myCurrentUser!.todoListItems!;
+          var list = myCurrentUser!.todoListItems!;
+          for (var entry in _sharedCategorySlugs.entries) {
+            final sharedItems = await FirebaseRepoInteractor.instance.getSharedCategoryItems(entry.value);
+            for (var item in sharedItems) {
+              item.category = entry.key;
+              if (!list.any((e) => e.text == item.text && e.category == item.category)) {
+                list.add(item);
+              }
+            }
+          }
+          return list;
+        }
+      }
+      for (var entry in _sharedCategorySlugs.entries) {
+        final sharedItems = await FirebaseRepoInteractor.instance.getSharedCategoryItems(entry.value);
+        for (var item in sharedItems) {
+          item.category = entry.key;
+          if (!sharedPrefsTodoList.any((e) => e.text == item.text && e.category == item.category)) {
+            sharedPrefsTodoList.add(item);
+          }
         }
       }
       return sharedPrefsTodoList;
@@ -1098,9 +1126,29 @@ class _HomePageState extends State<HomePage>
       }
       if (myCurrentUser != null && myCurrentUser?.todoListItems != null) {
         print("Loading from the DB 2");
-        return myCurrentUser!.todoListItems!;
+        var list = myCurrentUser!.todoListItems!;
+        for (var entry in _sharedCategorySlugs.entries) {
+          final sharedItems = await FirebaseRepoInteractor.instance.getSharedCategoryItems(entry.value);
+          for (var item in sharedItems) {
+            item.category = entry.key;
+            if (!list.any((e) => e.text == item.text && e.category == item.category)) {
+              list.add(item);
+            }
+          }
+        }
+        return list;
       }
-      return StubData.getInitialTodoList(context);
+      var list = StubData.getInitialTodoList(context);
+      for (var entry in _sharedCategorySlugs.entries) {
+        final sharedItems = await FirebaseRepoInteractor.instance.getSharedCategoryItems(entry.value);
+        for (var item in sharedItems) {
+          item.category = entry.key;
+          if (!list.any((e) => e.text == item.text && e.category == item.category)) {
+            list.add(item);
+          }
+        }
+      }
+      return list;
     }
   }
 
@@ -1757,7 +1805,8 @@ class _HomePageState extends State<HomePage>
                                   avatar = CircleAvatar(radius: 16, child: Text(initials));
                                 }
                               }
-                              return avatar;
+                              final tooltip = '${snapshot.data?.name?.isNotEmpty == true ? snapshot.data!.name! : AppLocale.anonymous.getString(context)}\n${snapshot.data?.email ?? ''}';
+                              return Tooltip(message: tooltip, child: avatar);
                             },
                           ),
                         if (members.keys.length > 2)
@@ -1863,9 +1912,10 @@ class _HomePageState extends State<HomePage>
                         avatar = CircleAvatar(radius: 12, child: Text(initials, style: const TextStyle(fontSize: 10)));
                       }
                     }
+                    final tooltip = '${snapshot.data?.name?.isNotEmpty == true ? snapshot.data!.name! : AppLocale.anonymous.getString(context)}\n${snapshot.data?.email ?? ''}';
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                      child: avatar,
+                      child: Tooltip(message: tooltip, child: avatar),
                     );
                   },
                 ),

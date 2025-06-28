@@ -94,6 +94,7 @@ mixin AppLocale {
   static const String uncategorizedCategory = 'uncategorizedCategory';
   static const String uncategorizedResults = 'uncategorizedResults';
   static const String unknown = "unknown";
+  static const String anonymous = 'anonymous';
   static const String version = "version";
 
   // Settings Screen - Import/Export & Delete Account
@@ -172,6 +173,7 @@ mixin AppLocale {
     AppLocale.archivedTodos: "Archived Todos",
     AppLocale.guest: "Guest",
     AppLocale.unknown: "unknown",
+    AppLocale.anonymous: "Anonymous",
     AppLocale.archivedTodosSubtitle: "Todos are added to the archive after 24 hours since they're checked as done.",
     AppLocale.close: "Close",
     AppLocale.loginWEmail: "Login with Email",
@@ -322,6 +324,7 @@ mixin AppLocale {
     AppLocale.archivedTodos: "ארכיון המשימות",
     AppLocale.guest: "אורח",
     AppLocale.unknown: "לא ידוע",
+    AppLocale.anonymous: "אנונימי",
     AppLocale.archivedTodosSubtitle: "משימות שבוצעו יועברו לארכיון המשימות לאחר כ-24 שעות.",
     AppLocale.close: "סגירה",
     AppLocale.loginWEmail: "כניסה עם דוא''ל",
