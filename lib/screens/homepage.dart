@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_example/common/date_extensions.dart';
 import 'package:flutter_example/common/dialog_extensions.dart';
 import 'package:flutter_example/common/encrypted_shared_preferences_helper.dart';
 import 'package:flutter_example/common/globals.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_example/common/home_widget_helper.dart';
 import 'package:flutter_example/common/stub_data.dart';
 import 'package:flutter_example/mixin/app_locale.dart';
@@ -52,6 +54,7 @@ class _HomePageState extends State<HomePage>
   List<String> _categories = []; // Will be initialized in didChangeDependencies
   List<String> _customCategories = [];
   Map<String, String> _sharedCategorySlugs = {};
+  final Map<String, StreamSubscription<DatabaseEvent>> _sharedListSubscriptions = {};
   bool _incomingSlugHandled = false;
   bool _isPromptingForCategory = false;
 
@@ -305,10 +308,49 @@ class _HomePageState extends State<HomePage>
         _categories = newCategories;
         _tabController = newTabController;
       });
+      _startSharedListeners();
     } else {
       // If not mounted, dispose the newly created controller to avoid leaks
       newTabController.dispose();
     }
+  }
+
+  void _startSharedListeners() {
+    _cancelSharedListeners();
+    for (var entry in _sharedCategorySlugs.entries) {
+      _listenToSharedList(entry.key, entry.value);
+    }
+  }
+
+  void _listenToSharedList(String categoryName, String slug) {
+    final ref = FirebaseDatabase.instance.ref('sharedLists/$slug/items');
+    final sub = ref.onValue.listen((event) {
+      final data = event.snapshot.value;
+      if (data is Map) {
+        final newItems = data.values
+            .whereType<Map>()
+            .map((e) {
+              final item = TodoListItem.fromJson(
+                  Map<String, dynamic>.from(e as Map));
+              item.category = categoryName;
+              return item;
+            })
+            .toList();
+        setState(() {
+          items.removeWhere((i) => i.category == categoryName);
+          items.addAll(newItems);
+        });
+        _updateList(fromRemote: true);
+      }
+    });
+    _sharedListSubscriptions[categoryName] = sub;
+  }
+
+  void _cancelSharedListeners() {
+    for (var sub in _sharedListSubscriptions.values) {
+      sub.cancel();
+    }
+    _sharedListSubscriptions.clear();
   }
 
   void _handleTabSelection() {
@@ -346,6 +388,7 @@ class _HomePageState extends State<HomePage>
   void dispose() {
     _tabController?.removeListener(_handleTabSelection);
     _tabController?.dispose();
+    _cancelSharedListeners();
     myBanner?.dispose();
     _todoLineFocusNode.dispose(); // Dispose of the FocusNode
     _textEditingController.dispose(); // Dispose the text controller
@@ -863,7 +906,7 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  void _updateList() async {
+  void _updateList({bool fromRemote = false}) async {
     // Convert the current list to JSON
     var listAsStr = jsonEncode(items);
     await EncryptedSharedPreferencesHelper.setString(
@@ -872,7 +915,7 @@ class _HomePageState extends State<HomePage>
 
     // todo update realtime DB if logged in
 
-    if (isLoggedIn && currentUser?.uid.isNotEmpty == true) {
+    if (!fromRemote && isLoggedIn && currentUser?.uid.isNotEmpty == true) {
       if (myCurrentUser == null) {
         myCurrentUser =
         await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
