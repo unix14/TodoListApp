@@ -933,23 +933,26 @@ class _HomePageState extends State<HomePage>
         kAllListSavedPrefs, listAsStr);
     print("update list :" + listAsStr);
 
-    // todo update realtime DB if logged in
+    // Update cloud data when possible
+    if (!fromRemote && currentUser?.uid.isNotEmpty == true) {
+      if (isLoggedIn) {
+        if (myCurrentUser == null) {
+          myCurrentUser =
+              await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
+        }
+        myCurrentUser!.todoListItems = items;
 
-    if (!fromRemote && isLoggedIn && currentUser?.uid.isNotEmpty == true) {
-      if (myCurrentUser == null) {
-        myCurrentUser =
-        await FirebaseRepoInteractor.instance.getUserData(currentUser!.uid);
+        var didSuccess =
+            await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+        if (didSuccess == true) {
+          print("success save to DB");
+        }
       }
-      myCurrentUser!.todoListItems = items;
 
-      var didSuccess =
-      await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
-      if (didSuccess == true) {
-        print("success save to DB");
-      }
       for (var entry in _sharedCategorySlugs.entries) {
         final catItems = items.where((i) => i.category == entry.key).toList();
-        await FirebaseRepoInteractor.instance.saveSharedCategoryItems(entry.value, catItems);
+        await FirebaseRepoInteractor.instance
+            .saveSharedCategoryItems(entry.value, catItems);
       }
     }
 
