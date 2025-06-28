@@ -86,18 +86,21 @@ class _SettingsScreenState extends State<SettingsScreen>
                 Tooltip(
                   message:
                       '${name.isNotEmpty ? name : AppLocale.anonymous.getString(context)}${email.isNotEmpty ? '\n$email' : ''}',
-                  child: CircleAvatar(
-                    radius: 30,
-                    backgroundImage: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
-                        ? (myCurrentUser!.imageURL!.startsWith('http')
-                            ? NetworkImage(myCurrentUser!.imageURL!)
-                            : MemoryImage(base64Decode(myCurrentUser!.imageURL!)) as ImageProvider)
-                        : null,
-                    child: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
-                        ? null
-                        : (name.trim().isNotEmpty
-                            ? Text(name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase())
-                            : const Icon(Icons.person)),
+                  child: InkWell(
+                    onTap: () => _settingsHelper.updateProfilePicture(context),
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundImage: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
+                          ? (myCurrentUser!.imageURL!.startsWith('http')
+                              ? NetworkImage(myCurrentUser!.imageURL!)
+                              : MemoryImage(base64Decode(myCurrentUser!.imageURL!)) as ImageProvider)
+                          : null,
+                      child: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
+                          ? null
+                          : (name.trim().isNotEmpty
+                              ? Text(name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase())
+                              : const Icon(Icons.person)),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),

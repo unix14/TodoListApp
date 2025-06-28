@@ -145,6 +145,7 @@ mixin AppLocale {
   static const String changeNameTitle = "changeNameTitle";
   static const String nameUpdated = "nameUpdated";
   static const String nameEmptyError = "nameEmptyError";
+  static const String loginToUploadPicture = "loginToUploadPicture";
   static const String invitationTitle = "invitationTitle";
   static const String invitationMessage = "invitationMessage";
   static const String accept = "accept";
@@ -229,6 +230,7 @@ mixin AppLocale {
     AppLocale.changeNameTitle: "Change Name",
     AppLocale.nameUpdated: "Name updated",
     AppLocale.nameEmptyError: "Name cannot be empty",
+    AppLocale.loginToUploadPicture: "Please sign up to upload a picture",
     AppLocale.invitationTitle: "Invitation",
     AppLocale.invitationMessage: "{user} ({email}) invited you to share this list.",
     AppLocale.accept: "Accept",
@@ -380,6 +382,7 @@ mixin AppLocale {
     AppLocale.changeNameTitle: "שנה שם",
     AppLocale.nameUpdated: "השם עודכן",
     AppLocale.nameEmptyError: "השם לא יכול להיות ריק",
+    AppLocale.loginToUploadPicture: "אנא הירשם כדי להעלות תמונה",
     AppLocale.invitationTitle: "הזמנה",
     AppLocale.invitationMessage: "{user} ({email}) הזמין אותך לשתף את הרשימה הזו.",
     AppLocale.accept: "אישור",

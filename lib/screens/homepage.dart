@@ -1843,90 +1843,74 @@ class _HomePageState extends State<HomePage>
               const SizedBox(height: 8),
               if (members.isNotEmpty)
                 Text(AppLocale.sharedWith.getString(context)),
-                if (members.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Wrap(
-                      spacing: 4.0,
-                      children: [
-                        for (var uid in members.keys.take(2))
-                          FutureBuilder<MyUser.User?>(
-                            future: FirebaseRepoInteractor.instance.getUserData(uid),
-                            builder: (context, snapshot) {
-                              Widget avatar;
-                              if (snapshot.hasData && snapshot.data!.imageURL != null && snapshot.data!.imageURL!.isNotEmpty) {
-                                try {
-                                  avatar = CircleAvatar(
-                                    radius: 16,
-                                    backgroundImage: snapshot.data!.imageURL!.startsWith('http')
-                                        ? NetworkImage(snapshot.data!.imageURL!)
-                                        : MemoryImage(base64Decode(snapshot.data!.imageURL!)) as ImageProvider,
-                                  );
-                                } catch (_) {
-                                  avatar = const CircleAvatar(radius: 16, child: Icon(Icons.person));
-                                }
-                              } else {
-                                final initials = (snapshot.data?.name ?? '').isNotEmpty
-                                    ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
-                                    : '';
-                                if (initials.isEmpty) {
-                                  avatar = const CircleAvatar(radius: 16, child: Icon(Icons.person));
-                                } else {
-                                  avatar = CircleAvatar(radius: 16, child: Text(initials));
-                                }
+              if (members.isNotEmpty)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (var uid in members.keys)
+                        FutureBuilder<MyUser.User?>(
+                          future: FirebaseRepoInteractor.instance.getUserData(uid),
+                          builder: (context, snapshot) {
+                            final name = snapshot.data?.name?.isNotEmpty == true ? snapshot.data!.name! : AppLocale.anonymous.getString(context);
+                            final email = snapshot.data?.email ?? '';
+                            Widget avatar;
+                            if (snapshot.hasData && snapshot.data!.imageURL != null && snapshot.data!.imageURL!.isNotEmpty) {
+                              try {
+                                avatar = CircleAvatar(
+                                  backgroundImage: snapshot.data!.imageURL!.startsWith('http')
+                                      ? NetworkImage(snapshot.data!.imageURL!)
+                                      : MemoryImage(base64Decode(snapshot.data!.imageURL!)) as ImageProvider,
+                                );
+                              } catch (_) {
+                                avatar = const CircleAvatar(child: Icon(Icons.person));
                               }
-                              final tooltip = '${snapshot.data?.name?.isNotEmpty == true ? snapshot.data!.name! : AppLocale.anonymous.getString(context)}${(snapshot.data?.email?.isNotEmpty ?? false) ? '\n${snapshot.data!.email!}' : ''}';
-                              return Tooltip(message: tooltip, child: avatar);
-                            },
-                          ),
-                        if (members.keys.length > 2)
-                          CircleAvatar(
-                            radius: 16,
-                            child: Text('+${members.keys.length - 2}'),
-                          ),
-                      ],
-                    ),
+                            } else {
+                              final initials = name.isNotEmpty
+                                  ? name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+                                  : '';
+                              avatar = initials.isEmpty
+                                  ? const CircleAvatar(child: Icon(Icons.person))
+                                  : CircleAvatar(child: Text(initials));
+                            }
+                            return ListTile(
+                              leading: avatar,
+                              title: Text(name),
+                              subtitle: email.isNotEmpty ? Text(email) : null,
+                              trailing: currentUser != null && currentUser!.uid == data['owner'] && uid != currentUser!.uid
+                                  ? IconButton(
+                                      icon: const Icon(Icons.remove_circle),
+                                      onPressed: () async {
+                                        members.remove(uid);
+                                        try {
+                                          final success = await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+                                            slug,
+                                            {
+                                              ...data,
+                                              'members': members,
+                                            },
+                                          );
+                                          if (!success && mounted) {
+                                            context.showSnackBar(AppLocale.shareFailed.getString(context));
+                                            return;
+                                          }
+                                        } catch (_) {
+                                          if (mounted) {
+                                            context.showSnackBar(AppLocale.shareFailed.getString(context));
+                                          }
+                                          return;
+                                        }
+                                        Navigator.of(dialogContext).pop();
+                                        _showShareDialog(categoryName);
+                                      },
+                                    )
+                                  : null,
+                            );
+                          },
+                        ),
+                    ],
                   ),
-              if (currentUser != null && currentUser!.uid == data['owner'])
-                Column(
-                  children: members.keys
-                      .where((uid) => uid != currentUser!.uid)
-                      .map((uid) => FutureBuilder<MyUser.User?>(
-                            future: FirebaseRepoInteractor.instance.getUserData(uid),
-                            builder: (context, snap) {
-                              final name = snap.data?.name ?? uid;
-                              return ListTile(
-                                title: Text(name),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.remove_circle),
-                                  onPressed: () async {
-                                    members.remove(uid);
-                                    try {
-                                      final success = await FirebaseRepoInteractor.instance.saveSharedCategoryData(
-                                        slug,
-                                        {
-                                          ...data,
-                                          'members': members,
-                                        },
-                                      );
-                                      if (!success && mounted) {
-                                        context.showSnackBar(AppLocale.shareFailed.getString(context));
-                                        return;
-                                      }
-                                    } catch (e) {
-                                      if (mounted) {
-                                        context.showSnackBar(AppLocale.shareFailed.getString(context));
-                                      }
-                                      return;
-                                    }
-                                    Navigator.of(dialogContext).pop();
-                                    _showShareDialog(categoryName);
-                                  },
-                                ),
-                              );
-                            },
-                          ))
-                      .toList(),
                 ),
             ],
           ),

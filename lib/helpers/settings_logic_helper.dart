@@ -315,7 +315,12 @@ class SettingsLogicHelper {
     }
   }
   Future<void> updateProfilePicture(BuildContext context) async {
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocale.loginToUploadPicture.getString(context))),
+      );
+      return;
+    }
     FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
     if (result != null && result.files.isNotEmpty) {
       Uint8List? bytes = result.files.first.bytes;
@@ -374,8 +379,10 @@ class SettingsLogicHelper {
     );
 
     if (newName != null && newName != myCurrentUser?.name) {
-      myCurrentUser?.name = newName;
-      await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+      if (myCurrentUser != null) {
+        myCurrentUser!.name = newName;
+        await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocale.nameUpdated.getString(context))),
       );
