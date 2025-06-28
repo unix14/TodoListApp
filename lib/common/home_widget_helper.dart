@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart'; // Added
 import 'package:home_widget/home_widget.dart';
 
 void updateHomeWidget() {
+  if(kIsWeb) return; // Added
   try {
     // Notify the widget to update
     HomeWidget.updateWidget(

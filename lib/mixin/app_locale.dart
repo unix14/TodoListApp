@@ -124,6 +124,36 @@ mixin AppLocale {
   static const String unknown = "unknown";
   static const String version = "version";
 
+  // Keys for Category Features
+  static const String categoryOptionsMenuItem = 'category_options_menu_item';
+  static const String editCategoryDialogTitle = 'edit_category_dialog_title';
+  static const String categoryColorLabel = 'category_color_label';
+  static const String selectColorTooltip = 'select_color_tooltip';
+  static const String deleteCategoryButtonText = 'delete_category_button_text';
+  static const String expandButtonText = 'expand_button_text';
+  static const String collapseButtonText = 'collapse_button_text';
+  static const String categoryUpdatedSnackbar = 'category_updated_snackbar';
+  static const String categoryAddedSnackbar = 'category_added_snackbar'; // Added
+  // categoryDeletedSnackbar already exists
+  static const String selectColorDialogTitle = 'select_color_dialog_title';
+  static const String changeColorButtonText = 'change_color_button_text';
+
+  // Keys for Color Names (for tooltips in color picker)
+  static const String colorNameRed = 'color_name_red';
+  static const String colorNameGreen = 'color_name_green';
+  static const String colorNameBlue = 'color_name_blue';
+  static const String colorNameYellow = 'color_name_yellow';
+  static const String colorNamePurple = 'color_name_purple';
+  static const String colorNameOrange = 'color_name_orange';
+  static const String colorNamePink = 'color_name_pink';
+  static const String colorNameBrown = 'color_name_brown';
+  static const String colorNameTeal = 'color_name_teal';
+  static const String colorNameCyan = 'color_name_cyan';
+  static const String colorNameWhite = 'color_name_white';
+  static const String colorNameGrey = 'color_name_grey';
+  static const String colorNameDarkGrey = 'color_name_dark_grey';
+  static const String colorNameLightBlue = 'color_name_light_blue';
+
   // Settings Screen - Import/Export & Delete Account
   static const String settingsExportDataTitle = 'settingsExportDataTitle';
   static const String settingsExportErrorNotLoggedIn = 'settingsExportErrorNotLoggedIn';
@@ -328,6 +358,35 @@ mixin AppLocale {
     AppLocale.settingsAnonDeleteDialogTitle: "Delete Local Data",
     AppLocale.settingsAnonDeleteDialogMessage: "This will permanently delete all your locally stored data. This cannot be undone. Are you sure?",
     AppLocale.uncategorizedResults: "Results in Uncategorized",
+
+    // New translations for category features (English):
+    AppLocale.categoryOptionsMenuItem: 'Category Options',
+    AppLocale.editCategoryDialogTitle: 'Edit Category: {categoryName}',
+    AppLocale.categoryColorLabel: 'Color',
+    AppLocale.selectColorTooltip: 'Select color',
+    AppLocale.deleteCategoryButtonText: 'Delete Category',
+    AppLocale.expandButtonText: 'Expand',
+    AppLocale.collapseButtonText: 'Collapse',
+    AppLocale.categoryUpdatedSnackbar: 'Category {categoryName} updated.',
+    AppLocale.selectColorDialogTitle: 'Select Color',
+    AppLocale.changeColorButtonText: 'Change Color',
+
+    // Color Name Translations for English
+    AppLocale.colorNameRed: 'Red',
+    AppLocale.colorNameGreen: 'Green',
+    AppLocale.colorNameBlue: 'Blue',
+    AppLocale.colorNameYellow: 'Yellow',
+    AppLocale.colorNamePurple: 'Purple',
+    AppLocale.colorNameOrange: 'Orange',
+    AppLocale.colorNamePink: 'Pink',
+    AppLocale.colorNameBrown: 'Brown',
+    AppLocale.colorNameTeal: 'Teal',
+    AppLocale.colorNameCyan: 'Cyan',
+    AppLocale.colorNameWhite: 'White',
+    AppLocale.colorNameGrey: 'Grey',
+    AppLocale.categoryAddedSnackbar: 'Category {categoryName} added.', // Added
+    AppLocale.colorNameDarkGrey: 'Dark Grey',
+    AppLocale.colorNameLightBlue: 'Light Blue',
   };
 
   static const Map<String, dynamic> HE = {
@@ -491,5 +550,34 @@ mixin AppLocale {
     AppLocale.settingsAnonDeleteDialogTitle: "מחיקת נתונים מקומיים",
     AppLocale.settingsAnonDeleteDialogMessage: "פעולה זו תמחק לצמיתות את כל הנתונים המאוחסנים מקומית. לא ניתן לבטל פעולה זו. האם אתה בטוח?",
     AppLocale.uncategorizedResults: "תוצאות ללא קטגוריה",
+
+    // New translations for category features (Hebrew):
+    AppLocale.categoryOptionsMenuItem: 'אפשרויות קטגוריה',
+    AppLocale.editCategoryDialogTitle: 'ערוך קטגוריה: {categoryName}',
+    AppLocale.categoryColorLabel: 'צבע',
+    AppLocale.selectColorTooltip: 'בחר צבע',
+    AppLocale.deleteCategoryButtonText: 'מחק קטגוריה',
+    AppLocale.expandButtonText: 'הרחב',
+    AppLocale.collapseButtonText: 'צמצם',
+    AppLocale.categoryUpdatedSnackbar: 'קטגוריה {categoryName} עודכנה.',
+    AppLocale.selectColorDialogTitle: 'בחר צבע',
+    AppLocale.changeColorButtonText: 'שנה צבע',
+
+    // Color Name Translations for Hebrew
+    AppLocale.colorNameRed: 'אדום',
+    AppLocale.colorNameGreen: 'ירוק',
+    AppLocale.colorNameBlue: 'כחול',
+    AppLocale.colorNameYellow: 'צהוב',
+    AppLocale.colorNamePurple: 'סגול',
+    AppLocale.colorNameOrange: 'כתום',
+    AppLocale.colorNamePink: 'ורוד',
+    AppLocale.colorNameBrown: 'חום',
+    AppLocale.colorNameTeal: 'טורקיז',
+    AppLocale.colorNameCyan: 'ציאן',
+    AppLocale.colorNameWhite: 'לבן',
+    AppLocale.colorNameGrey: 'אפור',
+    AppLocale.categoryAddedSnackbar: 'קטגוריה {categoryName} נוספה.', // Added
+    AppLocale.colorNameDarkGrey: 'אפור כהה',
+    AppLocale.colorNameLightBlue: 'תכלת',
   };
 }
