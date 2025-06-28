@@ -320,10 +320,14 @@ class SettingsLogicHelper {
     if (result != null && result.files.isNotEmpty) {
       Uint8List? bytes = result.files.first.bytes;
       if (bytes != null) {
-        String base64Image = base64Encode(bytes);
-        myCurrentUser?.imageURL = base64Image;
-        await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.profilePictureUpdated.getString(context))));
+        final url = await FirebaseRepoInteractor.instance.uploadProfileImage(currentUser!.uid, bytes);
+        if (url != null) {
+          myCurrentUser?.imageURL = url;
+          await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.profilePictureUpdated.getString(context))));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.shareFailed.getString(context))));
+        }
       }
     }
   }

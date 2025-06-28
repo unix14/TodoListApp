@@ -70,4 +70,12 @@ class FirebaseRepoInteractor {
         .map((e) => TodoListItem.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
   }
+  Future<String?> uploadProfileImage(String uid, Uint8List bytes) async {
+    try {
+      return await FirebaseStorageRepository.instance.uploadProfileImage(uid, bytes);
+    } catch (e) {
+      print("Error uploading profile image: $e");
+      return null;
+    }
+  }
 }

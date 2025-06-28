@@ -85,11 +85,13 @@ class _SettingsScreenState extends State<SettingsScreen>
               children: [
                 Tooltip(
                   message:
-                      '${name.isNotEmpty ? name : AppLocale.anonymous.getString(context)}\n${email.isNotEmpty ? email : ''}',
+                      '${name.isNotEmpty ? name : AppLocale.anonymous.getString(context)}${email.isNotEmpty ? '\n$email' : ''}',
                   child: CircleAvatar(
                     radius: 30,
                     backgroundImage: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
-                        ? MemoryImage(base64Decode(myCurrentUser!.imageURL!))
+                        ? (myCurrentUser!.imageURL!.startsWith('http')
+                            ? NetworkImage(myCurrentUser!.imageURL!)
+                            : MemoryImage(base64Decode(myCurrentUser!.imageURL!)) as ImageProvider)
                         : null,
                     child: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
                         ? null

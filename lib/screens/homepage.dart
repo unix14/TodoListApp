@@ -1858,7 +1858,9 @@ class _HomePageState extends State<HomePage>
                                 try {
                                   avatar = CircleAvatar(
                                     radius: 16,
-                                    backgroundImage: MemoryImage(base64Decode(snapshot.data!.imageURL!)),
+                                    backgroundImage: snapshot.data!.imageURL!.startsWith('http')
+                                        ? NetworkImage(snapshot.data!.imageURL!)
+                                        : MemoryImage(base64Decode(snapshot.data!.imageURL!)) as ImageProvider,
                                   );
                                 } catch (_) {
                                   avatar = const CircleAvatar(radius: 16, child: Icon(Icons.person));
@@ -1873,7 +1875,7 @@ class _HomePageState extends State<HomePage>
                                   avatar = CircleAvatar(radius: 16, child: Text(initials));
                                 }
                               }
-                              final tooltip = '${snapshot.data?.name?.isNotEmpty == true ? snapshot.data!.name! : AppLocale.anonymous.getString(context)}\n${snapshot.data?.email ?? ''}';
+                              final tooltip = '${snapshot.data?.name?.isNotEmpty == true ? snapshot.data!.name! : AppLocale.anonymous.getString(context)}${(snapshot.data?.email?.isNotEmpty ?? false) ? '\n${snapshot.data!.email!}' : ''}';
                               return Tooltip(message: tooltip, child: avatar);
                             },
                           ),
@@ -1970,7 +1972,9 @@ class _HomePageState extends State<HomePage>
                       try {
                         avatar = CircleAvatar(
                           radius: radius,
-                          backgroundImage: MemoryImage(base64Decode(snapshot.data!.imageURL!)),
+                          backgroundImage: snapshot.data!.imageURL!.startsWith('http')
+                              ? NetworkImage(snapshot.data!.imageURL!)
+                              : MemoryImage(base64Decode(snapshot.data!.imageURL!)) as ImageProvider,
                         );
                       } catch (_) {
                         avatar = CircleAvatar(radius: radius, child: Icon(Icons.person, size: radius));
@@ -1985,7 +1989,7 @@ class _HomePageState extends State<HomePage>
                         avatar = CircleAvatar(radius: radius, child: Text(initials, style: TextStyle(fontSize: fontSize)));
                       }
                     }
-                    final tooltip = '${snapshot.data?.name?.isNotEmpty == true ? snapshot.data!.name! : AppLocale.anonymous.getString(context)}\n${snapshot.data?.email ?? ''}';
+                    final tooltip = '${snapshot.data?.name?.isNotEmpty == true ? snapshot.data!.name! : AppLocale.anonymous.getString(context)}${(snapshot.data?.email?.isNotEmpty ?? false) ? '\n${snapshot.data!.email!}' : ''}';
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2.0),
                       child: Tooltip(message: tooltip, child: avatar),
