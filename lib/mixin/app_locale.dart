@@ -144,6 +144,10 @@ mixin AppLocale {
   static const String changeNameTitle = "changeNameTitle";
   static const String nameUpdated = "nameUpdated";
   static const String nameEmptyError = "nameEmptyError";
+  static const String invitationTitle = "invitationTitle";
+  static const String invitationMessage = "invitationMessage";
+  static const String accept = "accept";
+  static const String decline = "decline";
   static const String copyLink = 'copyLink';
   static const String sharedWith = 'sharedWith';
   static const String createdOn = 'createdOn';
@@ -223,6 +227,10 @@ mixin AppLocale {
     AppLocale.changeNameTitle: "Change Name",
     AppLocale.nameUpdated: "Name updated",
     AppLocale.nameEmptyError: "Name cannot be empty",
+    AppLocale.invitationTitle: "Invitation",
+    AppLocale.invitationMessage: "{user} ({email}) invited you to share this list.",
+    AppLocale.accept: "Accept",
+    AppLocale.decline: "Decline",
     AppLocale.shareFailed: "Could not share list",
     AppLocale.copiedToClipboard: "Copied to clipboard",
     AppLocale.copyLink: "Copy link",
@@ -369,6 +377,10 @@ mixin AppLocale {
     AppLocale.changeNameTitle: "שנה שם",
     AppLocale.nameUpdated: "השם עודכן",
     AppLocale.nameEmptyError: "השם לא יכול להיות ריק",
+    AppLocale.invitationTitle: "הזמנה",
+    AppLocale.invitationMessage: "{user} ({email}) הזמין אותך לשתף את הרשימה הזו.",
+    AppLocale.accept: "אישור",
+    AppLocale.decline: "דחייה",
     AppLocale.shareFailed: "לא ניתן לשתף את הרשימה",
     AppLocale.copiedToClipboard: "הועתק ללוח",
     AppLocale.copyLink: "העתק קישור",

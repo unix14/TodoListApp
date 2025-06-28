@@ -79,9 +79,41 @@ class _SettingsScreenState extends State<SettingsScreen>
         mainAxisAlignment: MainAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,
         children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundImage: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
+                      ? MemoryImage(base64Decode(myCurrentUser!.imageURL!))
+                      : null,
+                  child: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
+                      ? null
+                      : (name.trim().isNotEmpty
+                          ? Text(name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase())
+                          : const Icon(Icons.person)),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    name.isNotEmpty ? name : AppLocale.unknown.getString(context),
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                ),
+                if (currentUser != null && currentUser!.isAnonymous == false)
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      _settingsHelper.updateUserName(context);
+                    },
+                  ),
+              ],
+            ),
+          ),
           ListTile(
             title: Text(AppLocale.account.getString(context)),
-            subtitle: Text(email), // todo
+            subtitle: Text(email),
             onTap: () {
               context.copyToClipboard(email);
             },

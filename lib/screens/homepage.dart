@@ -154,40 +154,78 @@ class _HomePageState extends State<HomePage>
           .getSharedCategoryData(incomingSharedSlug!);
       if (data.isNotEmpty) {
         String name = data['name'] ?? '';
-        bool added = false;
-        if (!_customCategories.contains(name)) {
-          _customCategories.add(name);
-          await EncryptedSharedPreferencesHelper.saveCategories(
-              _customCategories);
-          added = true;
-        }
-        _sharedCategorySlugs[name] = incomingSharedSlug!;
-        await EncryptedSharedPreferencesHelper.saveSharedSlugs(
-            _sharedCategorySlugs);
-
         Map<String, dynamic> members =
             Map<String, dynamic>.from(data['members'] ?? {});
-        if (!members.containsKey(currentUser!.uid)) {
-          members[currentUser!.uid] = true;
-          try {
-            await FirebaseRepoInteractor.instance.saveSharedCategoryData(
-              incomingSharedSlug!,
-              {
-                ...data,
-                'members': members,
-              },
-            );
-          } catch (e) {
-            if (mounted) {
-              context.showSnackBar(
-                  AppLocale.shareFailed.getString(context));
-            }
-          }
+        bool alreadyMember = members.containsKey(currentUser!.uid);
+        bool proceed = alreadyMember;
+
+        if (!alreadyMember) {
+          String ownerUid = data['owner'] ?? '';
+          final owner = await FirebaseRepoInteractor.instance.getUserData(ownerUid);
+          bool? accepted = await showDialog<bool>(
+            context: context,
+            builder: (dialogContext) {
+              return AlertDialog(
+                title: Text(AppLocale.invitationTitle.getString(dialogContext)),
+                content: Text(
+                  AppLocale.invitationMessage
+                      .getString(dialogContext)
+                      .replaceAll('{user}', owner?.name ?? '')
+                      .replaceAll('{email}', owner?.email ?? ''),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: Text(AppLocale.decline.getString(dialogContext)),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    child: Text(AppLocale.accept.getString(dialogContext)),
+                  ),
+                ],
+              );
+            },
+          );
+          proceed = accepted == true;
         }
 
-        if (added && mounted) {
-          await _initializeTabs();
-          setState(() {});
+        if (proceed) {
+          bool added = false;
+          if (!_customCategories.contains(name)) {
+            _customCategories.add(name);
+            await EncryptedSharedPreferencesHelper.saveCategories(_customCategories);
+            added = true;
+          }
+          _sharedCategorySlugs[name] = incomingSharedSlug!;
+          await EncryptedSharedPreferencesHelper.saveSharedSlugs(_sharedCategorySlugs);
+
+          if (!members.containsKey(currentUser!.uid)) {
+            members[currentUser!.uid] = true;
+            try {
+              await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+                incomingSharedSlug!,
+                {
+                  ...data,
+                  'members': members,
+                },
+              );
+            } catch (e) {
+              if (mounted) {
+                context
+                    .showSnackBar(AppLocale.shareFailed.getString(context));
+              }
+            }
+          }
+
+          if (added && mounted) {
+            await _initializeTabs();
+            final index = _categories.indexOf(name);
+            setState(() {
+              if (index != -1 && _tabController != null) {
+                _tabController!.index = index;
+              }
+            });
+          }
         }
       }
       incomingSharedSlug = null;
@@ -1704,7 +1742,11 @@ class _HomePageState extends State<HomePage>
                                 final initials = (snapshot.data?.name ?? '').isNotEmpty
                                     ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
                                     : '';
-                                avatar = CircleAvatar(radius: 16, child: Text(initials));
+                                if (initials.isEmpty) {
+                                  avatar = const CircleAvatar(radius: 16, child: Icon(Icons.person));
+                                } else {
+                                  avatar = CircleAvatar(radius: 16, child: Text(initials));
+                                }
                               }
                               return avatar;
                             },
@@ -1802,7 +1844,11 @@ class _HomePageState extends State<HomePage>
                       final initials = (snapshot.data?.name ?? '').isNotEmpty
                           ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
                           : '';
-                      avatar = CircleAvatar(radius: 12, child: Text(initials, style: const TextStyle(fontSize: 10)));
+                      if (initials.isEmpty) {
+                        avatar = const CircleAvatar(radius: 12, child: Icon(Icons.person, size: 12));
+                      } else {
+                        avatar = CircleAvatar(radius: 12, child: Text(initials, style: const TextStyle(fontSize: 10)));
+                      }
                     }
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2.0),
