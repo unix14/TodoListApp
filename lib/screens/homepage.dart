@@ -423,7 +423,7 @@ class _HomePageState extends State<HomePage>
                       TodoCategory category = entry.value;
                       String tabText = category.name.substring(0, min(category.name.length, MAX_CHARS_IN_TAB_BAR)) +
                                      (category.name.length > MAX_CHARS_IN_TAB_BAR ? "..." : "");
-                      final bool isSelected = (_tabController != null && _tabController.index == idx);
+                      final bool isSelected = (_tabController != null && _tabController?.index == idx);
                       return Tab(
                         child: Text(
                           tabText,
@@ -631,13 +631,33 @@ class _HomePageState extends State<HomePage>
                                   else {
                                     displayHeaderText = rawHeaderText.replaceAll("::", " ");
                                     }
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16.0, vertical: 8.0),
-                                      child: Text(displayHeaderText,
-                                          style: const TextStyle(fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.blueGrey)),
+                                    return GestureDetector(
+                                      onTap: () {
+                                        _toggleSearchUI();
+
+                                        final categoryIndex = _categoryTabsList.indexWhere(
+                                                (cat) => cat.name == item.category);
+                                        print("clicked on index $categoryIndex");
+                                        if (categoryIndex != -1) {
+                                          _tabController?.animateTo(categoryIndex);
+                                        }
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16.0, vertical: 8.0),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.max,
+                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Text(displayHeaderText,
+                                                style: const TextStyle(fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blueGrey)),
+                                            Icon(Icons.arrow_forward_ios_rounded, size: 16)
+                                          ],
+                                        ),
+                                      ),
                                     );
                                   }
                                   return getListTile(item);
@@ -661,6 +681,9 @@ class _HomePageState extends State<HomePage>
                                 ),
                               );
                             } else if (itemsToDisplayOrSearchIn.isNotEmpty) {
+                              bool canArchiveTasks = itemsToDisplayOrSearchIn.where((TodoListItem item) {
+                                return item.isChecked && !item.isArchived;
+                              }).isNotEmpty;
                               String taskCountString;
                             if (itemsToDisplayOrSearchIn.length == 1) {
                                 taskCountString =
@@ -678,12 +701,42 @@ class _HomePageState extends State<HomePage>
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 8.0, horizontal: 16.0),
-                                        child: Text(taskCountString,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(fontSize: 13.0,
-                                                color: Colors.blueGrey,
-                                                fontWeight: FontWeight.w500)),
-                                      );
+                                            child: Stack(
+                                              children: [
+                                                Center(
+                                                  child: Text(taskCountString,
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: const TextStyle(
+                                                          fontSize: 13.0,
+                                                          color:
+                                                              Colors.blueGrey,
+                                                          fontWeight:
+                                                              FontWeight.w500)),
+                                                ),
+                                                if(canArchiveTasks)
+                                                Align(
+                                                  alignment: currentLocaleStr == "he"
+                                                      ? Alignment.topRight
+                                                      : Alignment.topLeft,
+                                                  child: GestureDetector(
+                                                    onTap: _clearCheckedTodosInCurrentCategory,
+                                                    child: Text(
+                                                        AppLocale.clearArchivedTodos.getString(context),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style: const TextStyle(
+                                                            fontSize: 11.0,
+                                                              decoration: TextDecoration.underline,
+                                                            color:
+                                                                Colors.blueGrey,
+                                                            fontWeight:
+                                                                FontWeight.w500)),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          );
                                     }
                                     int itemIndex = index - 1;
                                     return getListTile(
@@ -750,6 +803,35 @@ class _HomePageState extends State<HomePage>
       )
         : Container(),
     );
+  }
+
+  void _clearCheckedTodosInCurrentCategory() {
+    String? currentCategoryName;
+    if (_tabController != null && _tabController!.index < _categoryTabsList.length) {
+      final selectedCategory = _categoryTabsList[_tabController!.index];
+      if (selectedCategory.name != AppLocale.all.getString(context)) {
+        currentCategoryName = selectedCategory.name;
+      }
+    }
+
+    int archivedCount = 0;
+    setState(() {
+      for (var item in items) {
+        if (item.isChecked && !item.isArchived) {
+          if (currentCategoryName == null || item.category == currentCategoryName) {
+            item.isArchived = true;
+            archivedCount++;
+          }
+        }
+      }
+      _updateList();
+    });
+    if (archivedCount > 0) {
+      final msg = (archivedCount > 1 ? AppLocale.archivedAllPossibleTodosPlural : AppLocale.archivedAllPossibleTodos)
+          .getString(context)
+          .replaceAll('\'{count}\'', archivedCount.toString());
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    }
   }
 
   void _onAddItem() {
@@ -1117,7 +1199,7 @@ class _HomePageState extends State<HomePage>
                               _tabController!.index < _categoryTabsList.length && // Check index bounds
                               _categoryTabsList[_tabController!.index].name == AppLocale.all.getString(context); // Reverted
 
-              if (isAllTab && currentTodo.category != null) {
+              if ((isAllTab /*|| (_isSearching && _searchQuery.isNotEmpty)*/) && currentTodo.category != null) {
                 TodoCategory? itemCategory = _customCategories.firstWhere( // Corrected type
                   (TodoCategory cat) => cat.name == currentTodo.category,
                   orElse: () => _categoryTabsList.firstWhere(
@@ -1151,15 +1233,14 @@ class _HomePageState extends State<HomePage>
                           style: TextStyle(fontSize: 10, color: textColor),
                         ),
                         backgroundColor: chipColor,
-                        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 0.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         labelPadding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
                         elevation: 3.0, // Changed
                         shape: RoundedRectangleBorder( // Added
-                          borderRadius: BorderRadius.circular(12.0),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        // shape: StadiumBorder(side: BorderSide(color: Colors.grey.shade400, width: 0.5)), // Optional border
                       ),
                     ),
                   );
@@ -1908,91 +1989,84 @@ class _HomePageState extends State<HomePage>
 
     showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (BuildContext dialogContext) {
-        // final dialogAppLocale = AppLocale.of(dialogContext); // Removed
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: Text(AppLocale.editCategoryDialogTitleSimple.getString(dialogContext)),
+              title: Text(AppLocale.editCategoryDialogTitle.getString(dialogContext)),
               content: SingleChildScrollView(
                 child: Form(
                   key: formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      TextFormField(
-                        controller: nameController,
-                        decoration: InputDecoration(labelText: AppLocale.categoryNameHintText.getString(dialogContext)),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return AppLocale.categoryNameEmptyError.getString(dialogContext);
-                          }
-                          final newNameTrimmed = value.trim();
-                          if (newNameTrimmed.toLowerCase() == AppLocale.all.getString(dialogContext).toLowerCase()) { // Assuming 'all' key needs context
-                            return AppLocale.categoryNameExistsError.getString(dialogContext);
-                          }
-                          if (newNameTrimmed.toLowerCase() != originalCategory.name.toLowerCase() &&
-                              _customCategories.any((TodoCategory cat) =>
-                                  cat.name.toLowerCase() == newNameTrimmed.toLowerCase() &&
-                                  cat.name.toLowerCase() != originalCategory.name.toLowerCase())) {
-                            return AppLocale.categoryNameExistsError.getString(dialogContext); // Corrected this line
-                          }
-                          return null;
-                        },
-                        onChanged: (value) {
-                           // If live title update is desired for AlertDialog:
-                           // setStateDialog(() { /* Update a local variable for title if needed */});
-                        },
-                      ),
-                      const SizedBox(height: 20),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisSize: MainAxisSize.max,
                         children: [
-                          Text(AppLocale.categoryColorLabel.getString(dialogContext) + ":"),
-                          Tooltip(
-                            message: AppLocale.selectColorTooltip.getString(dialogContext),
-                            child: InkWell(
-                              onTap: () async {
-                                final int? selectedColor = await _selectCategoryColor(dialogContext, categoryBeingEdited);
-                                if (selectedColor != null) {
-                                  setStateDialog(() {
-                                    categoryBeingEdited = categoryBeingEdited.copyWith(color: selectedColor);
-                                  });
-                                }
-                              },
-                              child: CircleAvatar(
-                                radius: 18, // Outer radius for border
-                                backgroundColor: Theme.of(dialogContext).dividerColor, // Border color
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Tooltip(
+                              message: AppLocale.selectColorTooltip.getString(dialogContext),
+                              child: InkWell(
+                                onTap: () async {
+                                  final int? selectedColor = await _selectCategoryColor(dialogContext, categoryBeingEdited);
+                                  if (selectedColor != null) {
+                                    setStateDialog(() {
+                                      categoryBeingEdited = categoryBeingEdited.copyWith(color: selectedColor);
+                                    });
+                                  }
+                                },
                                 child: CircleAvatar(
-                                  radius: 16, // Inner radius for actual color
-                                  backgroundColor: Color(categoryBeingEdited.color),
+                                  radius: 18, // Outer radius for border
+                                  backgroundColor: Theme.of(dialogContext).dividerColor, // Border color
+                                  child: CircleAvatar(
+                                    radius: 16, // Inner radius for actual color
+                                    backgroundColor: Color(categoryBeingEdited.color),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: nameController,
+                              decoration: InputDecoration(labelText: AppLocale.categoryNameHintText.getString(dialogContext)),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return AppLocale.categoryNameEmptyError.getString(dialogContext);
+                                }
+                                final newNameTrimmed = value.trim();
+                                if (newNameTrimmed.toLowerCase() == AppLocale.all.getString(dialogContext).toLowerCase()) { // Assuming 'all' key needs context
+                                  return AppLocale.categoryNameExistsError.getString(dialogContext);
+                                }
+                                if (newNameTrimmed.toLowerCase() != originalCategory.name.toLowerCase() &&
+                                    _customCategories.any((TodoCategory cat) =>
+                                        cat.name.toLowerCase() == newNameTrimmed.toLowerCase() &&
+                                        cat.name.toLowerCase() != originalCategory.name.toLowerCase())) {
+                                  return AppLocale.categoryNameExistsError.getString(dialogContext); // Corrected this line
+                                }
+                                return null;
+                              },
+                              onChanged: (value) {
+                                 // If live title update is desired for AlertDialog:
+                                 // setStateDialog(() { /* Update a local variable for title if needed */});
+                              },
+                            ),
+                          ),
                         ],
-                      ),
-                      // Keep "Change Color" button or remove if CircleAvatar tap is enough
-                       // The Padding widget containing the "Change Color" ElevatedButton has been removed.
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                        child: Text(AppLocale.deleteCategoryButtonText.getString(dialogContext), style: const TextStyle(color: Colors.white)),
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop();
-                          _deleteCategoryFromOptionsDialog(originalCategory);
-                        },
                       ),
                     ],
                   ),
                 ),
               ),
+              actionsAlignment: MainAxisAlignment.spaceBetween,
               actions: <Widget>[
-                TextButton(
-                  child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: Text(AppLocale.deleteCategoryButtonText.getString(dialogContext), style: const TextStyle(color: Colors.white)),
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
+                    _deleteCategoryFromOptionsDialog(originalCategory);
                   },
                 ),
                 ElevatedButton(
@@ -2025,7 +2099,7 @@ class _HomePageState extends State<HomePage>
                             if (userCatIndex != -1) {
                               myCurrentUser!.categories![userCatIndex] = finalCategoryToSave;
                             } else {
-                               myCurrentUser!.categories = List<TodoCategory>.from(_customCategories);
+                              myCurrentUser!.categories = List<TodoCategory>.from(_customCategories);
                             }
                             await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
                           }
