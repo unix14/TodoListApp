@@ -202,13 +202,18 @@ class _HomePageState extends State<HomePage>
           if (!members.containsKey(currentUser!.uid)) {
             members[currentUser!.uid] = true;
             try {
-              await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+              final success = await FirebaseRepoInteractor.instance
+                  .saveSharedCategoryData(
                 incomingSharedSlug!,
                 {
                   ...data,
                   'members': members,
                 },
               );
+              if (!success && mounted) {
+                context
+                    .showSnackBar(AppLocale.shareFailed.getString(context));
+              }
             } catch (e) {
               if (mounted) {
                 context
@@ -1673,7 +1678,7 @@ class _HomePageState extends State<HomePage>
     } else {
       slug = await FirebaseRepoInteractor.instance.generateUniqueSlug(categoryName);
       try {
-        await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+        final success = await FirebaseRepoInteractor.instance.saveSharedCategoryData(
           slug,
           {
             'name': categoryName,
@@ -1682,6 +1687,10 @@ class _HomePageState extends State<HomePage>
             'members': {if (currentUser != null) currentUser!.uid: true},
           },
         );
+        if (!success) {
+          context.showSnackBar(AppLocale.shareFailed.getString(context));
+          return;
+        }
         _sharedCategorySlugs[categoryName] = slug;
         await EncryptedSharedPreferencesHelper.saveSharedSlugs(_sharedCategorySlugs);
       } catch (e) {
@@ -1774,13 +1783,17 @@ class _HomePageState extends State<HomePage>
                                   onPressed: () async {
                                     members.remove(uid);
                                     try {
-                                      await FirebaseRepoInteractor.instance.saveSharedCategoryData(
+                                      final success = await FirebaseRepoInteractor.instance.saveSharedCategoryData(
                                         slug,
                                         {
                                           ...data,
                                           'members': members,
                                         },
                                       );
+                                      if (!success && mounted) {
+                                        context.showSnackBar(AppLocale.shareFailed.getString(context));
+                                        return;
+                                      }
                                     } catch (e) {
                                       if (mounted) {
                                         context.showSnackBar(AppLocale.shareFailed.getString(context));
