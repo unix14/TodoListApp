@@ -170,14 +170,21 @@ class _HomePageState extends State<HomePage>
           bool? accepted = await showDialog<bool>(
             context: context,
             builder: (dialogContext) {
+              String name = (owner?.name?.isNotEmpty ?? false)
+                  ? owner!.name!
+                  : AppLocale.anonymous.getString(dialogContext);
+              String email = owner?.email ?? '';
+              String message =
+                  AppLocale.invitationMessage.getString(dialogContext).replaceAll('{user}', name);
+              if (email.isNotEmpty) {
+                message = message.replaceAll('{email}', email);
+              } else {
+                message = message.replaceAll('({email})', '');
+                message = message.replaceAll('{email}', '');
+              }
               return AlertDialog(
                 title: Text(AppLocale.invitationTitle.getString(dialogContext)),
-                content: Text(
-                  AppLocale.invitationMessage
-                      .getString(dialogContext)
-                      .replaceAll('{user}', (owner?.name?.isNotEmpty ?? false) ? owner!.name! : AppLocale.anonymous.getString(dialogContext))
-                      .replaceAll('{email}', owner?.email ?? ''),
-                ),
+                content: Text(message),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -227,7 +234,7 @@ class _HomePageState extends State<HomePage>
             }
           }
 
-          if (added && mounted) {
+          if (mounted) {
             await _initializeTabs();
             final index = _categories.indexOf(name);
             setState(() {
@@ -236,6 +243,10 @@ class _HomePageState extends State<HomePage>
               }
             });
           }
+        }
+      } else {
+        if (mounted) {
+          context.showSnackBar(AppLocale.shareFailed.getString(context));
         }
       }
       incomingSharedSlug = null;
@@ -519,9 +530,7 @@ class _HomePageState extends State<HomePage>
                 ..._categories
                     .map((String name) =>
                     Tab(
-                      text: name.substring(0, min(name.length,
-                          MAX_CHARS_IN_TAB_BAR)) +
-                          (name.length > MAX_CHARS_IN_TAB_BAR ? "..." : ""),
+                      child: _buildTabLabel(name),
                     )
                 )
                     .toList(),
@@ -819,12 +828,7 @@ class _HomePageState extends State<HomePage>
                               ); // Empty list view for non-"All" categories that are empty
                             }
                           }
-                          return Column(
-                            children: [
-                              _buildMembersRow(currentCategoryNameForTab),
-                              Expanded(child: listContent),
-                            ],
-                          );
+                          return listContent;
                         }
                       },
                     );
@@ -1784,6 +1788,8 @@ class _HomePageState extends State<HomePage>
         }
         _sharedCategorySlugs[categoryName] = slug;
         await EncryptedSharedPreferencesHelper.saveSharedSlugs(_sharedCategorySlugs);
+        // Save existing items for this category to the shared list
+        _updateList();
       } catch (e) {
         context.showSnackBar(AppLocale.shareFailed.getString(context));
         return;
@@ -1914,7 +1920,7 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildMembersRow(String categoryName) {
+  Widget _buildMembersRow(String categoryName, {bool compact = false}) {
     final slug = _sharedCategorySlugs[categoryName];
     if (slug == null) return const SizedBox.shrink();
     return FutureBuilder<Map<String, dynamic>>(
@@ -1927,8 +1933,13 @@ class _HomePageState extends State<HomePage>
         membersMap.remove(currentUser?.uid);
         final uids = membersMap.keys.toList();
         if (uids.isEmpty) return const SizedBox.shrink();
+        final radius = compact ? 8.0 : 12.0;
+        final fontSize = compact ? 8.0 : 10.0;
+        final padding = compact
+            ? const EdgeInsets.symmetric(horizontal: 1.0, vertical: 2.0)
+            : const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0);
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          padding: padding,
           child: Row(
             children: [
               for (var uid in uids.take(2))
@@ -1939,20 +1950,20 @@ class _HomePageState extends State<HomePage>
                     if (snapshot.hasData && snapshot.data!.imageURL != null && snapshot.data!.imageURL!.isNotEmpty) {
                       try {
                         avatar = CircleAvatar(
-                          radius: 12,
+                          radius: radius,
                           backgroundImage: MemoryImage(base64Decode(snapshot.data!.imageURL!)),
                         );
                       } catch (_) {
-                        avatar = const CircleAvatar(radius: 12, child: Icon(Icons.person, size: 12));
+                        avatar = CircleAvatar(radius: radius, child: Icon(Icons.person, size: radius));
                       }
                     } else {
                       final initials = (snapshot.data?.name ?? '').isNotEmpty
                           ? snapshot.data!.name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
                           : '';
                       if (initials.isEmpty) {
-                        avatar = const CircleAvatar(radius: 12, child: Icon(Icons.person, size: 12));
+                        avatar = CircleAvatar(radius: radius, child: Icon(Icons.person, size: radius));
                       } else {
-                        avatar = CircleAvatar(radius: 12, child: Text(initials, style: const TextStyle(fontSize: 10)));
+                        avatar = CircleAvatar(radius: radius, child: Text(initials, style: TextStyle(fontSize: fontSize)));
                       }
                     }
                     final tooltip = '${snapshot.data?.name?.isNotEmpty == true ? snapshot.data!.name! : AppLocale.anonymous.getString(context)}\n${snapshot.data?.email ?? ''}';
@@ -1966,14 +1977,31 @@ class _HomePageState extends State<HomePage>
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2.0),
                   child: CircleAvatar(
-                    radius: 12,
-                    child: Text('+${uids.length - 2}', style: const TextStyle(fontSize: 10)),
+                    radius: radius,
+                    child: Text('+${uids.length - 2}', style: TextStyle(fontSize: fontSize)),
                   ),
                 ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTabLabel(String categoryName) {
+    final text = Text(
+      categoryName.substring(0, min(categoryName.length, MAX_CHARS_IN_TAB_BAR)) +
+          (categoryName.length > MAX_CHARS_IN_TAB_BAR ? "..." : ""),
+    );
+    if (!_sharedCategorySlugs.containsKey(categoryName)) {
+      return Column(mainAxisSize: MainAxisSize.min, children: [text]);
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        text,
+        _buildMembersRow(categoryName, compact: true),
+      ],
     );
   }
 
