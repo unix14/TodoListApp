@@ -155,6 +155,7 @@ class _HomePageState extends State<HomePage>
   Future<void> _checkIncomingSharedSlug() async {
     if (_incomingSlugHandled) return;
     if (incomingSharedSlug != null && currentUser != null) {
+      _incomingSlugHandled = true;
       final data = await FirebaseRepoInteractor.instance
           .getSharedCategoryData(incomingSharedSlug!);
       if (data.isNotEmpty) {
@@ -251,7 +252,6 @@ class _HomePageState extends State<HomePage>
         }
       }
       incomingSharedSlug = null;
-      _incomingSlugHandled = true;
     } else {
       _incomingSlugHandled = true;
     }

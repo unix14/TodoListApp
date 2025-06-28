@@ -315,7 +315,7 @@ class SettingsLogicHelper {
     }
   }
   Future<void> updateProfilePicture(BuildContext context) async {
-    if (currentUser == null || currentUser!.isAnonymous) return;
+    if (currentUser == null) return;
     FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
     if (result != null && result.files.isNotEmpty) {
       Uint8List? bytes = result.files.first.bytes;
@@ -333,7 +333,7 @@ class SettingsLogicHelper {
   }
 
   Future<void> updateUserName(BuildContext context) async {
-    if (currentUser == null || currentUser!.isAnonymous) return;
+    if (currentUser == null) return;
     final controller = TextEditingController(text: myCurrentUser?.name ?? '');
     final formKey = GlobalKey<FormState>();
     final newName = await showDialog<String>(

@@ -107,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     style: const TextStyle(fontSize: 18),
                   ),
                 ),
-                if (currentUser != null && currentUser!.isAnonymous == false)
+                if (currentUser != null)
                   IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: () {
@@ -124,7 +124,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               context.copyToClipboard(email);
             },
           ),
-          if(currentUser != null && currentUser!.isAnonymous == false)
+          if(currentUser != null)
             ListTile(
               title: Text(AppLocale.name.getString(context)),
               subtitle: Text(name),
@@ -132,7 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 _settingsHelper.updateUserName(context);
               },
             ),
-          if(currentUser != null && currentUser!.isAnonymous == false)
+          if(currentUser != null)
             ListTile(
               title: Text(AppLocale.profilePicture.getString(context)),
               onTap: () {
