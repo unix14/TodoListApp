@@ -8,7 +8,7 @@
     },
     "sharedLists": {
       "$slug": {
-        ".read": true,
+        ".read": "auth != null && (data.child('owner').val() == auth.uid || data.child('members').child(auth.uid).exists())",
         ".write": "auth != null && ((data.exists() && (data.child('owner').val() == auth.uid || data.child('members').child(auth.uid).exists())) || (!data.exists() && newData.child('owner').val() == auth.uid) || (!data.child('members').child(auth.uid).exists() && newData.child('members').child(auth.uid).val() == true))"
       }
     }
