@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "users": {
+      "$user_id": {
+        ".read": "(auth != null && auth.token.email != null && auth.token.email == root.child('users/' + $user_id + '/email').val()) || root.child('users/' + $user_id).val() == null",
+        ".write": "(auth != null && auth.token.email != null && auth.token.email == root.child('users/' + $user_id + '/email').val()) || root.child('users/' + $user_id).val() == null"
+      }
+    },
+    "sharedLists": {
+      "$slug": {
+        ".read": "auth != null && (data.child('owner').val() == auth.uid || data.child('members').child(auth.uid).exists())",
+        ".write": "auth != null && ((data.exists() && (data.child('owner').val() == auth.uid || data.child('members').child(auth.uid).exists())) || (!data.exists() && newData.child('owner').val() == auth.uid) || (!data.child('members').child(auth.uid).exists() && newData.child('members').child(auth.uid).val() == true))"
+      }
+    }
+  }
+}
