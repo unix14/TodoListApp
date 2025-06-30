@@ -1844,14 +1844,16 @@ class _HomePageState extends State<HomePage>
               if (members.isNotEmpty)
                 Text(AppLocale.sharedWith.getString(context)),
               if (members.isNotEmpty)
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
-                      for (var uid in members.keys)
-                        FutureBuilder<MyUser.User?>(
-                          future: FirebaseRepoInteractor.instance.getUserData(uid),
+                SizedBox(
+                  width: double.maxFinite,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 200),
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (var uid in members.keys)
+                          FutureBuilder<MyUser.User?>(
+                            future: FirebaseRepoInteractor.instance.getUserData(uid),
                           builder: (context, snapshot) {
                             final name = snapshot.data?.name?.isNotEmpty == true ? snapshot.data!.name! : AppLocale.anonymous.getString(context);
                             final email = snapshot.data?.email ?? '';
@@ -1909,7 +1911,8 @@ class _HomePageState extends State<HomePage>
                             );
                           },
                         ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
             ],

@@ -314,12 +314,12 @@ class SettingsLogicHelper {
           content: Text("An unexpected error occurred during deletion.")));
     }
   }
-  Future<void> updateProfilePicture(BuildContext context) async {
+  Future<bool> updateProfilePicture(BuildContext context) async {
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocale.loginToUploadPicture.getString(context))),
       );
-      return;
+      return false;
     }
     FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
     if (result != null && result.files.isNotEmpty) {
@@ -330,14 +330,16 @@ class SettingsLogicHelper {
           myCurrentUser?.imageURL = url;
           await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.profilePictureUpdated.getString(context))));
+          return true;
         } else {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.shareFailed.getString(context))));
         }
       }
     }
+    return false;
   }
 
-  Future<void> updateUserName(BuildContext context) async {
+  Future<bool> updateUserName(BuildContext context) async {
     if (currentUser == null) return;
     final controller = TextEditingController(text: myCurrentUser?.name ?? '');
     final formKey = GlobalKey<FormState>();
@@ -386,7 +388,9 @@ class SettingsLogicHelper {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocale.nameUpdated.getString(context))),
       );
+      return true;
     }
+    return false;
   }
 
 }

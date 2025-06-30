@@ -113,8 +113,11 @@ class _SettingsScreenState extends State<SettingsScreen>
                 if (currentUser != null)
                   IconButton(
                     icon: const Icon(Icons.edit),
-                    onPressed: () {
-                      _settingsHelper.updateUserName(context);
+                    onPressed: () async {
+                      final updated = await _settingsHelper.updateUserName(context);
+                      if (updated && mounted) {
+                        setState(() {});
+                      }
                     },
                   ),
               ],
@@ -131,15 +134,17 @@ class _SettingsScreenState extends State<SettingsScreen>
             ListTile(
               title: Text(AppLocale.name.getString(context)),
               subtitle: Text(name),
-              onTap: () {
-                _settingsHelper.updateUserName(context);
+              onTap: () async {
+                final updated = await _settingsHelper.updateUserName(context);
+                if (updated && mounted) setState(() {});
               },
             ),
           if(currentUser != null)
             ListTile(
               title: Text(AppLocale.profilePicture.getString(context)),
-              onTap: () {
-                _settingsHelper.updateProfilePicture(context);
+              onTap: () async {
+                final updated = await _settingsHelper.updateProfilePicture(context);
+                if (updated && mounted) setState(() {});
               },
             ),
           simpleDivider,
