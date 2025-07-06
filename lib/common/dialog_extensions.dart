@@ -144,7 +144,7 @@ extension DialogExtensions on BuildContext {
                     },
                     child: Text(thirdButtonText, style: const TextStyle(color: Colors.black),),
                   ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();

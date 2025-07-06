@@ -6,6 +6,7 @@ import 'package:encrypt/encrypt.dart';
 class EncryptedSharedPreferencesHelper {
   static late EncryptedSharedPreferences _prefs;
   static const String kCategoriesListPrefs = 'categories_list_prefs';
+  static const String kSharedSlugsPrefs = 'shared_slugs_prefs';
 
   /// Initialize the EncryptedSharedPreferences with the given key
   static Future<void> initialize() async {
@@ -57,13 +58,36 @@ class EncryptedSharedPreferencesHelper {
     await setString(kCategoriesListPrefs, jsonString);
   }
 
+  static Future<void> saveSharedSlugs(Map<String, String> slugs) async {
+    await setString(kSharedSlugsPrefs, json.encode(slugs));
+  }
+
+  static Future<Map<String, String>> loadSharedSlugs() async {
+    final String? jsonString = await getString(kSharedSlugsPrefs);
+    if (jsonString != null && jsonString.isNotEmpty) {
+      try {
+        final Map<String, dynamic> decoded = json.decode(jsonString);
+        return decoded.map((key, value) => MapEntry(key, value.toString()));
+      } catch (e) {
+        print('Error decoding shared slugs from JSON: $e');
+        return {};
+      }
+    }
+    return {};
+  }
+
   /// Load a list of categories from the encrypted shared preferences
   static Future<List<String>> loadCategories() async {
     final String? jsonString = await getString(kCategoriesListPrefs);
     if (jsonString != null && jsonString.isNotEmpty) {
       try {
         final List<dynamic> decodedList = json.decode(jsonString);
-        return decodedList.map((category) => category.toString()).toList();
+        return decodedList.map((category) {
+          if (category is Map && category.containsKey('name')) {
+            return category['name'].toString();
+          }
+          return category.toString();
+        }).toList();
       } catch (e) {
         print('Error decoding categories from JSON: $e');
         return [];

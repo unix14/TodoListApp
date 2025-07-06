@@ -314,4 +314,83 @@ class SettingsLogicHelper {
           content: Text("An unexpected error occurred during deletion.")));
     }
   }
+  Future<bool> updateProfilePicture(BuildContext context) async {
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocale.loginToUploadPicture.getString(context))),
+      );
+      return false;
+    }
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null && result.files.isNotEmpty) {
+      Uint8List? bytes = result.files.first.bytes;
+      if (bytes != null) {
+        final url = await FirebaseRepoInteractor.instance.uploadProfileImage(currentUser!.uid, bytes);
+        if (url != null) {
+          myCurrentUser?.imageURL = url;
+          await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.profilePictureUpdated.getString(context))));
+          return true;
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.shareFailed.getString(context))));
+        }
+      }
+    }
+    return false;
+  }
+
+  Future<bool> updateUserName(BuildContext context) async {
+    if (currentUser == null) return false;
+    final controller = TextEditingController(text: myCurrentUser?.name ?? '');
+    final formKey = GlobalKey<FormState>();
+    final newName = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(AppLocale.changeNameTitle.getString(dialogContext)),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: controller,
+              decoration: InputDecoration(hintText: AppLocale.name.getString(dialogContext)),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return AppLocale.nameEmptyError.getString(dialogContext);
+                }
+                return null;
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(AppLocale.cancelButtonText.getString(dialogContext)),
+            ),
+            TextButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  Navigator.of(dialogContext).pop(controller.text.trim());
+                }
+              },
+              child: Text(AppLocale.okButtonText.getString(dialogContext)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newName != null && newName != myCurrentUser?.name) {
+      if (myCurrentUser != null) {
+        myCurrentUser!.name = newName;
+        await FirebaseRepoInteractor.instance.updateUserData(myCurrentUser!);
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocale.nameUpdated.getString(context))),
+      );
+      return true;
+    }
+    return false;
+  }
+
 }

@@ -86,6 +86,7 @@ mixin AppLocale {
   static const String timeMinuteAgo = 'timeMinuteAgo';
   static const String timeMinutesAgo = 'timeMinutesAgo';
   static const String timeYesterday = 'timeYesterday';
+  static const String time2DaysAgo = 'time2DaysAgo';
   static const String title = 'title';
   static const String todoExample1 = "todoExample1";
   static const String todoExample2 = "todoExample2";
@@ -94,6 +95,7 @@ mixin AppLocale {
   static const String uncategorizedCategory = 'uncategorizedCategory';
   static const String uncategorizedResults = 'uncategorizedResults';
   static const String unknown = "unknown";
+  static const String anonymous = 'anonymous';
   static const String version = "version";
 
   // Settings Screen - Import/Export & Delete Account
@@ -138,6 +140,21 @@ mixin AppLocale {
   static const String editTodoHint = 'editTodoHint';
   static const String emptyTodoTitle = 'emptyTodoTitle';
   static const String emptyTodoMessage = 'emptyTodoMessage';
+  static const String shareCategory = "shareCategory";
+  static const String profilePicture = "profilePicture";
+  static const String profilePictureUpdated = "profilePictureUpdated";
+  static const String changeNameTitle = "changeNameTitle";
+  static const String nameUpdated = "nameUpdated";
+  static const String nameEmptyError = "nameEmptyError";
+  static const String loginToUploadPicture = "loginToUploadPicture";
+  static const String invitationTitle = "invitationTitle";
+  static const String invitationMessage = "invitationMessage";
+  static const String accept = "accept";
+  static const String decline = "decline";
+  static const String copyLink = 'copyLink';
+  static const String sharedWith = 'sharedWith';
+  static const String createdOn = 'createdOn';
+  static const String shareFailed = "shareFailed";
 
   static const Map<String, dynamic> EN = {
     AppLocale.title: 'Todo List',
@@ -158,6 +175,7 @@ mixin AppLocale {
     AppLocale.archivedTodos: "Archived Todos",
     AppLocale.guest: "Guest",
     AppLocale.unknown: "unknown",
+    AppLocale.anonymous: "Anonymous",
     AppLocale.archivedTodosSubtitle: "Todos are added to the archive after 24 hours since they're checked as done.",
     AppLocale.close: "Close",
     AppLocale.loginWEmail: "Login with Email",
@@ -207,6 +225,22 @@ mixin AppLocale {
     AppLocale.enterSearchQueryPrompt: "Type to start searching.",
     AppLocale.itemMovedSnackbar: 'Item moved to {categoryName}',
     // AppLocale.itemUncategorizedSnackbar: 'Item moved to All', // Already included above
+    AppLocale.shareCategory: "Share Category",
+    AppLocale.profilePicture: "Profile Picture",
+    AppLocale.profilePictureUpdated: "Profile picture updated" ,
+    AppLocale.changeNameTitle: "Change Name",
+    AppLocale.nameUpdated: "Name updated",
+    AppLocale.nameEmptyError: "Name cannot be empty",
+    AppLocale.loginToUploadPicture: "Please sign up to upload a picture",
+    AppLocale.invitationTitle: "Invitation",
+    AppLocale.invitationMessage: "{user} ({email}) invited you to share this list.",
+    AppLocale.accept: "Accept",
+    AppLocale.decline: "Decline",
+    AppLocale.shareFailed: "Could not share list",
+    AppLocale.copiedToClipboard: "Copied to clipboard",
+    AppLocale.copyLink: "Copy link",
+    AppLocale.sharedWith: "Shared with",
+    AppLocale.createdOn: "Created on {date}",
     AppLocale.motivationalSentence1: "Let's get something done!",
     AppLocale.motivationalSentence2: "What's on your mind today?",
     AppLocale.motivationalSentence3: "Time to be productive!",
@@ -241,6 +275,7 @@ mixin AppLocale {
     AppLocale.timeMinuteAgo: '{minutes} minute ago',
     AppLocale.timeMinutesAgo: '{minutes} minutes ago',
     AppLocale.timeYesterday: 'yesterday',
+    AppLocale.time2DaysAgo: '2 days ago',
 
     // Settings Screen - Import/Export & Delete Account
     AppLocale.settingsExportDataTitle: "Export Data",
@@ -293,6 +328,7 @@ mixin AppLocale {
     AppLocale.archivedTodos: "ארכיון המשימות",
     AppLocale.guest: "אורח",
     AppLocale.unknown: "לא ידוע",
+    AppLocale.anonymous: "אנונימי",
     AppLocale.archivedTodosSubtitle: "משימות שבוצעו יועברו לארכיון המשימות לאחר כ-24 שעות.",
     AppLocale.close: "סגירה",
     AppLocale.loginWEmail: "כניסה עם דוא''ל",
@@ -342,6 +378,22 @@ mixin AppLocale {
     AppLocale.enterSearchQueryPrompt: "הקלד כדי להתחיל בחיפוש.",
     // AppLocale.itemMovedSnackbar: 'הפריט הועבר לקטגוריה {categoryName}', // Already included above
     AppLocale.itemUncategorizedSnackbar: 'הפריט הועבר להכל',
+    AppLocale.shareCategory: "שתף קטגוריה",
+    AppLocale.profilePicture: "תמונת פרופיל",
+    AppLocale.profilePictureUpdated: "התמונה עודכנה",
+    AppLocale.changeNameTitle: "שנה שם",
+    AppLocale.nameUpdated: "השם עודכן",
+    AppLocale.nameEmptyError: "השם לא יכול להיות ריק",
+    AppLocale.loginToUploadPicture: "אנא הירשם כדי להעלות תמונה",
+    AppLocale.invitationTitle: "הזמנה",
+    AppLocale.invitationMessage: "{user} ({email}) הזמין אותך לשתף את הרשימה הזו.",
+    AppLocale.accept: "אישור",
+    AppLocale.decline: "דחייה",
+    AppLocale.shareFailed: "לא ניתן לשתף את הרשימה",
+    AppLocale.copiedToClipboard: "הועתק ללוח",
+    AppLocale.copyLink: "העתק קישור",
+    AppLocale.sharedWith: "שותף עם",
+    AppLocale.createdOn: "נוצר ב {date}",
     AppLocale.motivationalSentence1: "דברים גדולים לעולם לא מגיעים מאזורי נוחות. בוא נתמודד עם משימה!",
     AppLocale.motivationalSentence2: "הסוד להתקדם הוא להתחיל. מה הדבר הראשון?",
     AppLocale.motivationalSentence3: "רשימה ריקה היא בד ציור ריק. צייר את יצירת המופת שלך בפרודוקטיביות!",
@@ -375,6 +427,7 @@ mixin AppLocale {
     AppLocale.timeHourAgo: 'לפני שעה',   // Placeholder for singular hour, assuming {hours} will be 1
     AppLocale.timeHoursAgo: 'לפני {hours} שעות',   // Placeholder
     AppLocale.timeYesterday: 'אתמול',      // Placeholder
+    AppLocale.time2DaysAgo: 'שלשום',
     AppLocale.timeDaysAgo: 'לפני {days} ימים',     // Placeholder
 
     // Settings Screen - Import/Export & Delete Account

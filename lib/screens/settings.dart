@@ -66,7 +66,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   @override
   Widget build(BuildContext context) {
     var email = myCurrentUser?.email ?? AppLocale.guest.getString(context);
-    // var name = myCurrentUser?.name ?? AppLocale.unknown.getString(context); // todo bring back
+    var name = myCurrentUser?.name ?? AppLocale.unknown.getString(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocale.settings.getString(context)),
@@ -79,20 +79,74 @@ class _SettingsScreenState extends State<SettingsScreen>
         mainAxisAlignment: MainAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,
         children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Tooltip(
+                  message:
+                      '${name.isNotEmpty ? name : AppLocale.anonymous.getString(context)}${email.isNotEmpty ? '\n$email' : ''}',
+                  child: InkWell(
+                    onTap: () => _settingsHelper.updateProfilePicture(context),
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundImage: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
+                          ? (myCurrentUser!.imageURL!.startsWith('http')
+                              ? NetworkImage(myCurrentUser!.imageURL!)
+                              : MemoryImage(base64Decode(myCurrentUser!.imageURL!)) as ImageProvider)
+                          : null,
+                      child: (myCurrentUser?.imageURL != null && myCurrentUser!.imageURL!.isNotEmpty)
+                          ? null
+                          : (name.trim().isNotEmpty
+                              ? Text(name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase())
+                              : const Icon(Icons.person)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    name.isNotEmpty ? name : AppLocale.unknown.getString(context),
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                ),
+                if (currentUser != null)
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () async {
+                      final updated = await _settingsHelper.updateUserName(context);
+                      if (updated && mounted) {
+                        setState(() {});
+                      }
+                    },
+                  ),
+              ],
+            ),
+          ),
           ListTile(
             title: Text(AppLocale.account.getString(context)),
-            subtitle: Text(email), // todo
+            subtitle: Text(email),
             onTap: () {
               context.copyToClipboard(email);
             },
           ),
-          // ListTile(
-          //   title: Text(AppLocale.name.getString(context)),
-          //   subtitle: Text(name),
-          //   onTap: () {
-          //     // todo when clicked show different name input dialog and change it in firebase
-          //   },
-          // ),
+          if(currentUser != null)
+            ListTile(
+              title: Text(AppLocale.name.getString(context)),
+              subtitle: Text(name),
+              onTap: () async {
+                final updated = await _settingsHelper.updateUserName(context);
+                if (updated && mounted) setState(() {});
+              },
+            ),
+          if(currentUser != null)
+            ListTile(
+              title: Text(AppLocale.profilePicture.getString(context)),
+              onTap: () async {
+                final updated = await _settingsHelper.updateProfilePicture(context);
+                if (updated && mounted) setState(() {});
+              },
+            ),
           simpleDivider,
           ListTile(
             title: Text(AppLocale.lang.getString(context)),

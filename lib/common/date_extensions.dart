@@ -44,7 +44,9 @@ String formatTimeDifference(DateTime dateTime, BuildContext context) {
         }
     } else if (difference.inDays == 1) {
         return AppLocale.timeYesterday.getString(context);
-    } else if (difference.inDays < 7) { // 2 to 6 days
+    } else if (difference.inDays == 2) {
+        return AppLocale.time2DaysAgo.getString(context);
+    } else if (difference.inDays < 7) { // 3 to 6 days
         final days = difference.inDays;
         return AppLocale.timeDaysAgo.getString(context).replaceAll('{days}', days.toString());
     } else {
