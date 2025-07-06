@@ -86,6 +86,7 @@ mixin AppLocale {
   static const String timeMinuteAgo = 'timeMinuteAgo';
   static const String timeMinutesAgo = 'timeMinutesAgo';
   static const String timeYesterday = 'timeYesterday';
+  static const String time2DaysAgo = 'time2DaysAgo';
   static const String title = 'title';
   static const String todoExample1 = "todoExample1";
   static const String todoExample2 = "todoExample2";
@@ -274,6 +275,7 @@ mixin AppLocale {
     AppLocale.timeMinuteAgo: '{minutes} minute ago',
     AppLocale.timeMinutesAgo: '{minutes} minutes ago',
     AppLocale.timeYesterday: 'yesterday',
+    AppLocale.time2DaysAgo: '2 days ago',
 
     // Settings Screen - Import/Export & Delete Account
     AppLocale.settingsExportDataTitle: "Export Data",
@@ -425,6 +427,7 @@ mixin AppLocale {
     AppLocale.timeHourAgo: 'לפני שעה',   // Placeholder for singular hour, assuming {hours} will be 1
     AppLocale.timeHoursAgo: 'לפני {hours} שעות',   // Placeholder
     AppLocale.timeYesterday: 'אתמול',      // Placeholder
+    AppLocale.time2DaysAgo: 'שלשום',
     AppLocale.timeDaysAgo: 'לפני {days} ימים',     // Placeholder
 
     // Settings Screen - Import/Export & Delete Account

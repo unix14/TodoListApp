@@ -86,7 +86,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Text(FlutterLocalization.instance.getLanguageName(), style: TextStyle(color: Colors.white),),
                 )),
               ),
-              const Spacer(),
+              const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.only(bottom: 28),
                 child: SizedBox(
@@ -102,7 +102,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   color: Colors.white,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 16),
               WhiteRoundButton(text: AppLocale.loginWEmail.getString(context), onPressed: () async {
       // JULES_TODO: Refactor login logic below to use Authenticator.signIn and handle results:
       // 1. Obtain email and password from your dialog (e.g., by adapting context.showLoginDialog or a new dialog).
@@ -147,7 +147,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               //     // Handle the error
               //   }
               // },),
-              const Spacer(),
+              const SizedBox(height: 16),
               Padding(padding: const EdgeInsets.only(bottom: 8, top: 30),
                 child: TextButton(
                   onPressed: _skipToMainScreen,

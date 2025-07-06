@@ -340,7 +340,7 @@ class SettingsLogicHelper {
   }
 
   Future<bool> updateUserName(BuildContext context) async {
-    if (currentUser == null) return;
+    if (currentUser == null) return false;
     final controller = TextEditingController(text: myCurrentUser?.name ?? '');
     final formKey = GlobalKey<FormState>();
     final newName = await showDialog<String>(

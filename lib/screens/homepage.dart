@@ -81,6 +81,8 @@ class _HomePageState extends State<HomePage>
 
   final FocusNode _todoLineFocusNode = FocusNode();
 
+  late final ScrollController _scrollController;
+
   //todo refactor and extract code to widgets
 
   bool isLoading = true;
@@ -421,6 +423,7 @@ class _HomePageState extends State<HomePage>
     _textEditingController.dispose(); // Dispose the text controller
     _searchFocusNode.dispose();
     _searchController.dispose();
+    _scrollController.dispose();
     ServicesBinding.instance.keyboard.removeHandler(_onKey);
     super.dispose();
   }
@@ -428,6 +431,7 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
     _textEditingController =
         TextEditingController(); // Initialize the controller
     _searchController = TextEditingController();
@@ -672,12 +676,18 @@ class _HomePageState extends State<HomePage>
                                               fontWeight: FontWeight.w500)),
                                     ),
                                     Expanded(
-                                      child: ListView.builder(
-                                        itemCount: itemsToDisplayOrSearchIn
-                                            .length,
-                                        itemBuilder: (context, itemIndex) =>
-                                            getListTile(
-                                                itemsToDisplayOrSearchIn[itemIndex]),
+                                      child: Scrollbar(
+                                        controller: _scrollController,
+                                        radius: const Radius.circular(8),
+                                        thickness: 6,
+                                        thumbVisibility: true,
+                                        child: ListView.builder(
+                                          controller: _scrollController,
+                                          itemCount: itemsToDisplayOrSearchIn.length,
+                                          itemBuilder: (context, itemIndex) =>
+                                              getListTile(
+                                                  itemsToDisplayOrSearchIn[itemIndex]),
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -716,9 +726,15 @@ class _HomePageState extends State<HomePage>
                                         .length
                                         .toString());
                               }
-                              listContent = ListView.builder(
-                                itemCount: _searchResults.length + 1,
-                                itemBuilder: (context, index) {
+                              listContent = Scrollbar(
+                                controller: _scrollController,
+                                radius: const Radius.circular(8),
+                                thickness: 6,
+                                thumbVisibility: true,
+                                child: ListView.builder(
+                                  controller: _scrollController,
+                                  itemCount: _searchResults.length + 1,
+                                  itemBuilder: (context, index) {
                                   if (index == 0) {
                                     return Center(
                                       child: Padding(
@@ -819,12 +835,18 @@ class _HomePageState extends State<HomePage>
                                             fontWeight: FontWeight.w500)),
                                   ),
                                   Expanded(
-                                    child: ListView.builder(
-                                      itemCount: itemsToDisplayOrSearchIn
-                                          .length,
-                                      itemBuilder: (context, itemIndex) =>
-                                          getListTile(
-                                              itemsToDisplayOrSearchIn[itemIndex]),
+                                    child: Scrollbar(
+                                      controller: _scrollController,
+                                      radius: const Radius.circular(8),
+                                      thickness: 6,
+                                      thumbVisibility: true,
+                                      child: ListView.builder(
+                                        controller: _scrollController,
+                                        itemCount: itemsToDisplayOrSearchIn.length,
+                                        itemBuilder: (context, itemIndex) =>
+                                            getListTile(
+                                                itemsToDisplayOrSearchIn[itemIndex]),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -978,6 +1000,7 @@ class _HomePageState extends State<HomePage>
   void showArchivedTodos() async {
     // Use archivedTodos to display archived todos.
     // Display the archived todos using an AlertDialog
+    final ScrollController controller = ScrollController();
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -994,9 +1017,15 @@ class _HomePageState extends State<HomePage>
                 child: Column(
                   children: [
                     Expanded(
-                      child: ListView.builder(
-                        itemCount: archivedTodos.length,
-                        itemBuilder: (context, index) {
+                      child: Scrollbar(
+                        controller: controller,
+                        radius: const Radius.circular(8),
+                        thickness: 6,
+                        thumbVisibility: true,
+                        child: ListView.builder(
+                          controller: controller,
+                          itemCount: archivedTodos.length,
+                          itemBuilder: (context, index) {
                           final todo = archivedTodos[index];
                           return GestureDetector(
                             onTap: () {
@@ -1090,7 +1119,7 @@ class _HomePageState extends State<HomePage>
           },
         );
       },
-    );
+    ).then((_) => controller.dispose());
   }
 
   Future<void> archiveTodos() async {
@@ -1848,9 +1877,15 @@ class _HomePageState extends State<HomePage>
                 SizedBox(
                   width: double.maxFinite,
                   height: 200,
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
+                  child: Scrollbar(
+                    controller: _scrollController,
+                    radius: const Radius.circular(8),
+                    thickness: 6,
+                    thumbVisibility: true,
+                    child: ListView(
+                      controller: _scrollController,
+                      shrinkWrap: true,
+                      children: [
                       for (var uid in members.keys)
                         FutureBuilder<MyUser.User?>(
                           future: FirebaseRepoInteractor.instance.getUserData(uid),
