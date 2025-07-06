@@ -1823,6 +1823,7 @@ class _HomePageState extends State<HomePage>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          scrollable: true,
           title: Text(AppLocale.shareCategory.getString(context)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1846,14 +1847,13 @@ class _HomePageState extends State<HomePage>
               if (members.isNotEmpty)
                 SizedBox(
                   width: double.maxFinite,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: [
-                        for (var uid in members.keys)
-                          FutureBuilder<MyUser.User?>(
-                            future: FirebaseRepoInteractor.instance.getUserData(uid),
+                  height: 200,
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (var uid in members.keys)
+                        FutureBuilder<MyUser.User?>(
+                          future: FirebaseRepoInteractor.instance.getUserData(uid),
                           builder: (context, snapshot) {
                             final name = snapshot.data?.name?.isNotEmpty == true ? snapshot.data!.name! : AppLocale.anonymous.getString(context);
                             final email = snapshot.data?.email ?? '';
@@ -1913,13 +1913,12 @@ class _HomePageState extends State<HomePage>
                         ),
                       ],
                     ),
-                  ),
                 ),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(AppLocale.ok.getString(context)),
             ),
           ],
